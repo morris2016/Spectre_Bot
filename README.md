@@ -51,35 +51,40 @@ The QuantumSpectre Elite Trading System is built with a modular, microservice-ba
    pip install -r requirements.txt
    ```
 
-3. Install frontend dependencies:
+3. Create the Codex environment (includes RAPIDS libraries):
+   ```bash
+   bash scripts/codex_setup.sh
+   ```
+
+4. Install frontend dependencies:
    ```
    cd frontend
    npm install
    ```
 
-4. Create configuration:
+5. Create configuration:
    ```
    cp .env.example .env
    # Edit .env with your configuration
    ```
 
-5. Initialize database:
+6. Initialize database:
    ```
    python -m scripts.init_db
    ```
 
-6. Start the system:
+7. Start the system:
    ```
    python main.py
    ```
 
-7. In a separate terminal, start the frontend:
+8. In a separate terminal, start the frontend:
    ```
    cd frontend
    npm start
    ```
 
-8. Access the dashboard at http://localhost:8000
+9. Access the dashboard at http://localhost:8000
 
 ## Usage
 
