@@ -79,6 +79,19 @@ The QuantumSpectre Elite Trading System is built with a modular, microservice-ba
    npm start
    ```
 
+### Codex Environment
+
+For an isolated environment used by Codex, run the setup script instead of
+installing requirements manually:
+
+```bash
+bash scripts/codex_setup.sh
+```
+
+This installs Miniforge, creates the `spectre` conda environment, installs all
+Python requirements except GPU libraries, and then installs `cudf` and `cuml`
+from NVIDIA's package index.
+
 8. Access the dashboard at http://localhost:8000
 
 ## Usage
