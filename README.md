@@ -46,6 +46,11 @@ The QuantumSpectre Elite Trading System is built with a modular, microservice-ba
    cd quantum-spectre
    ```
 
+   To create a self-contained Codex environment run:
+   ```
+   bash scripts/codex_setup.sh
+   ```
+
 2. Install backend dependencies:
    ```
    pip install -r requirements.txt
