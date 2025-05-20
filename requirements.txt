@@ -15,7 +15,6 @@ catboost>=1.2
 category_encoders>=2.6.1
 ccxt>=2.6.30
 cryptography>=41.0.0
-cudf>=23.06.0
 cuml>=23.06.0
 cupy>=12.1.0
 dash>=2.13.0
