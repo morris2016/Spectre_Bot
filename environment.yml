@@ -1,0 +1,13 @@
+name: spectre-env
+channels:
+  - rapidsai
+  - nvidia
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - cudf=23.06
+  - pip
+  - pip:
+      - -r requirements.txt
+

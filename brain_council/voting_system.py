@@ -682,10 +682,12 @@ class VotingSystem:
         voter_metrics = defaultdict(lambda: {
             'total_votes': 0,
             'correct_votes': 0,
-            'win_rate': 0,
-            'avg_pnl': 0,
-            'pnl_sum': 0,
-            'confidence_accuracy_correlation': 0
+            'win_rate': 0.0,
+            'avg_pnl': 0.0,
+            'pnl_sum': 0.0,
+            'confidences': [],
+            'accuracies': [],
+            'confidence_accuracy_correlation': 0.0
         })
         
         # Process historical decisions
@@ -707,16 +709,28 @@ class VotingSystem:
                 
                 # Track PnL
                 voter_metrics[voter]['pnl_sum'] += outcome_pnl
-                
-                # TODO: Add confidence-accuracy correlation calculation
-                # This requires more sophisticated statistical analysis
+
+                # Track confidence and whether the vote was correct
+                confidence = vote.get('confidence', 0)
+                voter_metrics[voter]['confidences'].append(confidence)
+                voter_metrics[voter]['accuracies'].append(
+                    1.0 if vote['direction'] == record['decision']['direction'] and outcome_successful else 0.0
+                )
         
         # Calculate derived metrics
         for voter, metrics in voter_metrics.items():
             if metrics['total_votes'] > 0:
                 metrics['win_rate'] = metrics['correct_votes'] / metrics['total_votes']
                 metrics['avg_pnl'] = metrics['pnl_sum'] / metrics['total_votes']
-        
+                if len(metrics['confidences']) > 1 and len(set(metrics['confidences'])) > 1:
+                    metrics['confidence_accuracy_correlation'] = float(np.corrcoef(
+                        metrics['confidences'], metrics['accuracies']
+                    )[0, 1])
+                else:
+                    metrics['confidence_accuracy_correlation'] = 0.0
+                metrics.pop('confidences', None)
+                metrics.pop('accuracies', None)
+
         return dict(voter_metrics)
     
     def get_voting_statistics(self) -> Dict[str, Any]:
