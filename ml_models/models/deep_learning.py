@@ -1269,14 +1269,14 @@ class HybridModel(nn.Module):
 class DeepLearningModel(BaseModel):
     """Deep learning model wrapper for the QuantumSpectre Elite Trading System"""
     
-    def __init__(self, config: DeepLearningConfig):
+    def __init__(self, config: DeepLearningConfig, name: str = "deep_learning", **kwargs: Any):
         """
         Initialize the deep learning model
         
         Args:
             config: Model configuration
         """
-        super(DeepLearningModel, self).__init__(config)
+        super(DeepLearningModel, self).__init__(config, name=name, **kwargs)
         self.config = config
         
         # Create model based on type

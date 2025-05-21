@@ -149,14 +149,14 @@ class BaseRegressionModel(BaseModel):
     Base class for all regression models in the system.
     """
     
-    def __init__(self, config: ModelConfig):
+    def __init__(self, config: ModelConfig, name: str = "base_regression", **kwargs: Any):
         """
         Initialize regression model with configuration.
         
         Args:
             config: Model configuration parameters
         """
-        super().__init__(config)
+        super().__init__(config, name=name, **kwargs)
         self.model = None
         self.scaler_X = None
         self.scaler_y = None

@@ -93,7 +93,7 @@ class ARIMAModel(BaseModel):
     automatic parameter selection and seasonality handling.
     """
     
-    def __init__(self, config: TimeSeriesConfig, name: str = "arima"):
+    def __init__(self, config: TimeSeriesConfig, name: str = "arima", **kwargs: Any):
         """
         Initialize the ARIMA model with the given configuration.
         
@@ -101,7 +101,7 @@ class ARIMAModel(BaseModel):
             config: Configuration parameters for the model
             name: Unique identifier for this model instance
         """
-        super().__init__(config, name)
+        super().__init__(config, name=name, **kwargs)
         self.model = None
         self.scaler = StandardScaler()
         self.config = config
@@ -392,7 +392,7 @@ class ProphetModel(BaseModel):
     multiple seasonality patterns, changepoint detection, and uncertainty estimation.
     """
     
-    def __init__(self, config: TimeSeriesConfig, name: str = "prophet"):
+    def __init__(self, config: TimeSeriesConfig, name: str = "prophet", **kwargs: Any):
         """
         Initialize the Prophet model with the given configuration.
         
@@ -400,7 +400,7 @@ class ProphetModel(BaseModel):
             config: Configuration parameters for the model
             name: Unique identifier for this model instance
         """
-        super().__init__(config, name)
+        super().__init__(config, name=name, **kwargs)
         self.model = None
         self.config = config
         self.is_fitted = False
@@ -683,7 +683,7 @@ class LSTMModel(BaseModel):
     multiple layers, regularization, and GPU acceleration.
     """
     
-    def __init__(self, config: TimeSeriesConfig, name: str = "lstm"):
+    def __init__(self, config: TimeSeriesConfig, name: str = "lstm", **kwargs: Any):
         """
         Initialize the LSTM model with the given configuration.
         
@@ -691,7 +691,7 @@ class LSTMModel(BaseModel):
             config: Configuration parameters for the model
             name: Unique identifier for this model instance
         """
-        super().__init__(config, name)
+        super().__init__(config, name=name, **kwargs)
         self.model = None
         self.config = config
         self.is_fitted = False
@@ -1127,7 +1127,7 @@ class TCNModel(BaseModel):
     which is excellent for capturing long-range dependencies in financial data.
     """
     
-    def __init__(self, config: TimeSeriesConfig, name: str = "tcn"):
+    def __init__(self, config: TimeSeriesConfig, name: str = "tcn", **kwargs: Any):
         """
         Initialize the TCN model with the given configuration.
         
@@ -1135,7 +1135,7 @@ class TCNModel(BaseModel):
             config: Configuration parameters for the model
             name: Unique identifier for this model instance
         """
-        super().__init__(config, name)
+        super().__init__(config, name=name, **kwargs)
         self.model = None
         self.config = config
         self.is_fitted = False
@@ -1599,7 +1599,7 @@ class AttentionModel(BaseModel):
     effective at capturing long-range dependencies and multi-timeframe patterns.
     """
     
-    def __init__(self, config: TimeSeriesConfig, name: str = "attention"):
+    def __init__(self, config: TimeSeriesConfig, name: str = "attention", **kwargs: Any):
         """
         Initialize the Attention model with the given configuration.
         
@@ -1607,7 +1607,7 @@ class AttentionModel(BaseModel):
             config: Configuration parameters for the model
             name: Unique identifier for this model instance
         """
-        super().__init__(config, name)
+        super().__init__(config, name=name, **kwargs)
         self.model = None
         self.config = config
         self.is_fitted = False
@@ -2001,7 +2001,7 @@ class EnsembleTimeSeriesModel(BaseModel):
     providing robustness and uncertainty estimation.
     """
     
-    def __init__(self, config: TimeSeriesConfig, name: str = "ensemble_ts"):
+    def __init__(self, config: TimeSeriesConfig, name: str = "ensemble_ts", **kwargs: Any):
         """
         Initialize the Ensemble model with the given configuration.
         
@@ -2009,7 +2009,7 @@ class EnsembleTimeSeriesModel(BaseModel):
             config: Configuration parameters for the model
             name: Unique identifier for this model instance
         """
-        super().__init__(config, name)
+        super().__init__(config, name=name, **kwargs)
         self.models = {}
         self.weights = {}
         self.config = config
