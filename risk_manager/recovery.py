@@ -12,8 +12,6 @@ maintaining risk management discipline.
 
 from typing import Dict, List, Optional, Any, Type
 from datetime import datetime
-
-
 from common.db_client import DatabaseClient
 from common.redis_client import RedisClient
 from common.constants import RECOVERY_STRATEGIES, ACCOUNT_STATES
@@ -654,4 +652,4 @@ def get_recovery_manager(name: str, *args, **kwargs) -> BaseRecoveryManager:
     return cls(*args, **kwargs)
 
 
-__all__ = ["BaseRecoveryManager", "get_recovery_manager", "RecoveryManager"]
+__all__ = ["BaseRecoveryManager", "get_recovery_manager"]
