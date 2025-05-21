@@ -717,9 +717,9 @@ class MarketEnvironment:
         """
         current_data = self.market_data.iloc[self.current_idx]
         
-        print(f"\n==== Environment State at {current_data.name} ====")
-        print(f"Price: {current_data['close']:.4f}")
-        print(f"Balance: ${self.balance:.2f}")
+        logger.info(f"\n==== Environment State at {current_data.name} ====")
+        logger.info(f"Price: {current_data['close']:.4f}")
+        logger.info(f"Balance: ${self.balance:.2f}")
         
         if self.position != 0:
             position_type = "LONG" if self.position > 0 else "SHORT"
@@ -727,14 +727,18 @@ class MarketEnvironment:
                 (current_data['close'] - self.entry_price) if self.position > 0 
                 else (self.entry_price - current_data['close'])
             )
-            print(f"Position: {position_type} {self.position_size:.4f} units at {self.entry_price:.4f}")
-            print(f"Unrealized P&L: ${unrealized_pnl:.2f}")
+            logger.info(
+                f"Position: {position_type} {self.position_size:.4f} units at {self.entry_price:.4f}"
+            )
+            logger.info(f"Unrealized P&L: ${unrealized_pnl:.2f}")
             
-        print(f"Total Return: {self.total_return:.2%}")
-        print(f"Max Drawdown: {self.max_drawdown:.2%}")
-        print(f"Win Rate: {self.profitable_trades}/{self.total_trades} "
-              f"({self.profitable_trades/self.total_trades:.2%} if self.total_trades > 0 else 'N/A')")
-        print("=" * 40)
+        logger.info(f"Total Return: {self.total_return:.2%}")
+        logger.info(f"Max Drawdown: {self.max_drawdown:.2%}")
+        logger.info(
+            f"Win Rate: {self.profitable_trades}/{self.total_trades} "
+            f"({self.profitable_trades/self.total_trades:.2%} if self.total_trades > 0 else 'N/A')"
+        )
+        logger.info("=" * 40)
         
 
 class DQNAgent:
