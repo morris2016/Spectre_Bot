@@ -46,50 +46,35 @@ The QuantumSpectre Elite Trading System is built with a modular, microservice-ba
    cd quantum-spectre
    ```
 
-2. Install backend dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
-   This installs all required Python packages, including `nltk>=3.8.1` for natural language processing.
-
-3. Create the Codex environment (includes RAPIDS libraries):
+2. Run the environment setup script:
    ```bash
-   bash scripts/codex_setup.sh
+   bash scripts/setup_environment.sh
    ```
-   *On Ubuntu 24.04 with CUDA support you can instead run:* 
-   ```bash
-   bash scripts/codex_cuda_setup.sh
-   ```
+   This installs system packages, creates the RAPIDS-enabled conda environment, installs Python requirements, downloads NLTK data, and installs the UI dependencies.
 
-4. Install ui dependencies:
-   ```
-   cd ui
-   npm install
-   ```
-
-5. Create configuration:
+3. Create configuration:
    ```
    cp .env.example .env
    # Edit .env with your configuration
    ```
 
-6. Initialize database:
+4. Initialize database:
    ```
    python -m scripts.init_db
    ```
 
-7. Start the system:
+5. Start the system:
    ```
    python main.py
    ```
 
-8. In a separate terminal, start the ui:
+6. In a separate terminal, start the ui:
    ```
    cd ui
    npm start
    ```
 
-9. Access the dashboard at http://localhost:8000
+7. Access the dashboard at http://localhost:8000
 
 ## Usage
 
