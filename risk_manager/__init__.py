@@ -6,6 +6,8 @@ from .take_profit import BaseTakeProfitStrategy, get_take_profit_strategy
 from .exposure import BaseExposureManager, get_exposure_manager
 from .circuit_breaker import BaseCircuitBreaker, get_circuit_breaker
 from .drawdown_protection import BaseDrawdownProtector, get_drawdown_protector
+from .correlation_risk import BaseCorrelationRiskManager
+from .recovery import BaseRecoveryManager
 
 #!/usr/bin/env python3
 """
@@ -36,6 +38,8 @@ take_profit_strategies = ClassRegistry()
 exposure_managers = ClassRegistry()
 circuit_breakers = ClassRegistry()
 drawdown_protectors = ClassRegistry()
+correlation_managers = ClassRegistry()
+recovery_managers = ClassRegistry()
 
 # Version info
 __version__ = '1.0.0'
@@ -55,6 +59,8 @@ def register_all_components() -> None:
         'risk_manager.exposure',
         'risk_manager.circuit_breaker',
         'risk_manager.drawdown_protection',
+        'risk_manager.correlation_risk',
+        'risk_manager.recovery',
     ]
     
     # Component base classes to compare against for registration
@@ -64,6 +70,8 @@ def register_all_components() -> None:
     from risk_manager.exposure import BaseExposureManager
     from risk_manager.circuit_breaker import BaseCircuitBreaker
     from risk_manager.drawdown_protection import BaseDrawdownProtector
+    from risk_manager.correlation_risk import BaseCorrelationRiskManager
+    from risk_manager.recovery import BaseRecoveryManager
     
     # Registration mapping
     registry_map = {
@@ -72,7 +80,9 @@ def register_all_components() -> None:
         BaseTakeProfitStrategy: take_profit_strategies,
         BaseExposureManager: exposure_managers,
         BaseCircuitBreaker: circuit_breakers,
-        BaseDrawdownProtector: drawdown_protectors
+        BaseDrawdownProtector: drawdown_protectors,
+        BaseCorrelationRiskManager: correlation_managers,
+        BaseRecoveryManager: recovery_managers
     }
     
     # Scan and register all components
@@ -114,8 +124,27 @@ def initialize() -> None:
     logger.debug(f"Registered exposure managers: {[cls.__name__ for cls in exposure_managers.get_all()]}")
     logger.debug(f"Registered circuit breakers: {[cls.__name__ for cls in circuit_breakers.get_all()]}")
     logger.debug(f"Registered drawdown protectors: {[cls.__name__ for cls in drawdown_protectors.get_all()]}")
+    logger.debug(f"Registered correlation managers: {[cls.__name__ for cls in correlation_managers.get_all()]}")
+    logger.debug(f"Registered recovery managers: {[cls.__name__ for cls in recovery_managers.get_all()]}")
 
 # Auto-initialize the module when imported
 initialize()
-__all__ = ["position_sizers", "stop_loss_strategies", "take_profit_strategies", "exposure_managers", "circuit_breakers", "drawdown_protectors", "BasePositionSizer", "BaseStopLossStrategy", "BaseTakeProfitStrategy", "BaseExposureManager", "BaseCircuitBreaker", "BaseDrawdownProtector"]
+__all__ = [
+    "position_sizers",
+    "stop_loss_strategies",
+    "take_profit_strategies",
+    "exposure_managers",
+    "circuit_breakers",
+    "drawdown_protectors",
+    "correlation_managers",
+    "recovery_managers",
+    "BasePositionSizer",
+    "BaseStopLossStrategy",
+    "BaseTakeProfitStrategy",
+    "BaseExposureManager",
+    "BaseCircuitBreaker",
+    "BaseDrawdownProtector",
+    "BaseCorrelationRiskManager",
+    "BaseRecoveryManager",
+]
 
