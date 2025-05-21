@@ -681,4 +681,7 @@ async def publish_event(event_type: str, data: Dict[str, Any]) -> None:
         if event_type in monitored_events:
             monitored_events[event_type] += 1
         else:
-            monitored_events[event_type]
+            monitored_events[event_type] = 1
+
+    except Exception as e:
+        logger.error(f"Error publishing event: {str(e)}")
