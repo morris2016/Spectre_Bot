@@ -12,8 +12,6 @@ maintaining risk management discipline.
 
 from typing import Dict, List, Optional, Any, Type
 from datetime import datetime
-
-from common.utils import calculate_sharpe_ratio, calculate_sortino_ratio
 from common.db_client import DatabaseClient
 from common.redis_client import RedisClient
 from common.constants import RECOVERY_STRATEGIES, ACCOUNT_STATES
