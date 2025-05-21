@@ -8,6 +8,7 @@ This module provides async utility functions for the QuantumSpectre Elite Tradin
 
 import asyncio
 import functools
+from contextlib import asynccontextmanager
 import logging
 import time
 from typing import Any, List, Callable, Coroutine, Optional, TypeVar, Set
@@ -442,7 +443,7 @@ async def periodic_task(
             # Still sleep before the next attempt
             await asyncio.sleep(interval)
 
-    from contextlib import asynccontextmanager
+@asynccontextmanager
 async def create_task_group():
     tasks = []
     try:

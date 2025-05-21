@@ -8,14 +8,18 @@ __version__ = '1.0.0'
 
 from .logger import get_logger, setup_logging
 from .utils import (
-    generate_uuid, 
-    timestamp_ms, 
-    format_currency, 
-    retry, 
-    rate_limit, 
-    timer, 
+    generate_uuid,
+    timestamp_ms,
+    format_currency,
+    retry,
+    rate_limit,
+    timer,
     chunks,
-    parse_timeframe
+    parse_timeframe,
+    ClassRegistry,
+    AsyncService,
+    Signal,
+    SignalBus
 )
 from .constants import (
     TIME_FRAMES, 
@@ -82,5 +86,9 @@ __all__ = [
     # Async utilities
     'gather_with_concurrency',
     'cancel_tasks',
-    'create_task_group'
+    'create_task_group',
+    'ClassRegistry',
+    'AsyncService',
+    'Signal',
+    'SignalBus'
 ]

@@ -10,6 +10,12 @@ exceeded, protecting capital during periods of high volatility or when
 unusual market behaviors are detected.
 """
 
+class BaseCircuitBreaker:
+    """Base class for circuit breaker implementations."""
+
+    async def check(self, *args, **kwargs) -> bool:
+        raise NotImplementedError
+
 import time
 import logging
 import numpy as np
@@ -1127,3 +1133,4 @@ class CircuitBreaker:
         logger.info(f"Registered custom circuit breaker: {cb_id} - {name}")
         
         return cb_id
+__all__ = ["BaseCircuitBreaker"]

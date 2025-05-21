@@ -9,6 +9,12 @@ position sizes based on confidence levels, account growth, market volatility,
 expected value, and risk profile.
 """
 
+class BasePositionSizer:
+    """Base class for position sizing strategies."""
+
+    def size_position(self, *args, **kwargs):
+        raise NotImplementedError
+
 import numpy as np
 import pandas as pd
 from typing import Dict, List, Tuple, Optional, Union, Any
@@ -1169,3 +1175,4 @@ class PositionSizing:
             logger.error(f"Error calculating position size distribution: {str(e)}", exc_info=True)
             raise PositionSizingError(f"Failed to calculate position size distribution: {str(e)}")
 
+__all__ = ["BasePositionSizer"]

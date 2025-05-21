@@ -17,7 +17,7 @@ VERSION = "1.0.0"
 CONFIG_SCHEMA_VERSION = 1
 SYSTEM_NAME = "QuantumSpectre Elite Trading System"
 AUTHOR = "QuantumSpectre Team"
-LICENSE = "Proprietary"
+LICENSE = "MIT"
 # Supported trading platforms
 SUPPORTED_PLATFORMS = ["deriv", "binance"]
 

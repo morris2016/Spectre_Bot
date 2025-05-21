@@ -9,6 +9,12 @@ This module provides sophisticated take profit management for the trading system
 including dynamic take profit levels, partial profit taking, and trailing profit mechanisms.
 """
 
+class BaseTakeProfitStrategy:
+    """Base class for take profit strategies."""
+
+    def calculate_target(self, *args, **kwargs):
+        raise NotImplementedError
+
 import logging
 import numpy as np
 from typing import Dict, List, Optional, Tuple, Union, Any
@@ -448,3 +454,4 @@ class TakeProfitManager:
             "highest_level": max([level["level"] for level in levels]) if levels else 0
         }
 
+__all__ = ["BaseTakeProfitStrategy"]

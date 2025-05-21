@@ -11,6 +11,12 @@ parameters, position sizes, and risk levels based on drawdown metrics to
 ensure account recovery and prevent catastrophic losses.
 """
 
+class BaseDrawdownProtector:
+    """Base class for drawdown protection strategies."""
+
+    async def apply_protection(self, *args, **kwargs) -> None:
+        raise NotImplementedError
+
 import time
 import logging
 import numpy as np
@@ -911,3 +917,4 @@ class DrawdownProtection:
         }
         
         return report
+__all__ = ["BaseDrawdownProtector"]
