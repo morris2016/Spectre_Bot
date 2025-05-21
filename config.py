@@ -16,6 +16,7 @@ import logging
 import pkgutil
 import importlib
 import traceback
+import copy
 from typing import Dict, List, Any, Optional, Union, Callable, ClassVar
 from pathlib import Path
 from dataclasses import dataclass
@@ -454,7 +455,7 @@ class Config:
         Args:
             data: Configuration data dictionary
         """
-        self.data = data or DEFAULT_CONFIG.copy()
+        self.data = copy.deepcopy(DEFAULT_CONFIG) if data is None else copy.deepcopy(data)
         self._environment_override()
     
     def __getattr__(self, name: str) -> Any:
