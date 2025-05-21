@@ -3155,53 +3155,79 @@ class ClassRegistry:
 
 
 class AsyncService:
-    """Minimal async service interface."""
+    """Minimal async service base class used by services throughout the system."""
+
+    def __init__(
+        self,
+        name: str = "",
+        config: Optional[Any] = None,
+        signal_bus: Optional["SignalBus"] = None,
+    ) -> None:
+        self.name = name
+        self.config = config or {}
+        self.signal_bus = signal_bus or SignalBus()
 
     async def start(self) -> None:
-        """Start the service."""
+        """Start the service.  Subclasses should override."""
         return None
 
     async def stop(self) -> None:
-        """Stop the service."""
+        """Stop the service.  Subclasses should override."""
         return None
 
 
-class Signal:
-    """Lightweight event signal for pub/sub communication."""
+class Signal(str, enum.Enum):
+    """Enumeration of basic system-wide events for the signal bus."""
 
-    def __init__(self) -> None:
-        self._subscribers: List[Callable] = []
-
-    def subscribe(self, callback: Callable) -> None:
-        """Register a callback to be invoked when the signal is emitted."""
-        self._subscribers.append(callback)
-
-    # ``connect`` is kept for backwards compatibility
-    connect = subscribe
-
-    async def emit(self, *args: Any, **kwargs: Any) -> None:
-        """Emit the signal to all registered callbacks."""
-        for cb in list(self._subscribers):
-            if asyncio.iscoroutinefunction(cb):
-                await cb(*args, **kwargs)
-            else:
-                cb(*args, **kwargs)
+    ACCOUNT_BALANCE_UPDATED = "account_balance_updated"
+    MARKET_DATA_UPDATED = "market_data_updated"
+    TRADE_EXECUTED = "trade_executed"
+    TRADE_CLOSED = "trade_closed"
+    POSITION_SIZE_REQUESTED = "position_size_requested"
+    POSITION_SIZE_RESPONSE = "position_size_response"
+    STOP_LOSS_REQUESTED = "stop_loss_requested"
+    STOP_LOSS_RESPONSE = "stop_loss_response"
+    TAKE_PROFIT_REQUESTED = "take_profit_requested"
+    TAKE_PROFIT_RESPONSE = "take_profit_response"
+    RISK_ASSESSMENT_REQUESTED = "risk_assessment_requested"
+    RISK_ASSESSMENT_RESPONSE = "risk_assessment_response"
+    MARKET_REGIME_CHANGED = "market_regime_changed"
+    VOLATILITY_SPIKE_DETECTED = "volatility_spike_detected"
+    CIRCUIT_BREAKER_ACTIVATED = "circuit_breaker_activated"
+    CIRCUIT_BREAKER_DEACTIVATED = "circuit_breaker_deactivated"
+    RISK_LEVEL_CHANGED = "risk_level_changed"
+    DRAWDOWN_PROTECTION_ACTIVATED = "drawdown_protection_activated"
+    ADJUST_STOP_LOSS = "adjust_stop_loss"
+    SERVICE_STARTED = "service_started"
+    SERVICE_STOPPED = "service_stopped"
 
 
 class SignalBus:
-    """Central registry of signals."""
+    """Simple synchronous signal bus for decoupled communication."""
 
     def __init__(self) -> None:
-        self._signals: Dict[str, Signal] = {}
+        self._subscribers: Dict[Signal, List[Callable]] = {}
 
-    def get_signal(self, name: str) -> Signal:
-        """Retrieve or create a named :class:`Signal`."""
-        if name not in self._signals:
-            self._signals[name] = Signal()
-        return self._signals[name]
+    def register(self, signal: Signal, callback: Callable) -> None:
+        """Register a callback for the given signal."""
+        self._subscribers.setdefault(signal, []).append(callback)
+
+    def emit(self, signal: Signal, *args: Any, **kwargs: Any) -> None:
+        """Invoke callbacks registered for the given signal."""
+        for cb in list(self._subscribers.get(signal, [])):
+            if asyncio.iscoroutinefunction(cb):
+                asyncio.create_task(cb(*args, **kwargs))
+            else:
+                cb(*args, **kwargs)
+
+    # ``get_signal`` for backward compatibility with previous API
+    def get_signal(self, name: str) -> "Signal":
+        return Signal(name)
 
     # ``get`` is kept for backwards compatibility
     get = get_signal
+
+
 
 # Additional utility functions needed by intelligence modules
 
