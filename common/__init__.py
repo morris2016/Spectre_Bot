@@ -25,8 +25,8 @@ from .constants import (
     TIME_FRAMES, 
     EXCHANGE_TYPES, 
     ORDER_TYPES, 
-    ORDER_SIDES, 
-    POSITION_STATUS
+    ORDER_SIDES,
+    ORDER_STATUSES
 )
 from .exceptions import (
     QuantumSpectreError,
@@ -63,7 +63,7 @@ __all__ = [
     'EXCHANGE_TYPES',
     'ORDER_TYPES',
     'ORDER_SIDES',
-    'POSITION_STATUS',
+    'ORDER_STATUSES',
     
     # Exceptions
     'QuantumSpectreError',

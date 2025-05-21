@@ -271,7 +271,7 @@ class OrderStatus(enum.Enum):
     PENDING_CANCEL = "pending_cancel"
     REJECTED = "rejected"
     EXPIRED = "expired"
-POSITION_STATUS = [ps.value for ps in OrderStatus]
+ORDER_STATUSES = [ps.value for ps in OrderStatus]
 
 # Trigger types for stop and take profit orders
 class TriggerType(enum.Enum):
@@ -852,7 +852,7 @@ __all__ = [
     'Exchange', 'AssetClass', 'Timeframe', 'OrderType', 'OrderSide',
     'PositionType', 'OrderStatus', 'TriggerType', 'TimeInForce',
     'SignalDirection', 'SignalStrength', 'MarketRegime', 'StrategyType',
-    'RiskLevel', 'FeeType','EXCHANGE_TYPES', 'TIME_FRAMES','ORDER_TYPES', 'ORDER_SIDES', 'POSITION_STATUS',
+    'RiskLevel', 'FeeType','EXCHANGE_TYPES', 'TIME_FRAMES','ORDER_TYPES', 'ORDER_SIDES', 'ORDER_STATUSES',
     
     # Feature and pattern enums
     'IndicatorCategory', 'CandlestickPattern', 'ChartPattern', 'HarmonicPattern',
