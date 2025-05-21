@@ -1632,6 +1632,75 @@ class InteractiveReport:
                     {
                         'direction': 'Long',
                         'win_rate': (len(long_trades[long_trades['profit_pct'] > 0]) / len(long_trades) * 100) if len(long_trades) > 0 else 0,
-                        'avg_profit': long_trades['profit_pct'].mean() if not long
-    
-    
+                        'avg_profit': float(long_trades['profit_pct'].mean()) if not long_trades.empty else 0.0,
+                    },
+                    {
+                        'direction': 'Short',
+                        'win_rate': (len(short_trades[short_trades['profit_pct'] > 0]) / len(short_trades) * 100) if len(short_trades) > 0 else 0,
+                        'avg_profit': float(short_trades['profit_pct'].mean()) if not short_trades.empty else 0.0,
+                    }
+                ]
+                dir_df = pd.DataFrame(direction_data)
+
+                fig.add_trace(
+                    go.Bar(
+                        x=dir_df['direction'],
+                        y=dir_df['avg_profit'],
+                        name='Avg Profit (%)',
+                        marker_color=[self.colors['profit'], self.colors['loss']]
+                    ),
+                    row=1, col=2
+                )
+
+                fig.add_trace(
+                    go.Bar(
+                        x=dir_df['direction'],
+                        y=dir_df['win_rate'],
+                        name='Win Rate (%)',
+                        marker_color=self.colors['equity'],
+                        opacity=0.6
+                    ),
+                    row=1, col=2
+                )
+
+            # 3. Bottom Left: Cumulative Performance
+            trades_df = trades_df.sort_values('entry_time')
+            trades_df['cum_profit'] = trades_df['profit_pct'].cumsum()
+            fig.add_trace(
+                go.Scatter(
+                    x=trades_df['entry_time'],
+                    y=trades_df['cum_profit'],
+                    mode='lines',
+                    name='Cumulative P/L',
+                    line=dict(color=self.colors['equity'], width=2)
+                ),
+                row=2, col=1
+            )
+
+            # 4. Bottom Right: Win/Loss Ratio
+            win_count = len(winning_trades)
+            loss_count = len(losing_trades)
+            fig.add_trace(
+                go.Pie(
+                    labels=['Wins', 'Losses'],
+                    values=[win_count, loss_count],
+                    marker_colors=[self.colors['profit'], self.colors['loss']],
+                    hole=0.4,
+                    showlegend=False
+                ),
+                row=2, col=2
+            )
+
+            fig.update_layout(
+                title='Trade Analysis',
+                template='plotly_dark',
+                height=800,
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(30,30,30,1)',
+                margin=dict(l=10, r=10, t=50, b=10)
+            )
+
+            return fig.to_html(full_html=False, include_plotlyjs=False)
+        except Exception as e:
+            logger.error(f"Error generating interactive trade analysis: {e}")
+            return f"Error generating trade analysis: {e}"
