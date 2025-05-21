@@ -1462,9 +1462,7 @@ class InteractiveReport:
         """Generate interactive equity curve visualization using Plotly."""
         try:
             if equity_curve.empty:
-                return "
-No equity curve data available
-"
+                return "No equity curve data available"
 
             # Create a subplot with 2 rows (equity and drawdown)
             fig = make_subplots(rows=2, cols=1, shared_xaxes=True, 
@@ -1537,17 +1535,13 @@ No equity curve data available
             
         except Exception as e:
             logger.error(f"Error generating interactive equity curve: {e}")
-            return f"
-Error generating equity curve: {e}
-"
+            return f"Error generating equity curve: {e}"
     
     def _generate_interactive_drawdown_chart(self, equity_curve: pd.DataFrame) -> str:
         """Generate interactive drawdown chart using Plotly."""
         try:
             if equity_curve.empty or 'drawdown_pct' not in equity_curve.columns:
-                return "
-No drawdown data available
-"
+                return "No drawdown data available"
 
             # Create figure
             fig = go.Figure()
@@ -1582,17 +1576,13 @@ No drawdown data available
             
         except Exception as e:
             logger.error(f"Error generating interactive drawdown chart: {e}")
-            return f"
-Error generating drawdown chart: {e}
-"
+            return f"Error generating drawdown chart: {e}"
     
     def _generate_interactive_trade_analysis(self, trades_df: pd.DataFrame) -> str:
         """Generate interactive trade analysis charts using Plotly."""
         try:
             if trades_df.empty:
-                return "
-No trades data available
-"
+                return "No trades data available"
 
             # Create a subplot with 2x2 layout
             fig = make_subplots(
