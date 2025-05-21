@@ -1586,7 +1586,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     if args.test:
-        print("Testing ensemble models module")
+        logger.info("Testing ensemble models module")
         
         # Example: Create a trend direction ensemble
         trend_ensemble = AdvancedEnsembleFactory.create_trend_direction_ensemble(
@@ -1595,8 +1595,8 @@ if __name__ == "__main__":
             dynamic_weighting=True
         )
         
-        print(f"Created trend direction ensemble for {args.asset} on {args.timeframe}")
-        print(f"Model info: {trend_ensemble.get_model_info()}")
+        logger.info(f"Created trend direction ensemble for {args.asset} on {args.timeframe}")
+        logger.info(f"Model info: {trend_ensemble.get_model_info()}")
         
         # Example: Create an entry/exit point ensemble
         entry_ensemble = AdvancedEnsembleFactory.create_entry_exit_ensemble(
@@ -1605,8 +1605,8 @@ if __name__ == "__main__":
             entry_type="long"
         )
         
-        print(f"Created entry/exit ensemble for {args.asset} on {args.timeframe}")
-        print(f"Model info: {entry_ensemble.get_model_info()}")
-        
-        print("Ensemble models module tests completed successfully")
+        logger.info(f"Created entry/exit ensemble for {args.asset} on {args.timeframe}")
+        logger.info(f"Model info: {entry_ensemble.get_model_info()}")
+
+        logger.info("Ensemble models module tests completed successfully")
 
