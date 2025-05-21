@@ -1,5 +1,8 @@
 from setuptools import setup, find_packages
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Function to read requirements from requirements.txt
 def parse_requirements(filename="requirements.txt"):
@@ -8,7 +11,7 @@ def parse_requirements(filename="requirements.txt"):
         with open(os.path.join(os.path.dirname(__file__), filename), 'r') as f:
             return [line.strip() for line in f if line.strip() and not line.startswith("#")]
     except FileNotFoundError:
-        print(f"Warning: {filename} not found. Proceeding without defined requirements.")
+        logger.warning(f"Warning: {filename} not found. Proceeding without defined requirements.")
         return []
 
 setup(
