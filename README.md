@@ -46,35 +46,41 @@ The QuantumSpectre Elite Trading System is built with a modular, microservice-ba
    cd quantum-spectre
    ```
 
-2. Run the environment setup script:
+2. Install the core Python dependencies:
+   ```bash
+   pip install -r requirements-core.txt
+   ```
+   Optional packages can be added later with `pip install -r requirements.txt`.
+
+3. Run the environment setup script:
    ```bash
    bash scripts/setup_environment.sh
    ```
-   This installs system packages, creates the RAPIDS-enabled conda environment, installs Python requirements, downloads NLTK data, and installs the UI dependencies.
+   This installs system packages, creates the RAPIDS-enabled conda environment, installs optional Python requirements from `requirements.txt`, downloads NLTK data, and installs the UI dependencies.
 
-3. Create configuration:
+4. Create configuration:
    ```
    cp .env.example .env
    # Edit .env with your configuration
    ```
 
-4. Initialize database:
+5. Initialize database:
    ```
    python -m scripts.init_db
    ```
 
-5. Start the system:
+6. Start the system:
    ```
    python main.py
    ```
 
-6. In a separate terminal, start the ui:
+7. In a separate terminal, start the ui:
    ```
    cd ui
    npm start
    ```
 
-7. Access the dashboard at http://localhost:8000
+8. Access the dashboard at http://localhost:8000
 
 ## Usage
 
