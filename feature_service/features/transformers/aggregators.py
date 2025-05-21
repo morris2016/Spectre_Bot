@@ -1120,7 +1120,7 @@ if __name__ == "__main__":
     )
     kama = aggregator.kaufman_adaptive_moving_average(data, period=20)
     
-    print(f"Hull MA first 5 values: {hull_ma.head()}")
-    print(f"VWAP first 5 values: {vwap.head()}")
-    print(f"KAMA first 5 values: {kama.head()}")
+    logger.info("Hull MA first 5 values: %s", hull_ma.head())
+    logger.info("VWAP first 5 values: %s", vwap.head())
+    logger.info("KAMA first 5 values: %s", kama.head())
 

@@ -12,7 +12,7 @@ import pandas as pd
 import talib
 from numba import jit, cuda
 from typing import Dict, List, Union, Tuple, Optional, Any
-import logging
+from common.logger import get_logger
 from concurrent.futures import ThreadPoolExecutor
 import warnings
 
@@ -21,7 +21,7 @@ from common.exceptions import FeatureCalculationError
 from common.constants import TECHNICAL_INDICATOR_PARAMS
 from feature_service.features.base_feature import BaseFeature
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class TechnicalFeatures(BaseFeature):
@@ -892,5 +892,5 @@ if __name__ == "__main__":
     # Calculate technical features
     tech_features = calculate_technical_features(data)
     
-    # Print first few rows with key indicators
-    print(tech_features.iloc[-5:][['sma_20', 'ema_20', 'rsi', 'macd', 'bb_upper', 'bb_lower']])
+    # Log first few rows with key indicators for debugging
+    logger.info(tech_features.iloc[-5:][['sma_20', 'ema_20', 'rsi', 'macd', 'bb_upper', 'bb_lower']])
