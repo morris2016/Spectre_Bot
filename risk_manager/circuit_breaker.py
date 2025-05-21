@@ -10,8 +10,18 @@ exceeded, protecting capital during periods of high volatility or when
 unusual market behaviors are detected.
 """
 
+from typing import Dict, List, Optional, Tuple, Any, Union, Set, Type
+
+
 class BaseCircuitBreaker:
     """Base class for circuit breaker implementations."""
+
+    registry: Dict[str, Type["BaseCircuitBreaker"]] = {}
+
+    def __init_subclass__(cls, name: Optional[str] = None, **kwargs) -> None:
+        super().__init_subclass__(**kwargs)
+        key = name or cls.__name__
+        BaseCircuitBreaker.registry[key] = cls
 
     async def check(self, *args, **kwargs) -> bool:
         raise NotImplementedError
@@ -19,7 +29,6 @@ class BaseCircuitBreaker:
 import time
 import logging
 import numpy as np
-from typing import Dict, List, Optional, Tuple, Any, Union, Set
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 import asyncio
@@ -95,7 +104,7 @@ class CircuitBreakerStatus:
     additional_info: Dict[str, Any] = None
 
 
-class CircuitBreaker:
+class CircuitBreaker(BaseCircuitBreaker):
     """
     Advanced circuit breaker implementation for protecting trading operations
     during extreme market conditions or system anomalies.
@@ -1131,6 +1140,15 @@ class CircuitBreaker:
         
         cb_id = self.register_circuit_breaker(config)
         logger.info(f"Registered custom circuit breaker: {cb_id} - {name}")
-        
+
         return cb_id
-__all__ = ["BaseCircuitBreaker"]
+
+
+def get_circuit_breaker(name: str, *args, **kwargs) -> BaseCircuitBreaker:
+    """Instantiate a registered circuit breaker by name."""
+    cls = BaseCircuitBreaker.registry.get(name)
+    if cls is None:
+        raise ValueError(f"Unknown circuit breaker: {name}")
+    return cls(*args, **kwargs)
+
+__all__ = ["BaseCircuitBreaker", "get_circuit_breaker"]

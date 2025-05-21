@@ -9,15 +9,24 @@ position sizes based on confidence levels, account growth, market volatility,
 expected value, and risk profile.
 """
 
+from typing import Dict, List, Tuple, Optional, Union, Any, Type
+
+
 class BasePositionSizer:
     """Base class for position sizing strategies."""
+
+    registry: Dict[str, Type["BasePositionSizer"]] = {}
+
+    def __init_subclass__(cls, name: Optional[str] = None, **kwargs) -> None:
+        super().__init_subclass__(**kwargs)
+        key = name or cls.__name__
+        BasePositionSizer.registry[key] = cls
 
     def size_position(self, *args, **kwargs):
         raise NotImplementedError
 
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Tuple, Optional, Union, Any
 import logging
 from datetime import datetime
 import asyncio
@@ -46,7 +55,7 @@ from data_storage.models.system_data import SystemConfig
 logger = get_logger("risk_manager.position_sizing")
 
 
-class PositionSizing:
+class PositionSizing(BasePositionSizer):
     """
     Advanced position sizing system with multiple algorithms and risk controls.
     Dynamically adapts position sizes based on strategy performance, market conditions,
@@ -1175,4 +1184,12 @@ class PositionSizing:
             logger.error(f"Error calculating position size distribution: {str(e)}", exc_info=True)
             raise PositionSizingError(f"Failed to calculate position size distribution: {str(e)}")
 
-__all__ = ["BasePositionSizer"]
+
+def get_position_sizer(name: str, *args, **kwargs) -> BasePositionSizer:
+    """Instantiate a registered position sizer by name."""
+    cls = BasePositionSizer.registry.get(name)
+    if cls is None:
+        raise ValueError(f"Unknown position sizer: {name}")
+    return cls(*args, **kwargs)
+
+__all__ = ["BasePositionSizer", "get_position_sizer"]
