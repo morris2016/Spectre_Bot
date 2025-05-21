@@ -2007,13 +2007,29 @@ class Dashboard:
                         "confidence": metrics.get("confidence", 0)
                     })
             
+
             # Sort by win rate and take top 5
             top_brains_by_win_rate = sorted(
-                brains, key=lambda x: x["win_rate"],
-    
-        window.__genspark_remove_badge_link = "https://www.genspark.ai/api/html_badge/" +
-            "remove_badge?token=To%2FBnjzloZ3UfQdcSaYfDuK8LJuAzp%2Bq4ssc0Zi4oU7Z2nrm%2FN8IWoKLvzcJoEaeGhP6arTmVYeZV1TnHWqIdGAnF7A4PrDxetJNTRQvOlPfk%2Fejxh5GJRlKJkK%2BER8REfrz0mI4BIDDG8loMyBb83DbSIf2LoZxq2a%2Ba9MEHjzeKqrc5UKxQuH7cAw83m9XQdzCrs6MkDiF9cZq%2BAtHNHwV2AUJ5dGmqcsm60khzrfQN5aHJzS0GeWRi%2FKVmSEJNI%2FB9en0iBj8dw3xruqtqffRCai8Yel8VURMeCJQOglggddA0P3DUIcTPE%2FBpbQOscn%2BrWrFVG7hRtRA0dS6dsrnlcWd7wfFT%2F39maAbtfaijHeHJEbAoP4L9quhwUz8RwLyxdAD8RqYeqEfEpPFH1nr%2FkwM%2BfsTD%2B0drgKSMQi0Ta4k%2Fl7uoGZWa8jKw%2BNW1CCbFQA56Ac%2F%2BI2tqlGhe7VuaRJh2uMVv15%2FKenjt%2BXLejKCmN3ULUmrWdDUmdtQblNzv0ByYOJWRZ9lfjc2kpSickPle5Y%2BnWtirAV3oTU%3D";
-        window.__genspark_locale = "en-US";
-        window.__genspark_token = "To/BnjzloZ3UfQdcSaYfDuK8LJuAzp+q4ssc0Zi4oU7Z2nrm/N8IWoKLvzcJoEaeGhP6arTmVYeZV1TnHWqIdGAnF7A4PrDxetJNTRQvOlPfk/ejxh5GJRlKJkK+ER8REfrz0mI4BIDDG8loMyBb83DbSIf2LoZxq2a+a9MEHjzeKqrc5UKxQuH7cAw83m9XQdzCrs6MkDiF9cZq+AtHNHwV2AUJ5dGmqcsm60khzrfQN5aHJzS0GeWRi/KVmSEJNI/B9en0iBj8dw3xruqtqffRCai8Yel8VURMeCJQOglggddA0P3DUIcTPE/BpbQOscn+rWrFVG7hRtRA0dS6dsrnlcWd7wfFT/39maAbtfaijHeHJEbAoP4L9quhwUz8RwLyxdAD8RqYeqEfEpPFH1nr/kwM+fsTD+0drgKSMQi0Ta4k/l7uoGZWa8jKw+NW1CCbFQA56Ac/+I2tqlGhe7VuaRJh2uMVv15/Kenjt+XLejKCmN3ULUmrWdDUmdtQblNzv0ByYOJWRZ9lfjc2kpSickPle5Y+nWtirAV3oTU=";
+                brains, key=lambda x: x["win_rate"], reverse=True
+            )[:5]
+
+            # Sort by profit and take top 5
+            top_brains_by_profit = sorted(
+                brains, key=lambda x: x["profit"], reverse=True
+            )[:5]
+
+            report["top_brains"] = {
+                "by_win_rate": top_brains_by_win_rate,
+                "by_profit": top_brains_by_profit,
+            }
+
+            logger.info("Successfully assembled trading performance report")
+            return report
+
+        except Exception as e:
+            logger.error(f"Error getting trading performance report: {str(e)}")
+            raise DashboardError(
+                f"Failed to get trading performance report: {str(e)}"
+            )
     
     
