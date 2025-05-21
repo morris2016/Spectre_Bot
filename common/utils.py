@@ -105,7 +105,7 @@ def import_submodules(package_name):
         try:
             results[name] = importlib.import_module(name)
         except Exception as e:
-            print(f"Failed to import module {name}: {e}")
+            logger.exception(f"Failed to import module {name}: {e}")
     return results
 
 #======================================
