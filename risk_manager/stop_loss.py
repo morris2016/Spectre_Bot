@@ -8,6 +8,12 @@ for optimal trade risk management. Includes volatility-based, technical,
 and adaptive stop loss calculation and management.
 """
 
+class BaseStopLossStrategy:
+    """Base class for stop loss strategies."""
+
+    def calculate_stop(self, *args, **kwargs):
+        raise NotImplementedError
+
 import numpy as np
 import pandas as pd
 from typing import Dict, List, Tuple, Optional, Union, Any
@@ -1943,3 +1949,4 @@ class StopLossManager:
             logger.error(f"Error calculating take profit levels: {str(e)}", exc_info=True)
             raise CalculationError(f"Failed to calculate take profit levels: {str(e)}")
     
+__all__ = ["BaseStopLossStrategy"]

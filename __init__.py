@@ -16,7 +16,7 @@ from pathlib import Path
 # Version information
 __version__ = "1.0.0"
 __author__ = "QuantumSpectre Team"
-__license__ = "Proprietary"
+__license__ = "MIT"
 
 # Module registry for automatic component discovery and management
 _registry = {

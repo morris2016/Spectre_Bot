@@ -10,6 +10,12 @@ including monitoring and controlling risk across different assets, platforms,
 and account sizes.
 """
 
+class BaseExposureManager:
+    """Base class for exposure management."""
+
+    async def adjust_exposure(self, *args, **kwargs):
+        raise NotImplementedError
+
 import logging
 import asyncio
 import numpy as np
@@ -668,3 +674,4 @@ class ExposureManager:
             }
         }
 
+__all__ = ["BaseExposureManager"]

@@ -3126,6 +3126,67 @@ class ThreadSafeDict:
         with self._lock:
             return self._dict.copy()
 
+
+class ClassRegistry:
+    """Simple registry for dynamically loaded classes."""
+
+    def __init__(self) -> None:
+        self._classes: Dict[str, type] = {}
+
+    def register(self, cls: type, name: Optional[str] = None) -> None:
+        """Register a class under a given name."""
+        key = name or cls.__name__
+        self._classes[key] = cls
+
+    def get(self, name: str) -> Optional[type]:
+        """Retrieve a registered class by name."""
+        return self._classes.get(name)
+
+    def list(self) -> List[str]:
+        """List all registered class names."""
+        return list(self._classes.keys())
+
+
+class AsyncService:
+    """Minimal async service interface."""
+
+    async def start(self) -> None:
+        """Start the service."""
+        return None
+
+    async def stop(self) -> None:
+        """Stop the service."""
+        return None
+
+
+class Signal:
+    """Lightweight event signal."""
+
+    def __init__(self) -> None:
+        self._subscribers: List[Callable] = []
+
+    def connect(self, callback: Callable) -> None:
+        self._subscribers.append(callback)
+
+    async def emit(self, *args: Any, **kwargs: Any) -> None:
+        for cb in list(self._subscribers):
+            if asyncio.iscoroutinefunction(cb):
+                await cb(*args, **kwargs)
+            else:
+                cb(*args, **kwargs)
+
+
+class SignalBus:
+    """Central registry of signals."""
+
+    def __init__(self) -> None:
+        self._signals: Dict[str, Signal] = {}
+
+    def get(self, name: str) -> Signal:
+        if name not in self._signals:
+            self._signals[name] = Signal()
+        return self._signals[name]
+
 # Additional utility functions needed by intelligence modules
 
 def create_event_loop(debug=False, thread_name_prefix="", max_tasks=None):
@@ -4028,6 +4089,7 @@ __all__ = [
     'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',
     'calculate_distance', 'calculate_distance_percentage', 'memoize',
     'is_higher_timeframe', 'threaded_calculation', 'create_batches', 'UuidUtils', 'HashUtils', 'SecurityUtils',
+    'ClassRegistry', 'AsyncService', 'Signal', 'SignalBus'
 ]
 
 class SecurityUtils:
