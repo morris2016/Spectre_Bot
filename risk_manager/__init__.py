@@ -17,7 +17,7 @@ import pkgutil
 from typing import Dict, List, Any, Optional, Set, Type
 
 from common.logger import get_logger
-from common.utils import ClassRegistry
+from common import ClassRegistry
 
 # Initialize module logger
 logger = get_logger(__name__)
