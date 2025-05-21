@@ -10,14 +10,10 @@ losses. It provides sophisticated mechanisms to recover from losing periods whil
 maintaining risk management discipline.
 """
 
-import numpy as np
-import pandas as pd
-from typing import Dict, List, Optional, Tuple, Union, Any, Type
-import asyncio
-import logging
-from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Any, Type
+from datetime import datetime
 
-from common.utils import calculate_sharpe_ratio, calculate_sortino_ratio
+
 from common.db_client import DatabaseClient
 from common.redis_client import RedisClient
 from common.constants import RECOVERY_STRATEGIES, ACCOUNT_STATES
