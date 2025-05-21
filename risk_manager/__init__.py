@@ -1,4 +1,3 @@
-codex/define-base-classes-and-factory-functions-in-risk_manager
 """Risk management package utilities."""
 
 from .position_sizing import BasePositionSizer, get_position_sizer

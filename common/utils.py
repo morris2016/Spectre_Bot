@@ -33,7 +33,7 @@ import asyncio
 import importlib
 import pkgutil
 import enum
-from typing import Dict, List, Any, Optional, Union, Callable, Tuple, Generator, Set
+from typing import Dict, List, Any, Optional, Union, Callable, Tuple, Generator, Set, Type
 from pathlib import Path
 from functools import wraps
 from contextlib import suppress, asynccontextmanager, contextmanager
@@ -3134,13 +3134,20 @@ class ClassRegistry:
         # Mapping of class name to the actual class reference
         self._classes: Dict[str, type] = {}
 
-    def register(self, cls: type) -> None:
+    def register(self, cls: Type) -> None:
         """Register a class reference using its ``__name__``."""
         self._classes[cls.__name__] = cls
 
-    def get(self, name: str) -> Optional[type]:
-        """Retrieve a previously registered class by name."""
-        return self._classes.get(name)
+    def get(self, name: str) -> type:
+        """Retrieve a previously registered class by name.
+
+        Raises:
+            KeyError: If ``name`` is not registered.
+        """
+        try:
+            return self._classes[name]
+        except KeyError as exc:
+            raise KeyError(f"{name!r} not registered") from exc
 
     def get_all(self) -> List[type]:
         """Return all registered class references."""
