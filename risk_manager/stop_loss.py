@@ -1885,6 +1885,61 @@ class StopLossManager:
         self,
         asset: str,
         entry_price: float,
-        
-    
+        stop_loss: float,
+        direction: str,
+        risk_reward_levels: Optional[List[float]] = None
+    ) -> Dict[str, Any]:
+        """Calculate tiered take profit prices based on risk-reward ratios.
+
+        Args:
+            asset: Trading asset symbol.
+            entry_price: Entry price of the position.
+            stop_loss: Stop loss price for the position.
+            direction: Trade direction ("long" or "short").
+            risk_reward_levels: Optional list of reward:risk ratios
+                for each take profit tier.
+
+        Returns:
+            Dictionary containing calculated take profit levels.
+        """
+        try:
+            if risk_reward_levels is None:
+                risk_reward_levels = [1.0, 2.0, 3.0]
+
+            direction = direction.lower()
+            if direction not in ["long", "short"]:
+                raise InvalidParameterError("Direction must be 'long' or 'short'")
+
+            is_long = direction == "long"
+
+            entry_dec = Decimal(str(entry_price))
+            stop_dec = Decimal(str(stop_loss))
+
+            risk_value = (entry_dec - stop_dec) if is_long else (stop_dec - entry_dec)
+            if risk_value <= 0:
+                raise InvalidParameterError("Stop loss must be on the risk side of the entry price")
+
+            levels = []
+            for idx, rr in enumerate(risk_reward_levels):
+                rr_dec = Decimal(str(rr))
+                tp_price = entry_dec + risk_value * rr_dec if is_long else entry_dec - risk_value * rr_dec
+                levels.append({
+                    "level": idx + 1,
+                    "ratio": float(rr_dec),
+                    "price": float(tp_price)
+                })
+
+            return {
+                "asset": asset,
+                "entry_price": float(entry_dec),
+                "stop_loss": float(stop_dec),
+                "direction": direction,
+                "risk": float(risk_value),
+                "levels": levels,
+                "calculation_time": datetime.utcnow().isoformat()
+            }
+
+        except Exception as e:
+            logger.error(f"Error calculating take profit levels: {str(e)}", exc_info=True)
+            raise CalculationError(f"Failed to calculate take profit levels: {str(e)}")
     
