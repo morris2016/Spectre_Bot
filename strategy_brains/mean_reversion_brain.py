@@ -1329,6 +1329,15 @@ class MeanReversionBrain(BaseBrain):
         
         direction = signal.get('direction', TradeDirection.NEUTRAL)
         strength = signal.get('strength', SignalStrength.VERY_LOW)
-        
+
         # Only update if signal is strong enough
-        if direction != TradeDirection.
+        if direction != TradeDirection.NEUTRAL and strength >= SignalStrength.MEDIUM:
+            self.active_signals[asset]["active"] = True
+            self.active_signals[asset]["direction"] = direction
+            self.active_signals[asset]["signal_id"] = signal.get("signal_id", str(uuid.uuid4()))
+            self.active_signals[asset]["timestamp"] = datetime.now()
+        else:
+            self.active_signals[asset]["active"] = False
+            self.active_signals[asset]["direction"] = TradeDirection.NEUTRAL
+            self.active_signals[asset]["signal_id"] = None
+            self.active_signals[asset]["timestamp"] = None
