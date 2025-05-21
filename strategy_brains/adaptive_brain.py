@@ -605,12 +605,136 @@ class AdaptiveBrain(BaseBrain):
         Returns:
             Dictionary with signal information
         """
+
         try:
             strategy_type = variant.strategy_type
             params = variant.parameters
-            
+
             # Different strategy implementations
             if strategy_type == STRATEGY_TYPES.TREND_FOLLOWING:
-                return await self._apply_trend_following(market_
-    
-    
+                return await self._apply_trend_following(market_data, params)
+            elif strategy_type == STRATEGY_TYPES.MEAN_REVERSION:
+                return await self._apply_mean_reversion(market_data, params)
+            elif strategy_type == STRATEGY_TYPES.BREAKOUT:
+                return await self._apply_breakout(market_data, params)
+            elif strategy_type == STRATEGY_TYPES.MOMENTUM:
+                return await self._apply_momentum(market_data, params)
+            elif strategy_type == STRATEGY_TYPES.VOLATILITY:
+                return await self._apply_volatility(market_data, params)
+            elif strategy_type == STRATEGY_TYPES.SUPPORT_RESISTANCE:
+                return await self._apply_support_resistance(market_data, params)
+            else:
+                return await self._apply_neutral(market_data, params)
+
+        except Exception as e:
+            self.logger.error(
+                f"Error applying strategy variant {strategy_type}: {str(e)}",
+                exc_info=True,
+            )
+            return {
+                "signal": SIGNAL_TYPES.NEUTRAL,
+                "confidence": 0.3,
+                "entry_price": None,
+                "stop_loss": None,
+                "take_profit": None,
+                "strategy_type": strategy_type,
+                "error": str(e),
+            }
+
+    async def _apply_trend_following(
+        self, market_data: pd.DataFrame, parameters: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Placeholder trend following strategy implementation."""
+        return {
+            "signal": SIGNAL_TYPES.NEUTRAL,
+            "confidence": 0.5,
+            "entry_price": None,
+            "stop_loss": None,
+            "take_profit": None,
+            "strategy_type": STRATEGY_TYPES.TREND_FOLLOWING,
+            "indicators": {},
+        }
+
+    async def _apply_mean_reversion(
+        self, market_data: pd.DataFrame, parameters: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Placeholder mean reversion strategy implementation."""
+        return {
+            "signal": SIGNAL_TYPES.NEUTRAL,
+            "confidence": 0.5,
+            "entry_price": None,
+            "stop_loss": None,
+            "take_profit": None,
+            "strategy_type": STRATEGY_TYPES.MEAN_REVERSION,
+            "indicators": {},
+        }
+
+    async def _apply_breakout(
+        self, market_data: pd.DataFrame, parameters: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Placeholder breakout strategy implementation."""
+        return {
+            "signal": SIGNAL_TYPES.NEUTRAL,
+            "confidence": 0.5,
+            "entry_price": None,
+            "stop_loss": None,
+            "take_profit": None,
+            "strategy_type": STRATEGY_TYPES.BREAKOUT,
+            "indicators": {},
+        }
+
+    async def _apply_momentum(
+        self, market_data: pd.DataFrame, parameters: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Placeholder momentum strategy implementation."""
+        return {
+            "signal": SIGNAL_TYPES.NEUTRAL,
+            "confidence": 0.5,
+            "entry_price": None,
+            "stop_loss": None,
+            "take_profit": None,
+            "strategy_type": STRATEGY_TYPES.MOMENTUM,
+            "indicators": {},
+        }
+
+    async def _apply_volatility(
+        self, market_data: pd.DataFrame, parameters: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Placeholder volatility strategy implementation."""
+        return {
+            "signal": SIGNAL_TYPES.NEUTRAL,
+            "confidence": 0.5,
+            "entry_price": None,
+            "stop_loss": None,
+            "take_profit": None,
+            "strategy_type": STRATEGY_TYPES.VOLATILITY,
+            "indicators": {},
+        }
+
+    async def _apply_support_resistance(
+        self, market_data: pd.DataFrame, parameters: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Placeholder support/resistance strategy implementation."""
+        return {
+            "signal": SIGNAL_TYPES.NEUTRAL,
+            "confidence": 0.5,
+            "entry_price": None,
+            "stop_loss": None,
+            "take_profit": None,
+            "strategy_type": STRATEGY_TYPES.SUPPORT_RESISTANCE,
+            "indicators": {},
+        }
+
+    async def _apply_neutral(
+        self, market_data: pd.DataFrame, parameters: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Return a neutral signal when strategy is unknown."""
+        return {
+            "signal": SIGNAL_TYPES.NEUTRAL,
+            "confidence": 0.5,
+            "entry_price": None,
+            "stop_loss": None,
+            "take_profit": None,
+            "strategy_type": STRATEGY_TYPES.NEUTRAL,
+            "indicators": {},
+        }
