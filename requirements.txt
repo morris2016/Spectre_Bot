@@ -112,3 +112,4 @@ web3>=6.10.0
 webdriver-manager>=4.0.1
 websockets>=11.0.0
 xgboost>=2.0.3
+stem
