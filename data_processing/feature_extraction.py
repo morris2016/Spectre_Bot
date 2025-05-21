@@ -1563,4 +1563,26 @@ class FeatureExtractor:
                 macd, signal, hist = talib.MACD(
                     close_price, 
                     fastperiod=12, 
-                    slowperio
+                    slowperiod=26,
+                    signalperiod=9
+                )
+
+                if len(macd) >= 2 and len(signal) >= 2:
+                    current_diff = macd[-1] - signal[-1]
+                    previous_diff = macd[-2] - signal[-2]
+
+                    if current_diff > 0 and previous_diff <= 0:
+                        return 1.0  # Bullish MACD crossover
+                    elif current_diff < 0 and previous_diff >= 0:
+                        return -1.0  # Bearish MACD crossover
+
+                return 0.0  # No crossover
+
+            else:
+                # Unknown trend feature
+                logger.warning(f"Unknown trend feature: {feature_name}")
+                return None
+
+        except Exception as e:
+            logger.error(f"Error calculating trend feature {feature_name}: {str(e)}")
+            return None
