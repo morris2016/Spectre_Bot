@@ -801,7 +801,9 @@ def load_config(path: str) -> Config:
         config = Config()
         
         # Create directory if it doesn't exist
-        os.makedirs(os.path.dirname(path), exist_ok=True)
+        dir_path = os.path.dirname(path)
+        if dir_path:
+            os.makedirs(dir_path, exist_ok=True)
         
         # Save default config
         config.save(path)
