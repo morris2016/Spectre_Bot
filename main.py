@@ -55,7 +55,8 @@ from ui.app import UIService
 from voice_assistant.app import VoiceAssistantService
 
 # Global variables
-logger = None
+# Module-level logger used throughout the application
+logger = logging.getLogger(__name__)
 services = {}
 config = None
 metrics_collector = None
@@ -732,12 +733,14 @@ def main():
         sys.exit(exit_code)
     except KeyboardInterrupt:
         # Handle keyboard interrupt for cleaner shutdown
-        print("\nShutdown requested via keyboard interrupt")
+        logger.info("Shutdown requested via keyboard interrupt")
         tasks = asyncio.all_tasks(loop=service_event_loop)
         for task in tasks:
             task.cancel()
-        service_event_loop.run_until_complete(asyncio.gather(*tasks, return_exceptions=True))
-        print("Shutdown complete")
+        service_event_loop.run_until_complete(
+            asyncio.gather(*tasks, return_exceptions=True)
+        )
+        logger.info("Shutdown complete")
     finally:
         # Clean up resources
         if executor:
