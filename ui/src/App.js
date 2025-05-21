@@ -1,9 +1,7 @@
-
-
 /**
  * QuantumSpectre Elite Trading System
  * Main App Component
- * 
+ *
  * This component serves as the root of the application UI.
  * It handles the main layout, routing, and application lifecycle.
  */
@@ -12,12 +10,7 @@ import React, { useEffect, useState, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { useTheme, styled } from '@mui/material/styles';
-import { 
-  Box, 
-  CircularProgress, 
-  Backdrop,
-  useMediaQuery
-} from '@mui/material';
+import { Box, CircularProgress, Backdrop, useMediaQuery } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 
@@ -105,83 +98,48 @@ const MainContent = styled(Box)(({ theme }) => ({
   minHeight: 'calc(100vh - 64px)', // Full height minus app bar
 }));
 
-/**
- * Main App Component
- * Manages the application layout, routing, and initialization
- */
 const App = () => {
-  // Hooks
   const theme = useTheme();
   const dispatch = useDispatch();
   const { t } = useTranslation();
   const { enqueueSnackbar } = useSnackbar();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  
-  // State management
-  const { isAuthenticated, loading: authLoading } = useSelector((state) => state.auth);
-  const { initialized, loading: systemLoading, error: systemError } = useSelector((state) => state.system);
-  const { currentPlatform } = useSelector((state) => state.trading);
-  
-  // Local state
+
+  const { isAuthenticated, loading: authLoading } = useSelector((state) => state.auth || {});
+  const { initialized, loading: systemLoading, error: systemError } = useSelector((state) => state.system || {});
+  const { currentPlatform } = useSelector((state) => state.trading || {});
+
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [shortcutsDialogOpen, setShortcutsDialogOpen] = useState(false);
-  
-  // Custom hooks
+
   const { saveWorkspace, loadWorkspace } = useWorkspace();
   const { connect, disconnect } = useWebSocket();
   const { initializeVoiceAdvisor } = useVoiceAdvisor();
   const { startMonitoring } = useSystemMonitor();
 
-  /**
-   * Initialize the application
-   */
   useEffect(() => {
-    // Check user authentication status
     dispatch(checkAuthStatus());
-    
-    // Setup keyboard shortcuts
     const cleanupShortcuts = setupKeyboardShortcuts({
       showShortcuts: () => setShortcutsDialogOpen(true),
-      toggleSidebar: () => setSidebarOpen(prev => !prev),
-      // Add other shortcuts here
+      toggleSidebar: () => setSidebarOpen((prev) => !prev),
     });
-    
-    // Detect hardware capabilities to optimize performance
-    const capabilities = detectHardwareCapabilities();
-    
+    detectHardwareCapabilities();
     return () => {
       cleanupShortcuts();
     };
   }, [dispatch]);
 
-  /**
-   * Handle system initialization after authentication
-   */
   useEffect(() => {
     if (isAuthenticated && !initialized && !systemLoading) {
-      // Initialize core system components
       dispatch(initializeSystem());
-      
-      // Load user preferences
       dispatch(initializePreferences());
-      
-      // Load saved workspace layout
       loadWorkspace();
-      
-      // Connect to WebSocket for real-time data
       connect();
-      
-      // Initialize voice advisor for trading insights
       initializeVoiceAdvisor();
-      
-      // Start system monitoring
       startMonitoring();
-      
-      // Periodic system health checks
       const healthCheckInterval = setInterval(() => {
         dispatch(checkSystemHealth());
-      }, 30000); // Check every 30 seconds
-      
+      }, 30000);
       return () => {
         clearInterval(healthCheckInterval);
         disconnect();
@@ -189,33 +147,24 @@ const App = () => {
       };
     }
   }, [
-    isAuthenticated, 
-    initialized, 
-    systemLoading, 
-    dispatch, 
-    connect, 
-    disconnect, 
-    saveWorkspace, 
-    loadWorkspace, 
-    initializeVoiceAdvisor, 
-    startMonitoring
+    isAuthenticated,
+    initialized,
+    systemLoading,
+    dispatch,
+    connect,
+    disconnect,
+    saveWorkspace,
+    loadWorkspace,
+    initializeVoiceAdvisor,
+    startMonitoring,
   ]);
 
-  /**
-   * Handle system errors
-   */
   useEffect(() => {
     if (systemError) {
-      enqueueSnackbar(
-        t('errors.system_error', { message: systemError }),
-        { variant: 'error' }
-      );
+      enqueueSnackbar(t('errors.system_error', { message: systemError }), { variant: 'error' });
     }
   }, [systemError, enqueueSnackbar, t]);
 
-  /**
-   * Handle platform changes
-   */
   useEffect(() => {
     if (currentPlatform === PLATFORM_TYPES.BINANCE) {
       document.title = 'QuantumSpectre Elite - Binance';
@@ -226,75 +175,70 @@ const App = () => {
     }
   }, [currentPlatform]);
 
-  // Toggle sidebar handler
   const handleToggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
+    setSidebarOpen((prev) => !prev);
   };
 
-  // Show application loading state
   if (authLoading || (isAuthenticated && systemLoading)) {
-    return ;
+    return (
+      <Backdrop open>
+        <CircularProgress color="inherit" />
+      </Backdrop>
+    );
   }
 
-  // Authentication routes render
   if (!isAuthenticated) {
     return (
-      
-        } />
-        } />
-        } />
-        } />
-        } />
-      
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
     );
   }
 
   return (
-    
-      
-        {/* Sidebar navigation */}
-        
-        
-        {/* Main application container */}
-        
-          {/* Top navigation */}
-          
-          
-          {/* Platform switcher (Binance/Deriv) */}
-          
-          
-          {/* System status bar */}
-          
-          
-          {/* Main content area */}
-          
-            
-                  
-                
-              }
-            >
-              
-                } />
-                } />
-                } />
-                } />
-                } />
-                } />
-                } />
-                } />
-                } />
-                } />
-                } />
-                } />
-                } />
-                } />
-                } />
-                } />
-              
-            
-          
-          
-          {/* Footer component */}
-          
-{/* Notification center */} {/* Voice advisor panel */} {/* Keyboard shortcuts dialog */} setShortcutsDialogOpen(false)} /> ); }; export default App;
+    <ErrorBoundary>
+      <AppContainer sidebarOpen={sidebarOpen}>
+        <Sidebar open={sidebarOpen} onClose={handleToggleSidebar} />
+        <Navigation onToggleSidebar={handleToggleSidebar} />
+        <PlatformSwitcher />
+        <SystemStatusBar />
+        <MainContent>
+          <Suspense fallback={<LoadingScreen />}>
+            <Routes>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/terminal" element={<TradingTerminal />} />
+              <Route path="/portfolio" element={<Portfolio />} />
+              <Route path="/strategy-builder" element={<StrategyBuilder />} />
+              <Route path="/backtesting" element={<Backtesting />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/analytics" element={<Analytics />} />
+              <Route path="/account" element={<AccountDetails />} />
+              <Route path="/notifications" element={<Notifications />} />
+              <Route path="/market-analysis" element={<MarketAnalysis />} />
+              <Route path="/ml-training" element={<MlModelTraining />} />
+              <Route path="/brain-performance" element={<BrainPerformance />} />
+              <Route path="/system-monitor" element={<SystemMonitor />} />
+              <Route path="/pattern-library" element={<PatternLibrary />} />
+              <Route path="/news-analysis" element={<NewsAnalysis />} />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+          </Suspense>
+          <Footer />
+        </MainContent>
+        <NotificationCenter />
+        <VoiceAdvisorPanel />
+        <KeyboardShortcutsDialog
+          open={shortcutsDialogOpen}
+          onClose={() => setShortcutsDialogOpen(false)}
+        />
+      </AppContainer>
+    </ErrorBoundary>
+  );
+};
 
+export default App;
