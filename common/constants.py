@@ -254,7 +254,7 @@ ORDER_TYPES = [ot.value for ot in OrderType]
 class OrderSide(enum.Enum):
     BUY = "buy"
     SELL = "sell"
-ORDER_SIDES = [os.value for os in OrderSide]
+ORDER_SIDES = [side.value for side in OrderSide]
 
 # Position types
 class PositionType(enum.Enum):
