@@ -3167,15 +3167,20 @@ class AsyncService:
 
 
 class Signal:
-    """Lightweight event signal."""
+    """Lightweight event signal for pub/sub communication."""
 
     def __init__(self) -> None:
         self._subscribers: List[Callable] = []
 
-    def connect(self, callback: Callable) -> None:
+    def subscribe(self, callback: Callable) -> None:
+        """Register a callback to be invoked when the signal is emitted."""
         self._subscribers.append(callback)
 
+    # ``connect`` is kept for backwards compatibility
+    connect = subscribe
+
     async def emit(self, *args: Any, **kwargs: Any) -> None:
+        """Emit the signal to all registered callbacks."""
         for cb in list(self._subscribers):
             if asyncio.iscoroutinefunction(cb):
                 await cb(*args, **kwargs)
@@ -3189,10 +3194,14 @@ class SignalBus:
     def __init__(self) -> None:
         self._signals: Dict[str, Signal] = {}
 
-    def get(self, name: str) -> Signal:
+    def get_signal(self, name: str) -> Signal:
+        """Retrieve or create a named :class:`Signal`."""
         if name not in self._signals:
             self._signals[name] = Signal()
         return self._signals[name]
+
+    # ``get`` is kept for backwards compatibility
+    get = get_signal
 
 # Additional utility functions needed by intelligence modules
 
