@@ -11,16 +11,14 @@ It prevents over-exposure to correlated assets and ensures proper diversificatio
 
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Optional, Tuple, Union, Any, Type
-import asyncio
-import logging
-from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Tuple, Any, Type
+from datetime import datetime
 from sklearn.cluster import DBSCAN
 
 from common.logger import get_logger
 from common.db_client import DatabaseClient
 from common.redis_client import RedisClient
-from common.constants import MAX_POSITION_CORRELATION, CORRELATION_LOOKBACK_PERIODS
+from common.constants import CORRELATION_LOOKBACK_PERIODS
 from common.exceptions import CorrelationCalculationError
 
 
