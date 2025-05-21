@@ -50,6 +50,7 @@ The QuantumSpectre Elite Trading System is built with a modular, microservice-ba
    ```
    pip install -r requirements.txt
    ```
+   This installs all required Python packages, including `nltk>=3.8.1` for natural language processing.
 
 3. Create the Codex environment (includes RAPIDS libraries):
    ```bash
