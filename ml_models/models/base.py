@@ -10,6 +10,7 @@ class ModelConfig:
     device: str = "cpu"
     parameters: Optional[Dict[str, Any]] = None
 
+
     def __post_init__(self):
         if self.parameters is None:
             self.parameters = {}
@@ -24,12 +25,15 @@ class ModelOutput:
 class BaseModel:
     """Base class for machine learning models."""
 
+
     def __init__(self, config: Optional[ModelConfig] = None, name: str = "base", **kwargs: Any) -> None:
         """Initialize the model with configuration and arbitrary options."""
         self.config = config or ModelConfig()
         self.name = name
         for key, value in kwargs.items():
-            setattr(self, key, value)
+
+    def __init__(self, config: Optional[ModelConfig] = None) -> None:
+        self.config = config or ModelConfig()
 
     def train_batch(self, batch: DataBatch) -> Dict[str, float]:
         raise NotImplementedError
