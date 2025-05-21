@@ -33,10 +33,13 @@ import time
 from datetime import datetime, timedelta
 
 from common.utils import (
-    safe_divide, atr, fibonacci_levels, 
-    calculate_risk_reward_ratio, pivot_points,
-    identify_swing_points, normalize_value
+    safe_divide,
+    calculate_risk_reward_ratio,
+    pivot_points,
+    normalize_value,
 )
+from feature_service.feature_extraction import atr, fibonacci_levels
+from feature_service.features.market_structure import identify_swing_points
 from common.constants import (
     DEFAULT_ATR_PERIODS, DEFAULT_ATR_MULTIPLIER,
     DEFAULT_FIXED_STOP_PERCENTAGE, DEFAULT_MIN_STOP_DISTANCE,
