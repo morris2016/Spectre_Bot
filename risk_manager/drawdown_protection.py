@@ -11,8 +11,18 @@ parameters, position sizes, and risk levels based on drawdown metrics to
 ensure account recovery and prevent catastrophic losses.
 """
 
+from typing import Dict, List, Optional, Tuple, Any, Union, Set, Type
+
+
 class BaseDrawdownProtector:
     """Base class for drawdown protection strategies."""
+
+    registry: Dict[str, Type["BaseDrawdownProtector"]] = {}
+
+    def __init_subclass__(cls, name: Optional[str] = None, **kwargs) -> None:
+        super().__init_subclass__(**kwargs)
+        key = name or cls.__name__
+        BaseDrawdownProtector.registry[key] = cls
 
     async def apply_protection(self, *args, **kwargs) -> None:
         raise NotImplementedError
@@ -20,7 +30,6 @@ class BaseDrawdownProtector:
 import time
 import logging
 import numpy as np
-from typing import Dict, List, Optional, Tuple, Any, Union, Set
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 import asyncio
@@ -93,7 +102,7 @@ class DrawdownStatus:
     message: str
 
 
-class DrawdownProtection:
+class DrawdownProtection(BaseDrawdownProtector):
     """
     Implements sophisticated drawdown protection mechanisms to preserve capital
     and ensure consistent trading performance even during drawdown periods.
@@ -917,4 +926,13 @@ class DrawdownProtection:
         }
         
         return report
-__all__ = ["BaseDrawdownProtector"]
+
+
+def get_drawdown_protector(name: str, *args, **kwargs) -> BaseDrawdownProtector:
+    """Instantiate a registered drawdown protector by name."""
+    cls = BaseDrawdownProtector.registry.get(name)
+    if cls is None:
+        raise ValueError(f"Unknown drawdown protector: {name}")
+    return cls(*args, **kwargs)
+
+__all__ = ["BaseDrawdownProtector", "get_drawdown_protector"]

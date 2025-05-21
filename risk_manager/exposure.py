@@ -10,8 +10,18 @@ including monitoring and controlling risk across different assets, platforms,
 and account sizes.
 """
 
+from typing import Dict, List, Optional, Tuple, Union, Any, Type
+
+
 class BaseExposureManager:
     """Base class for exposure management."""
+
+    registry: Dict[str, Type["BaseExposureManager"]] = {}
+
+    def __init_subclass__(cls, name: Optional[str] = None, **kwargs) -> None:
+        super().__init_subclass__(**kwargs)
+        key = name or cls.__name__
+        BaseExposureManager.registry[key] = cls
 
     async def adjust_exposure(self, *args, **kwargs):
         raise NotImplementedError
@@ -19,7 +29,6 @@ class BaseExposureManager:
 import logging
 import asyncio
 import numpy as np
-from typing import Dict, List, Optional, Tuple, Union, Any
 from decimal import Decimal
 
 from common.constants import PLATFORMS, EXPOSURE_LIMITS
@@ -30,7 +39,7 @@ from data_feeds.base_feed import MarketData
 logger = logging.getLogger(__name__)
 
 
-class ExposureManager:
+class ExposureManager(BaseExposureManager):
     """
     Advanced exposure management system that monitors and controls trading risk
     across different assets, platforms, and market conditions.
@@ -674,4 +683,12 @@ class ExposureManager:
             }
         }
 
-__all__ = ["BaseExposureManager"]
+
+def get_exposure_manager(name: str, *args, **kwargs) -> BaseExposureManager:
+    """Instantiate a registered exposure manager by name."""
+    cls = BaseExposureManager.registry.get(name)
+    if cls is None:
+        raise ValueError(f"Unknown exposure manager: {name}")
+    return cls(*args, **kwargs)
+
+__all__ = ["BaseExposureManager", "get_exposure_manager"]

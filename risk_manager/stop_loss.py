@@ -8,15 +8,24 @@ for optimal trade risk management. Includes volatility-based, technical,
 and adaptive stop loss calculation and management.
 """
 
+from typing import Dict, List, Tuple, Optional, Union, Any, Type
+
+
 class BaseStopLossStrategy:
     """Base class for stop loss strategies."""
+
+    registry: Dict[str, Type["BaseStopLossStrategy"]] = {}
+
+    def __init_subclass__(cls, name: Optional[str] = None, **kwargs) -> None:
+        super().__init_subclass__(**kwargs)
+        key = name or cls.__name__
+        BaseStopLossStrategy.registry[key] = cls
 
     def calculate_stop(self, *args, **kwargs):
         raise NotImplementedError
 
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Tuple, Optional, Union, Any
 import logging
 import asyncio
 from decimal import Decimal, ROUND_DOWN, ROUND_UP
@@ -45,7 +54,7 @@ from data_storage.market_data import MarketDataRepository
 logger = get_logger("risk_manager.stop_loss")
 
 
-class StopLossManager:
+class StopLossManager(BaseStopLossStrategy):
     """
     Advanced stop loss management system with multiple strategies and dynamic adjustments.
     
@@ -1948,5 +1957,13 @@ class StopLossManager:
         except Exception as e:
             logger.error(f"Error calculating take profit levels: {str(e)}", exc_info=True)
             raise CalculationError(f"Failed to calculate take profit levels: {str(e)}")
-    
-__all__ = ["BaseStopLossStrategy"]
+
+
+def get_stop_loss_strategy(name: str, *args, **kwargs) -> BaseStopLossStrategy:
+    """Instantiate a registered stop-loss strategy by name."""
+    cls = BaseStopLossStrategy.registry.get(name)
+    if cls is None:
+        raise ValueError(f"Unknown stop loss strategy: {name}")
+    return cls(*args, **kwargs)
+
+__all__ = ["BaseStopLossStrategy", "get_stop_loss_strategy"]

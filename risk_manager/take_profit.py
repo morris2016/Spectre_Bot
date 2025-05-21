@@ -9,15 +9,24 @@ This module provides sophisticated take profit management for the trading system
 including dynamic take profit levels, partial profit taking, and trailing profit mechanisms.
 """
 
+from typing import Dict, List, Optional, Tuple, Union, Any, Type
+
+
 class BaseTakeProfitStrategy:
     """Base class for take profit strategies."""
+
+    registry: Dict[str, Type["BaseTakeProfitStrategy"]] = {}
+
+    def __init_subclass__(cls, name: Optional[str] = None, **kwargs) -> None:
+        super().__init_subclass__(**kwargs)
+        key = name or cls.__name__
+        BaseTakeProfitStrategy.registry[key] = cls
 
     def calculate_target(self, *args, **kwargs):
         raise NotImplementedError
 
 import logging
 import numpy as np
-from typing import Dict, List, Optional, Tuple, Union, Any
 from decimal import Decimal
 
 from common.constants import OrderSide, OrderType, TimeInForce, PLATFORMS
@@ -30,7 +39,7 @@ from feature_service.features.volatility import VolatilityAnalyzer
 logger = logging.getLogger(__name__)
 
 
-class TakeProfitManager:
+class TakeProfitManager(BaseTakeProfitStrategy):
     """
     Advanced take profit management system with dynamic profit targets based on market conditions,
     volatility, and pattern completion projections.
@@ -454,4 +463,12 @@ class TakeProfitManager:
             "highest_level": max([level["level"] for level in levels]) if levels else 0
         }
 
-__all__ = ["BaseTakeProfitStrategy"]
+
+def get_take_profit_strategy(name: str, *args, **kwargs) -> BaseTakeProfitStrategy:
+    """Instantiate a registered take-profit strategy by name."""
+    cls = BaseTakeProfitStrategy.registry.get(name)
+    if cls is None:
+        raise ValueError(f"Unknown take profit strategy: {name}")
+    return cls(*args, **kwargs)
+
+__all__ = ["BaseTakeProfitStrategy", "get_take_profit_strategy"]
