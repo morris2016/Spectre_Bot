@@ -16,7 +16,7 @@ import logging
 import pkgutil
 import importlib
 import traceback
-from typing import Dict, List, Any, Optional, Union, Callable
+from typing import Dict, List, Any, Optional, Union, Callable, ClassVar
 from pathlib import Path
 from dataclasses import dataclass
 from datetime import datetime
@@ -443,8 +443,9 @@ DEFAULT_CONFIG = {
 @dataclass
 class Config:
     """Configuration container with validation and access methods."""
-    
+
     data: Dict[str, Any] = None
+    _loaded_config: ClassVar[Optional['Config']] = None
     
     def __init__(self, data: Dict[str, Any] = None):
         """
@@ -472,6 +473,18 @@ class Config:
         if name in self.data:
             return self.data[name]
         raise AttributeError(f"Configuration has no section '{name}'")
+
+    @classmethod
+    def get_section(cls, section_name: str, default: Any = None) -> Any:
+        """Return a top-level configuration section.
+
+        If a configuration file has been loaded via :func:`load_config`, the
+        section will be read from that configuration instance.  Otherwise the
+        value from :data:`DEFAULT_CONFIG` is returned.
+        """
+        if cls._loaded_config is None:
+            return DEFAULT_CONFIG.get(section_name, default)
+        return cls._loaded_config.data.get(section_name, default)
     
     def get(self, path: str, default: Any = None) -> Any:
         """
@@ -770,13 +783,15 @@ def load_config(path: str) -> Config:
         # Determine format based on file extension
         ext = path.suffix.lower()
         if ext == '.json':
-            return Config.from_json(content)
+            config = Config.from_json(content)
         elif ext in ('.yml', '.yaml'):
-            return Config.from_yaml(content)
+            config = Config.from_yaml(content)
         elif ext == '.toml':
-            return Config.from_toml(content)
+            config = Config.from_toml(content)
         else:
             raise ConfigurationError(f"Unsupported configuration file format: {ext}")
+        Config._loaded_config = config
+        return config
     except FileNotFoundError:
         # If file doesn't exist, create a new default config
         config = Config()
@@ -786,7 +801,8 @@ def load_config(path: str) -> Config:
         
         # Save default config
         config.save(path)
-        
+
+        Config._loaded_config = config
         return config
     except Exception as e:
         raise ConfigurationError(f"Failed to load configuration: {str(e)}")
