@@ -92,6 +92,14 @@ The QuantumSpectre Elite Trading System is built with a modular, microservice-ba
 
 The system behavior can be configured through environment variables or a configuration file. See `.env` for available options.
 
+You can access a top-level section at runtime with `Config.get_section('backtester')`. If no file is loaded, values come from `DEFAULT_CONFIG`.
+
+```python
+from config import Config
+
+api_cfg = Config.get_section('api')
+```
+
 ### API Keys
 
 To connect to exchanges, add your API keys to the `.env` file:
