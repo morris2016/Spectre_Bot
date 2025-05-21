@@ -1317,7 +1317,7 @@ if __name__ == "__main__":
         
         # Print registered strategy
         strategy_params = await meta_learning.get_strategy_parameters("test_strat_1")
-        print(f"Initial strategy parameters: {strategy_params}")
+        logger.info(f"Initial strategy parameters: {strategy_params}")
         
         # Simulate some performance updates
         for i in range(20):
@@ -1354,7 +1354,7 @@ if __name__ == "__main__":
             # Print adapted parameters
             if (i + 1) % 5 == 0:
                 adapted_params = await meta_learning.get_strategy_parameters("test_strat_1")
-                print(f"Adapted parameters after {i+1} updates: {adapted_params}")
+                logger.info(f"Adapted parameters after {i+1} updates: {adapted_params}")
         
         # Save state
         await meta_learning.save_state()
