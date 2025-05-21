@@ -28,9 +28,17 @@ source "$INSTALL_DIR/etc/profile.d/conda.sh"
 conda create -y -n spectre-cuda python=3.11
 conda activate spectre-cuda
 
-# Upgrade pip and install Python dependencies
+# Install GPU libraries with conda
+conda install -y -c rapidsai -c conda-forge -c nvidia \
+    rapids=25.04 \
+    'cuda-version>=12.0,<=12.8' \
+    'pytorch=*=*cuda*' tensorflow
+
+# Upgrade pip and install remaining Python dependencies
 pip install --upgrade pip
-pip install -r requirements.txt
+sed '/^cudf/d;/^cuml/d;/^cugraph/d;/^cupy/d;/^pycuda/d;/^tensorflow/d;/^torch/d' \
+  requirements.txt > /tmp/requirements_no_gpu.txt
+pip install -r /tmp/requirements_no_gpu.txt
 
 # Install UI dependencies
 cd ui && npm install && cd ..
