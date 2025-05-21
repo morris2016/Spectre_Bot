@@ -12,7 +12,7 @@ maintaining risk management discipline.
 
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Optional, Tuple, Union, Any
+from typing import Dict, List, Optional, Tuple, Union, Any, Type
 import asyncio
 import logging
 from datetime import datetime, timedelta
@@ -28,7 +28,26 @@ from risk_manager.position_sizing import PositionSizer
 from risk_manager.exposure import ExposureManager
 
 
-class RecoveryManager:
+class BaseRecoveryManager:
+    """Base class for recovery management."""
+
+    registry: Dict[str, Type["BaseRecoveryManager"]] = {}
+
+    def __init_subclass__(cls, name: Optional[str] = None, **kwargs) -> None:
+        super().__init_subclass__(**kwargs)
+        key = name or cls.__name__
+        BaseRecoveryManager.registry[key] = cls
+
+    async def enter_recovery_mode(self, *args, **kwargs):
+        """Enter recovery mode."""
+        raise NotImplementedError
+
+    async def exit_recovery_mode(self, *args, **kwargs):
+        """Exit recovery mode."""
+        raise NotImplementedError
+
+
+class RecoveryManager(BaseRecoveryManager):
     """
     The RecoveryManager implements strategies to recover from drawdowns and losing
     streaks while maintaining proper risk management discipline.
@@ -629,3 +648,14 @@ class RecoveryManager:
         except Exception as e:
             self.logger.error(f"Error getting current equity: {e}")
             return 0.0
+
+
+def get_recovery_manager(name: str, *args, **kwargs) -> BaseRecoveryManager:
+    """Instantiate a registered recovery manager by name."""
+    cls = BaseRecoveryManager.registry.get(name)
+    if cls is None:
+        raise ValueError(f"Unknown recovery manager: {name}")
+    return cls(*args, **kwargs)
+
+
+__all__ = ["BaseRecoveryManager", "get_recovery_manager", "RecoveryManager"]
