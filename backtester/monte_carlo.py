@@ -1013,7 +1013,7 @@ if __name__ == "__main__":
         )
         
         report_path = simulator.generate_report(results)
-        print(f"Report generated at: {report_path}")
+        logger.info(f"Report generated at: {report_path}")
     
     # Run the example in an asyncio event loop
     # asyncio.run(run_example())
