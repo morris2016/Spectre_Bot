@@ -30,6 +30,8 @@ import dashboardSlice from './slices/dashboardSlice';
 import strategySlice from './slices/strategySlice';
 import backtesterSlice from './slices/backtesterSlice';
 import voiceAdvisorSlice from './slices/voiceAdvisorSlice';
+import systemSlice from './slices/systemSlice';
+import preferencesSlice from './slices/preferencesSlice';
 
 // Configure persistence
 const persistConfig = {
@@ -57,6 +59,8 @@ const rootReducer = combineReducers({
   strategy: strategySlice.reducer,
   backtester: backtesterSlice.reducer,
   voiceAdvisor: voiceAdvisorSlice.reducer,
+  system: systemSlice.reducer,
+  preferences: preferencesSlice.reducer,
 });
 
 // Create the persisted reducer
@@ -125,6 +129,8 @@ export { actions as dashboardActions } from './slices/dashboardSlice';
 export { actions as strategyActions } from './slices/strategySlice';
 export { actions as backtesterActions } from './slices/backtesterSlice';
 export { actions as voiceAdvisorActions } from './slices/voiceAdvisorSlice';
+export { actions as systemActions } from './slices/systemSlice';
+export { actions as preferencesActions } from './slices/preferencesSlice';
 
 // Create typed hooks
 export const useAppSelector = (selector) => selector(getState());
