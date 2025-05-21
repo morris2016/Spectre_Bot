@@ -3131,20 +3131,20 @@ class ClassRegistry:
     """Simple registry for dynamically loaded classes."""
 
     def __init__(self) -> None:
+        # Mapping of class name to the actual class reference
         self._classes: Dict[str, type] = {}
 
-    def register(self, cls: type, name: Optional[str] = None) -> None:
-        """Register a class under a given name."""
-        key = name or cls.__name__
-        self._classes[key] = cls
+    def register(self, cls: type) -> None:
+        """Register a class reference using its ``__name__``."""
+        self._classes[cls.__name__] = cls
 
     def get(self, name: str) -> Optional[type]:
-        """Retrieve a registered class by name."""
+        """Retrieve a previously registered class by name."""
         return self._classes.get(name)
 
-    def list(self) -> List[str]:
-        """List all registered class names."""
-        return list(self._classes.keys())
+    def get_all(self) -> List[type]:
+        """Return all registered class references."""
+        return list(self._classes.values())
 
 
 class AsyncService:
