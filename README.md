@@ -36,7 +36,7 @@ The QuantumSpectre Elite Trading System is built with a modular, microservice-ba
 - Python 3.9+
 - Redis
 - PostgreSQL
-- Node.js 16+ (for frontend)
+- Node.js 16+ (for UI)
 
 ### Setup
 
@@ -55,6 +55,10 @@ The QuantumSpectre Elite Trading System is built with a modular, microservice-ba
 3. Create the Codex environment (includes RAPIDS libraries):
    ```bash
    bash scripts/codex_setup.sh
+   ```
+   *On Ubuntu 24.04 with CUDA support you can instead run:* 
+   ```bash
+   bash scripts/codex_cuda_setup.sh
    ```
 
 4. Install ui dependencies:
