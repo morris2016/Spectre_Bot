@@ -12,7 +12,7 @@ import pandas as pd
 import talib
 from numba import jit
 from typing import Dict, List, Union, Tuple, Optional, Any
-import logging
+from common.logger import get_logger
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 import warnings
@@ -23,7 +23,7 @@ from common.exceptions import FeatureCalculationError
 from common.constants import VOLATILITY_INDICATOR_PARAMS
 from feature_service.features.base_feature import BaseFeature
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class VolatilityFeatures(BaseFeature):
@@ -1001,5 +1001,5 @@ if __name__ == "__main__":
     # Calculate volatility features
     vol_features = calculate_volatility_features(data)
     
-    # Print first few rows with key indicators
-    print(vol_features.iloc[-5:][['historical_vol', 'atr_percent', 'volatility_regime']])
+    # Log first few rows with key indicators for debugging
+    logger.info(vol_features.iloc[-5:][['historical_vol', 'atr_percent', 'volatility_regime']])
