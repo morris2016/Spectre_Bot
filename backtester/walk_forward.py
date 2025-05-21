@@ -936,176 +936,143 @@ class WalkForwardAnalyzer:
         is_80plus_pct = is_80plus / len(is_metrics) if is_metrics else 0
         os_80plus_pct = os_80plus / len(os_metrics) if os_metrics else 0
         
+        period_rows = []
+        for i, p in enumerate(analysis.get("periods", [])):
+            period_rows.append(
+                f"<tr>"
+                f"<td>{i + 1}</td>"
+                f"<td>{p['period']['train_start']} to {p['period']['train_end']}</td>"
+                f"<td>{p['period']['valid_start']} to {p['period']['valid_end']}</td>"
+                f"<td>{p['training_metrics'].get('total_return', 0):.2%}</td>"
+                f"<td>{p['validation_metrics'].get('total_return', 0):.2%}</td>"
+                f"<td>{p['training_metrics'].get('win_rate', 0):.2%}</td>"
+                f"<td>{p['validation_metrics'].get('win_rate', 0):.2%}</td>"
+                f"</tr>"
+            )
+
+        param_rows = []
+        for param, metrics in analysis.get("parameter_stability", {}).get("parameter_metrics", {}).items():
+            param_rows.append(
+                f"<tr>"
+                f"<td>{param}</td>"
+                f"<td>{metrics['mean']:.4f}</td>"
+                f"<td>{metrics['median']:.4f}</td>"
+                f"<td>{metrics['std_dev']:.4f}</td>"
+                f"<td>{metrics['min']:.4f}</td>"
+                f"<td>{metrics['max']:.4f}</td>"
+                f"<td>{metrics['stability_score']:.2f}</td>"
+                f"</tr>"
+            )
+
+        robustness = (
+            "High"
+            if avg_os_win_rate >= 0.75 and os_80plus_pct >= 0.7 and analysis.get("parameter_stability", {}).get("overall_stability", 0) > 0.7
+            else "Medium"
+            if avg_os_win_rate >= 0.65 and os_80plus_pct >= 0.5 and analysis.get("parameter_stability", {}).get("overall_stability", 0) > 0.5
+            else "Low"
+        )
+
+        preferred_market = (
+            "Trending markets"
+            if avg_os_win_rate >= 0.7 and any("trend" in str(p).lower() for p in analysis.get("parameters", [{}])[0].keys())
+            else "Volatile markets"
+            if any("volatility" in str(p).lower() for p in analysis.get("parameters", [{}])[0].keys())
+            else "Rangebound markets"
+            if any("range" in str(p).lower() for p in analysis.get("parameters", [{}])[0].keys())
+            else "Various market conditions"
+        )
+
         html_content = f"""
-        
-        
-        
-            Walk Forward Analysis Report - {timestamp}
-            
+        <html>
+        <head>
+            <style>
                 body {{ font-family: Arial, sans-serif; margin: 20px; }}
                 h1, h2, h3 {{ color: #333366; }}
                 table {{ border-collapse: collapse; width: 100%; margin-bottom: 20px; }}
                 th, td {{ border: 1px solid #ddd; padding: 8px; }}
                 th {{ background-color: #f2f2f2; text-align: left; }}
                 tr:nth-child(even) {{ background-color: #f9f9f9; }}
-                .section {{ margin-bottom: 30px; }}
-                .highlight {{ background-color: #ffffcc; }}
-                .img-container {{ text-align: center; margin: 20px 0; }}
-                img {{ max-width: 100%; height: auto; }}
-            
-        
-        
-            Walk Forward Analysis Report
-            Generated on: {timestamp}
-            
-            
-                Analysis Overview
-                
-                    MetricValue
-                    Strategy ID{analysis.get('strategy_id', 'N/A')}
-                    Method{analysis.get('method', 'N/A')}
-                    Number of Periods{len(analysis.get('periods', []))}
-                    Avg. In-Sample Win Rate{avg_is_win_rate:.2%}
-                    Avg. Out-of-Sample Win Rate{avg_os_win_rate:.2%}
-                    In-Sample Periods with 80%+ Win Rate{is_80plus} ({is_80plus_pct:.2%})
-                    Out-of-Sample Periods with 80%+ Win Rate{os_80plus} ({os_80plus_pct:.2%})
-                    Overall Stability Score{analysis.get('parameter_stability', {}).get('overall_stability', 0):.2f}
-                
-            
-            
-            
-                Equity Curve
-                
-                    
-                
-                
-                Overall Performance Metrics
-                
-                    MetricValue
-                    Total Return{analysis.get('metrics', {}).get('total_return', 0):.2%}
-                    Annualized Return{analysis.get('metrics', {}).get('annualized_return', 0):.2%}
-                    Sharpe Ratio{analysis.get('metrics', {}).get('sharpe_ratio', 0):.2f}
-                    Max Drawdown{analysis.get('metrics', {}).get('max_drawdown', 0):.2%}
-                    Win Rate{analysis.get('metrics', {}).get('win_rate', 0):.2%}
-                    Profit Factor{analysis.get('metrics', {}).get('profit_factor', 0):.2f}
-                
-            
-            
-            
-                In-Sample vs. Out-of-Sample Performance
-                
-                    
-                
-                
-                Period-by-Period Comparison
-                
-                    {''.join([f"""
-                    
-                    """ for i, p in enumerate(analysis.get('periods', []))])}
-                
-                    
-                        Period
-                        Training Window
-                        Validation Window
-                        In-Sample Return
-                        Out-of-Sample Return
-                        In-Sample Win Rate
-                        Out-of-Sample Win Rate
-                    
-                        {i+1}
-                        {p['period']['train_start']} to {p['period']['train_end']}
-                        {p['period']['valid_start']} to {p['period']['valid_end']}
-                        {p['training_metrics'].get('total_return', 0):.2%}
-                        {p['validation_metrics'].get('total_return', 0):.2%}
-                        {p['training_metrics'].get('win_rate', 0):.2%}
-                        {p['validation_metrics'].get('win_rate', 0):.2%}
-                    
-            
-            
-            
-                Parameter Evolution and Stability
-                
-                    
-                
-                
-                
-                    
-                
-                
-                Parameter Stability Analysis
-                
-                    {''.join([f"""
-                    
-                    """ for param, metrics in analysis.get('parameter_stability', {}).get('parameter_metrics', {}).items()])}
-                
-                    
-                        Parameter
-                        Mean
-                        Median
-                        Std Dev
-                        Min
-                        Max
-                        Stability Score
-                    
-                        {param}
-                        {metrics['mean']:.4f}
-                        {metrics['median']:.4f}
-                        {metrics['std_dev']:.4f}
-                        {metrics['min']:.4f}
-                        {metrics['max']:.4f}
-                        {metrics['stability_score']:.2f}
-                    
-            
-            
-            
-                Strategy Robustness
-                {'' if 'robustness_results' in analysis else ''}
-                
-                Overall assessment of strategy robustness: 
-                    
-                    {
-                        "High" if avg_os_win_rate >= 0.75 and os_80plus_pct >= 0.7 and analysis.get('parameter_stability', {}).get('overall_stability', 0) > 0.7
-                        else "Medium" if avg_os_win_rate >= 0.65 and os_80plus_pct >= 0.5 and analysis.get('parameter_stability', {}).get('overall_stability', 0) > 0.5
-                        else "Low"
-                    }
-                    
-                
-                
-            
-            
-            
-                Conclusion and Recommendations
-                Based on the walk forward analysis, the following recommendations can be made:
-                
-                    Probability of achieving 80%+ win rate in out-of-sample periods: {os_80plus_pct:.2%}
-                    Parameter stability: {
-                        "High" if analysis.get('parameter_stability', {}).get('overall_stability', 0) > 0.7
-                        else "Medium" if analysis.get('parameter_stability', {}).get('overall_stability', 0) > 0.5
-                        else "Low"
-                    }
-                    Strategy performs best in: {
-                        "Trending markets" if avg_os_win_rate >= 0.7 and any("trend" in str(p).lower() for p in analysis.get('parameters', [{}])[0].keys())
-                        else "Volatile markets" if any("volatility" in str(p).lower() for p in analysis.get('parameters', [{}])[0].keys())
-                        else "Rangebound markets" if any("range" in str(p).lower() for p in analysis.get('parameters', [{}])[0].keys())
-                        else "Various market conditions"
-                    }
-                
-                
-                Optimal Parameters: Consider using the most stable parameters identified in the analysis for live trading.
-                
-                Risk Management: Based on observed drawdowns, it's recommended to use proper position sizing to limit risk to an acceptable level.
-            
-            
-            
-                Disclaimer
-                Past performance, even in walk forward analysis, does not guarantee future results. 
-                Markets change over time, and strategies may need to be adapted as conditions evolve.
-                Always use proper risk management when deploying any trading strategy.
-            
-        
-        
+            </style>
+        </head>
+        <body>
+            <h1>Walk Forward Analysis Report</h1>
+            <p>Generated on: {timestamp}</p>
+
+            <h2>Analysis Overview</h2>
+            <table>
+                <tr><th>Metric</th><th>Value</th></tr>
+                <tr><td>Strategy ID</td><td>{analysis.get('strategy_id', 'N/A')}</td></tr>
+                <tr><td>Method</td><td>{analysis.get('method', 'N/A')}</td></tr>
+                <tr><td>Number of Periods</td><td>{len(analysis.get('periods', []))}</td></tr>
+                <tr><td>Avg. In-Sample Win Rate</td><td>{avg_is_win_rate:.2%}</td></tr>
+                <tr><td>Avg. Out-of-Sample Win Rate</td><td>{avg_os_win_rate:.2%}</td></tr>
+                <tr><td>In-Sample Periods with 80%+ Win Rate</td><td>{is_80plus} ({is_80plus_pct:.2%})</td></tr>
+                <tr><td>Out-of-Sample Periods with 80%+ Win Rate</td><td>{os_80plus} ({os_80plus_pct:.2%})</td></tr>
+                <tr><td>Overall Stability Score</td><td>{analysis.get('parameter_stability', {}).get('overall_stability', 0):.2f}</td></tr>
+            </table>
+
+            <h2>Overall Performance Metrics</h2>
+            <table>
+                <tr><th>Metric</th><th>Value</th></tr>
+                <tr><td>Total Return</td><td>{analysis.get('metrics', {}).get('total_return', 0):.2%}</td></tr>
+                <tr><td>Annualized Return</td><td>{analysis.get('metrics', {}).get('annualized_return', 0):.2%}</td></tr>
+                <tr><td>Sharpe Ratio</td><td>{analysis.get('metrics', {}).get('sharpe_ratio', 0):.2f}</td></tr>
+                <tr><td>Max Drawdown</td><td>{analysis.get('metrics', {}).get('max_drawdown', 0):.2%}</td></tr>
+                <tr><td>Win Rate</td><td>{analysis.get('metrics', {}).get('win_rate', 0):.2%}</td></tr>
+                <tr><td>Profit Factor</td><td>{analysis.get('metrics', {}).get('profit_factor', 0):.2f}</td></tr>
+            </table>
+
+            <h2>Period-by-Period Comparison</h2>
+            <table>
+                <tr>
+                    <th>Period</th>
+                    <th>Training Window</th>
+                    <th>Validation Window</th>
+                    <th>In-Sample Return</th>
+                    <th>Out-of-Sample Return</th>
+                    <th>In-Sample Win Rate</th>
+                    <th>Out-of-Sample Win Rate</th>
+                </tr>
+                {''.join(period_rows)}
+            </table>
+
+            <h2>Parameter Stability Analysis</h2>
+            <table>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Mean</th>
+                    <th>Median</th>
+                    <th>Std Dev</th>
+                    <th>Min</th>
+                    <th>Max</th>
+                    <th>Stability Score</th>
+                </tr>
+                {''.join(param_rows)}
+            </table>
+
+            <h2>Strategy Robustness</h2>
+            <p>{'' if 'robustness_results' in analysis else ''}</p>
+            <p>Overall assessment of strategy robustness: {robustness}</p>
+
+            <h2>Conclusion and Recommendations</h2>
+            <p>Based on the walk forward analysis, the following recommendations can be made:</p>
+            <ul>
+                <li>Probability of achieving 80%+ win rate in out-of-sample periods: {os_80plus_pct:.2%}</li>
+                <li>Parameter stability: {robustness}</li>
+                <li>Strategy performs best in: {preferred_market}</li>
+            </ul>
+
+            <p>Optimal Parameters: Consider using the most stable parameters identified in the analysis for live trading.</p>
+            <p>Risk Management: Based on observed drawdowns, it's recommended to use proper position sizing to limit risk to an acceptable level.</p>
+
+            <h3>Disclaimer</h3>
+            <p>Past performance, even in walk forward analysis, does not guarantee future results.</p>
+            <p>Markets change over time, and strategies may need to be adapted as conditions evolve.</p>
+            <p>Always use proper risk management when deploying any trading strategy.</p>
+        </body>
+        </html>
         """
-        
+
         return html_content
 
 
