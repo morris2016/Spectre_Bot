@@ -10,6 +10,7 @@ import sys
 import yaml
 import logging
 from typing import Dict, Any, Optional, List, Union
+from common.logger import get_logger
 from dataclasses import dataclass, field, asdict
 import json
 import socket
@@ -18,6 +19,8 @@ from dotenv import load_dotenv
 
 # Load environment variables from .env file if it exists
 load_dotenv()
+
+logger = get_logger(__name__)
 
 @dataclass
 class SystemSettings:
@@ -241,7 +244,7 @@ def load_config(config_path: str) -> bool:
     try:
         # Check if file exists
         if not os.path.exists(config_path):
-            print(f"Configuration file not found: {config_path}")
+            logger.error(f"Configuration file not found: {config_path}")
             return False
         
         # Load configuration from file
@@ -251,7 +254,7 @@ def load_config(config_path: str) -> bool:
             elif config_path.endswith('.json'):
                 config_data = json.load(f)
             else:
-                print(f"Unsupported configuration file format: {config_path}")
+                logger.error(f"Unsupported configuration file format: {config_path}")
                 return False
                 
         # Update settings with environment variables
@@ -289,13 +292,13 @@ def load_config(config_path: str) -> bool:
         errors = settings.validate()
         if errors:
             for error in errors:
-                print(f"Configuration error: {error}")
+                logger.error(f"Configuration error: {error}")
             return False
             
         return True
         
     except Exception as e:
-        print(f"Error loading configuration: {str(e)}")
+        logger.error(f"Error loading configuration: {str(e)}")
         return False
         
 def get_settings() -> SystemSettings:
