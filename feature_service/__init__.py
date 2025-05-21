@@ -258,28 +258,28 @@ def _auto_import_features():
             from feature_service.features import order_flow
             feature_modules.append(order_flow)
         except ImportError as e:
-            print(f"Warning: Could not import order_flow module: {e}")
+            logger.warning(f"Could not import order_flow module: {e}")
             
         try:
             from feature_service.features import pattern
             feature_modules.append(pattern)
         except ImportError as e:
-            print(f"Warning: Could not import pattern module: {e}")
+            logger.warning(f"Could not import pattern module: {e}")
             
         try:
             from feature_service.features import sentiment
             feature_modules.append(sentiment)
         except ImportError as e:
-            print(f"Warning: Could not import sentiment module: {e}")
+            logger.warning(f"Could not import sentiment module: {e}")
             
         try:
             from feature_service.features import volume
             feature_modules.append(volume)
         except ImportError as e:
-            print(f"Warning: Could not import volume module: {e}")
+            logger.warning(f"Could not import volume module: {e}")
         
     except ImportError as e:
-        print(f"Error importing feature modules: {e}")
+        logger.error(f"Error importing feature modules: {e}")
     
     return feature_modules
 
@@ -288,7 +288,7 @@ def shutdown_feature_service():
     """
     Gracefully shut down the feature service and release resources
     """
-    print("Shutting down feature service...")
+    logger.info("Shutting down feature service...")
     # Implementation of shutdown logic
 # Call auto-import function when module is loaded
 _auto_import_features()
