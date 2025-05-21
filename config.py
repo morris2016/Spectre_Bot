@@ -812,22 +812,3 @@ def load_config(path: str) -> Config:
         return config
     except Exception as e:
         raise ConfigurationError(f"Failed to load configuration: {str(e)}")
-
-def deep_merge_dicts(dict1: Dict, dict2: Dict) -> Dict:
-    """
-    Deep merge two dictionaries recursively.
-    
-    Args:
-        dict1: First dictionary
-        dict2: Second dictionary (values override dict1 if there are conflicts)
-        
-    Returns:
-        Merged dictionary
-    """
-    result = dict1.copy()
-    for key, value in dict2.items():
-        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
-            result[key] = deep_merge_dicts(result[key], value)
-        else:
-            result[key] = value
-    return result
