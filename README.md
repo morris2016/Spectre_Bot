@@ -56,6 +56,10 @@ The QuantumSpectre Elite Trading System is built with a modular, microservice-ba
    ```bash
    bash scripts/codex_setup.sh
    ```
+   *On Ubuntu 24.04 with CUDA support you can instead run:* 
+   ```bash
+   bash scripts/codex_cuda_setup.sh
+   ```
 
 4. Install ui dependencies:
    ```
