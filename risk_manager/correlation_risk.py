@@ -11,7 +11,7 @@ It prevents over-exposure to correlated assets and ensures proper diversificatio
 
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Optional, Tuple, Union, Any
+from typing import Dict, List, Optional, Tuple, Union, Any, Type
 import asyncio
 import logging
 from datetime import datetime, timedelta
@@ -23,7 +23,24 @@ from common.redis_client import RedisClient
 from common.constants import MAX_POSITION_CORRELATION, CORRELATION_LOOKBACK_PERIODS
 from common.exceptions import CorrelationCalculationError
 
-class CorrelationRiskManager:
+
+class BaseCorrelationRiskManager:
+    """Base class for correlation risk managers."""
+
+    registry: Dict[str, Type["BaseCorrelationRiskManager"]] = {}
+
+    def __init_subclass__(cls, name: Optional[str] = None, **kwargs) -> None:
+        super().__init_subclass__(**kwargs)
+        key = name or cls.__name__
+        BaseCorrelationRiskManager.registry[key] = cls
+
+    async def check_correlation_risk(self, *args, **kwargs):
+        raise NotImplementedError
+
+    async def adjust_position_size(self, *args, **kwargs):
+        raise NotImplementedError
+
+class CorrelationRiskManager(BaseCorrelationRiskManager):
     """
     The CorrelationRiskManager monitors and manages correlation risk across assets
     to prevent over-exposure to correlated markets and ensure proper diversification.
@@ -628,5 +645,16 @@ class CorrelationRiskManager:
                 "exposure": self._cluster_exposures.get(i, 0.0)
             }
             result["clusters"].append(cluster_info)
-        
+
         return result
+
+
+def get_correlation_risk_manager(name: str, *args, **kwargs) -> BaseCorrelationRiskManager:
+    """Instantiate a registered correlation risk manager by name."""
+    cls = BaseCorrelationRiskManager.registry.get(name)
+    if cls is None:
+        raise ValueError(f"Unknown correlation risk manager: {name}")
+    return cls(*args, **kwargs)
+
+
+__all__ = ["BaseCorrelationRiskManager", "get_correlation_risk_manager"]
