@@ -10,6 +10,13 @@ def test_load_config_defaults(tmp_path):
     cfg.validate()
 
 
+def test_load_config_no_directory(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    cfg = load_config("config.json")
+    assert isinstance(cfg, Config)
+    assert os.path.isfile(tmp_path / "config.json")
+
+
 def test_validate_missing_db_host():
     cfg = Config()
     cfg.data['database']['host'] = ''
