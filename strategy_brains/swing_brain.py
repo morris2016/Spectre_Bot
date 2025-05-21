@@ -222,7 +222,7 @@ class SwingBrain(BaseBrain):
                     "analysis_time": datetime.now(),
                     "last_signal_time": self.last_signal_time
                 }
-            }
+        }
             
             self.logger.info(f"Swing analysis complete. Market structure: {self.current_market_structure}, Opportunities: {len(opportunities)}")
             return analysis_results
@@ -1260,6 +1260,8 @@ class SwingBrain(BaseBrain):
             REGIME_TYPES.WEAK_TREND: 0.9,  # Swing trades often work well in weak trends
             REGIME_TYPES.RANGING: 1.0,     # Swing trades excel in ranging markets
             REGIME_TYPES.VOLATILE_RANGE: 0.7,
-            REGIME_TYPES.
-    
-    
+            REGIME_TYPES.CHOPPY: 0.6,
+        }
+
+        return regime_factors.get(self.current_market_regime, 0.8)
+
