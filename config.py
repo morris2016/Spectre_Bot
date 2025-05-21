@@ -479,8 +479,11 @@ class Config:
         """Return a top-level configuration section.
 
         If a configuration file has been loaded via :func:`load_config`, the
-        section will be read from that configuration instance.  Otherwise the
-        value from :data:`DEFAULT_CONFIG` is returned.
+        section will be read from that configuration instance. Otherwise the
+        value from :data:`DEFAULT_CONFIG` is returned. In other words, when no
+        config file has been loaded this method behaves like::
+
+            DEFAULT_CONFIG.get(section_name, default)
         """
         if cls._loaded_config is None:
             return DEFAULT_CONFIG.get(section_name, default)
@@ -761,22 +764,6 @@ class Config:
             return cls(data)
         except toml.TomlDecodeError as e:
             raise ConfigurationError(f"Invalid TOML: {str(e)}")
-
-    @classmethod
-    def get_section(cls, section_name: str, default: Any = None) -> Any:
-        """Return a top-level section from the default configuration.
-
-        This helper is used when a configuration file hasn't been loaded yet
-        but callers expect to access default values for a section.
-
-        Args:
-            section_name: Name of the section to retrieve.
-            default: Value to return if the section is not present.
-
-        Returns:
-            The section dictionary or ``default`` if missing.
-        """
-        return DEFAULT_CONFIG.get(section_name, default)
 
 def load_config(path: str) -> Config:
     """
