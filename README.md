@@ -57,9 +57,9 @@ The QuantumSpectre Elite Trading System is built with a modular, microservice-ba
    bash scripts/codex_setup.sh
    ```
 
-4. Install frontend dependencies:
+4. Install ui dependencies:
    ```
-   cd frontend
+   cd ui
    npm install
    ```
 
@@ -79,9 +79,9 @@ The QuantumSpectre Elite Trading System is built with a modular, microservice-ba
    python main.py
    ```
 
-8. In a separate terminal, start the frontend:
+8. In a separate terminal, start the ui:
    ```
-   cd frontend
+   cd ui
    npm start
    ```
 
