@@ -635,8 +635,8 @@ async def startup():
         # Load configuration
         config_path = args.config
         logger.info(f"Loading configuration from {config_path}")
-        logger.debug(f"Loaded configuration: {config}")
         config = load_config(config_path)
+        logger.debug(f"Loaded configuration: {config}")
         
         # Validate configuration
         logger.info("Validating configuration...")
