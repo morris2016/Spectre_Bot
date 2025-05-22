@@ -8,7 +8,7 @@ Feature Transformers Module
 This module provides various transformer classes for processing and transforming
 feature data in the QuantumSpectre Elite Trading System. These transformers handle
 normalization, scaling, filtering, and other data transformations required for
-accurate pattern recognition and signal generation with 80%+ win rates.
+accurate pattern recognition and signal generation aimed at high win rates.
 """
 
 from typing import Dict, List, Any, Optional, Union, Tuple, Callable

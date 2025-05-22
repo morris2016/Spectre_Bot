@@ -9,7 +9,7 @@ This module implements the main Intelligence service responsible for:
 - Managing the adaptive learning and evolution of trading strategies
 - Integrating multiple intelligence sources for high-confidence signals
 
-The Intelligence system is designed to achieve 80%+ win rates by combining
+The Intelligence system is designed to deliver high win rates by combining
 multiple analysis techniques and continuously adapting to market conditions.
 """
 
@@ -183,7 +183,7 @@ class IntelligenceService:
     
     This service coordinates all intelligence components, including pattern
     recognition, loophole detection, and adaptive learning systems to generate
-    high-confidence trading signals with 80%+ win rates.
+    high-confidence trading signals with consistently strong performance.
     """
     
     def __init__(self, config: Config):

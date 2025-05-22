@@ -7,8 +7,8 @@ Pattern Recognition Features Module
 
 This module provides sophisticated pattern recognition capabilities for the QuantumSpectre Elite
 Trading System. It includes advanced detection of various chart patterns, harmonic patterns,
-candlestick patterns, and custom pattern recognition algorithms designed to identify high-probability
-trading setups with 80%+ success rates.
+candlestick patterns, and custom pattern recognition algorithms designed to identify
+high-probability trading setups with strong success rates.
 """
 
 import numpy as np

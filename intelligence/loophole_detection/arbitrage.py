@@ -5,7 +5,7 @@ Arbitrage Loophole Detection Module
 
 This module implements advanced arbitrage opportunities detection across various markets,
 assets, and even within the same platform. It is designed to identify and exploit price
-discrepancies with extremely high success rates (80%+).
+discrepancies with consistently high success rates.
 
 Key capabilities:
 - Cross-exchange arbitrage detection (Binance-Deriv and others)
@@ -143,7 +143,7 @@ class ArbitrageDetector:
         self.config = {
             "min_profitable_spread": MIN_PROFITABLE_SPREAD_PERCENT,
             "max_execution_time_ms": MAX_EXECUTION_TIME_MS,
-            "min_success_probability": 0.80,  # Target 80%+ success rate
+            "min_success_probability": 0.80,  # Target high success rate
             "min_liquidity_requirements": MIN_LIQUIDITY_REQUIREMENTS,
             "confidence_threshold": DEFAULT_CONFIDENCE_THRESHOLD,
             "enable_cross_exchange": True,

@@ -42,7 +42,8 @@ class SignalGenerator:
     based on the aggregated recommendations from different councils.
     
     This component applies sophisticated filtering, confidence scoring, and
-    risk assessment to produce high-precision signals with 80%+ win rates.
+    risk assessment to produce high-precision signals with an emphasis on
+    consistent win rates.
     """
     
     def __init__(self, config: Dict[str, Any]):
