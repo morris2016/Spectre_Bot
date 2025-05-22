@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Union, Tuple
 import psutil
 from contextlib import contextmanager
+from functools import wraps
 
 
 from common.logger import get_logger
@@ -590,6 +591,53 @@ def get_default_collector():
 
 # Create a global performance tracker instance
 performance_tracker = MetricsCollector.get_instance("performance")
+
+
+def calculate_timing(func=None, *, metric_name: Optional[str] = None,
+                     collector: Optional[MetricsCollector] = None):
+    """Decorator to measure execution time and record via ``MetricsCollector``.
+
+    This decorator supports both synchronous and asynchronous callables. The
+    execution duration (in seconds) is recorded using ``collector.record_timing``.
+
+    Args:
+        func: The function to decorate when used without arguments.
+        metric_name: Optional metric name. Defaults to the function's ``__name__``.
+        collector: Optional ``MetricsCollector`` instance. Defaults to the
+            ``performance_tracker`` collector.
+
+    Returns:
+        Wrapped function that records timing information.
+    """
+
+    if func is None:
+        return lambda f: calculate_timing(
+            f, metric_name=metric_name, collector=collector
+        )
+
+    metric = metric_name or func.__name__
+    coll = collector or performance_tracker
+
+    if asyncio.iscoroutinefunction(func):
+        @wraps(func)
+        async def async_wrapper(*args, **kwargs):
+            start = time.perf_counter()
+            try:
+                return await func(*args, **kwargs)
+            finally:
+                coll.record_timing(metric, time.perf_counter() - start)
+
+        return async_wrapper
+
+    @wraps(func)
+    def sync_wrapper(*args, **kwargs):
+        start = time.perf_counter()
+        try:
+            return func(*args, **kwargs)
+        finally:
+            coll.record_timing(metric, time.perf_counter() - start)
+
+    return sync_wrapper
 
 def record_latency(name, value_ms, tags=None):
     """

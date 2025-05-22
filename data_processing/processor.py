@@ -23,7 +23,7 @@ from common.models.market_data import (
     Ticker, 
     OrderBook
 )
-from common.utils.metrics import calculate_timing
+from common.metrics import calculate_timing
 
 logger = get_logger("data_processor")
 

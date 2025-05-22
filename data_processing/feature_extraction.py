@@ -19,7 +19,7 @@ import os
 
 from common.config import settings
 from common.logger import get_logger
-from common.utils.metrics import calculate_timing
+from common.metrics import calculate_timing
 from common.models.feature import FeatureSet, Feature
 from common.exceptions import FeatureExtractionError
 
