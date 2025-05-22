@@ -685,7 +685,9 @@ class VotingSystem:
             'win_rate': 0,
             'avg_pnl': 0,
             'pnl_sum': 0,
-            'confidence_accuracy_correlation': 0
+            'confidence_accuracy_correlation': 0,
+            'confidences': [],
+            'successes': []
         })
         
         # Process historical decisions
@@ -707,15 +709,31 @@ class VotingSystem:
                 
                 # Track PnL
                 voter_metrics[voter]['pnl_sum'] += outcome_pnl
-                
-                # TODO: Add confidence-accuracy correlation calculation
-                # This requires more sophisticated statistical analysis
+
+                # Track confidence and whether this vote was correct for
+                # correlation analysis later
+                voter_metrics[voter]['confidences'].append(vote.get('confidence', 0))
+                voter_metrics[voter]['successes'].append(
+                    1 if vote['direction'] == record['decision']['direction'] and outcome_successful else 0
+                )
         
         # Calculate derived metrics
         for voter, metrics in voter_metrics.items():
             if metrics['total_votes'] > 0:
                 metrics['win_rate'] = metrics['correct_votes'] / metrics['total_votes']
                 metrics['avg_pnl'] = metrics['pnl_sum'] / metrics['total_votes']
+
+                # Calculate correlation between voter confidence and success
+                if len(set(metrics['successes'])) > 1 and len(metrics['confidences']) > 1:
+                    metrics['confidence_accuracy_correlation'] = float(
+                        np.corrcoef(metrics['confidences'], metrics['successes'])[0, 1]
+                    )
+                else:
+                    metrics['confidence_accuracy_correlation'] = 0.0
+
+                # Remove temporary lists before returning
+                del metrics['confidences']
+                del metrics['successes']
         
         return dict(voter_metrics)
     
