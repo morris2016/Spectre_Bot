@@ -91,7 +91,7 @@ class MLModelService:
         # Track model performance
         self.model_performance = {}
         
-        logger.info("ML Model Service initialized")
+        logger.info("ML Models Service initialized")
     
     async def start(self):
         """
@@ -111,7 +111,7 @@ class MLModelService:
         asyncio.create_task(self.periodic_model_evaluation())
         asyncio.create_task(self.model_cache_management())
         
-        logger.info("ML Model Service started")
+        logger.info("ML Models Service started")
     
     async def stop(self):
         """
@@ -125,7 +125,7 @@ class MLModelService:
         # Shutdown thread pool
         self.executor.shutdown(wait=True)
         
-        logger.info("ML Model Service stopped")
+        logger.info("ML Models Service stopped")
     
     async def training_consumer(self):
         """

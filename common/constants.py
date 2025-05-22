@@ -89,50 +89,50 @@ DEFAULT_MODEL_DIR = os.environ.get(
 # Service names and dependencies
 SERVICE_NAMES = {
     "data_ingest": "Data Ingestion Service",
-    "data_feed": "Data Feed Service",
+    "data_feeds": "Data Feeds Service",
     "feature_service": "Feature Service",
     "intelligence": "Intelligence Service",
-    "ml_model": "ML Model Service",
-    "strategy_brain": "Strategy Brain Service",
+    "ml_models": "ML Models Service",
+    "strategy_brains": "Strategy Brains Service",
     "brain_council": "Brain Council Service",
     "execution_engine": "Execution Engine Service",
     "risk_manager": "Risk Manager Service",
     "backtester": "Backtester Service",
     "monitoring": "Monitoring Service",
     "api_gateway": "API Gateway Service",
-    "ui_server": "UI Server"
+    "ui": "UI Service"
 }
 
 SERVICE_DEPENDENCIES = {
     "data_ingest": [],
-    "data_feed": ["data_ingest"],
-    "feature_service": ["data_feed"],
+    "data_feeds": ["data_ingest"],
+    "feature_service": ["data_feeds"],
     "intelligence": ["feature_service"],
-    "ml_model": ["feature_service"],
-    "strategy_brain": ["intelligence", "ml_model"],
-    "brain_council": ["strategy_brain"],
+    "ml_models": ["feature_service"],
+    "strategy_brains": ["intelligence", "ml_models"],
+    "brain_council": ["strategy_brains"],
     "execution_engine": ["brain_council", "risk_manager"],
-    "risk_manager": ["data_feed"],
-    "backtester": ["feature_service", "strategy_brain", "risk_manager"],
+    "risk_manager": ["data_feeds"],
+    "backtester": ["feature_service", "strategy_brains", "risk_manager"],
     "monitoring": [],
     "api_gateway": ["brain_council", "execution_engine", "monitoring"],
-    "ui_server": ["api_gateway"]
+    "ui": ["api_gateway"]
 }
 
 SERVICE_STARTUP_ORDER = [
     "data_ingest",
-    "data_feed",
+    "data_feeds",
     "feature_service",
     "intelligence",
-    "ml_model",
-    "strategy_brain",
+    "ml_models",
+    "strategy_brains",
     "risk_manager",
     "brain_council",
     "execution_engine",
     "backtester",
     "monitoring",
     "api_gateway",
-    "ui_server"
+    "ui"
 ]
 
 DATA_INGEST_METRICS_PREFIX = "data_ingest"
