@@ -291,22 +291,26 @@ class SentimentFeatures(BaseFeature):
         Returns:
             Dict with source keys and lists of sentiment entries
         """
-        # This would normally query the database
-        # For this implementation, we'll retrieve it from ts_storage
-        
-        # Create time range
         end_time = datetime.datetime.now()
         start_time = end_time - datetime.timedelta(hours=lookback_hours)
-        
-        # Retrieve sentiment data
+
         sentiment_data = {}
-        
-        # TODO: Replace with actual database query in production
-        # For now, simulate with ts_storage
+
         for source in sources:
             try:
-                # Simulate retrieving sentiment data
-                sentiment_data[source] = self._simulate_sentiment_data(symbol, source, start_time, end_time)
+                entries = self.ts_storage.get_sentiment(
+                    symbol=symbol,
+                    timeframe="1h",
+                    source=source,
+                    start_time=start_time,
+                    end_time=end_time,
+                    limit=None,
+                )
+
+                if not entries:
+                    entries = self._simulate_sentiment_data(symbol, source, start_time, end_time)
+
+                sentiment_data[source] = entries
             except Exception as e:
                 logger.error(f"Error retrieving sentiment data for {symbol} from {source}: {str(e)}")
         
