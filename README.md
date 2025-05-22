@@ -52,7 +52,7 @@ The QuantumSpectre Elite Trading System is built with a modular, microservice-ba
    ```
    Optional packages can be added later with `pip install -r requirements.txt`.
 
-   The optional ML stack now requires `scikit-learn>=1.6.0,<2.0`. Ensure
+   The optional ML stack now requires `scikit-learn>=1.3,<2.0`. Ensure
    your environment includes compatible versions of `shap`, `boruta`, and
    `category_encoders` if you install the full requirements file.
    
