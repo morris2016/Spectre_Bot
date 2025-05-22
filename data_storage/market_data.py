@@ -1840,5 +1840,13 @@ class MarketDataStore:
         
         # Close database client
         await self.db_client.close()
-        
+
         self.logger.info("Market data store closed")
+
+# Backward compatibility for older modules
+MarketDataStorage = MarketDataStore
+
+__all__ = [
+    "MarketDataStore",
+    "MarketDataStorage",
+]
