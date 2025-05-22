@@ -82,6 +82,7 @@ class OrderFlowBrain(StrategyBrain):
         "learning_rate": 0.025,               # Learning rate for adaptive parameters
         "memory_length": 500,                 # Number of periods to keep in memory
         "session_reset": False,               # Reset accumulated data at session boundaries
+        "volume_lookback": 20,                # Lookback periods for volume comparison
     }
     
     def __init__(self, config: Config, asset_id: str, timeframe: str, **kwargs):
@@ -120,6 +121,7 @@ class OrderFlowBrain(StrategyBrain):
         self.significant_transactions = deque(maxlen=self.params["memory_length"])
         self.iceberg_detections = deque(maxlen=self.params["memory_length"])
         self.liquidity_events = deque(maxlen=self.params["memory_length"])
+        self.recent_cluster_volumes = deque(maxlen=50)
         
         # Detected patterns and states
         self.current_ob_imbalance = 0.0
@@ -610,7 +612,8 @@ class OrderFlowBrain(StrategyBrain):
         self.delta_history.append({
             'timestamp': candle['timestamp'],
             'delta': delta,
-            'close': candle['close']
+            'close': candle['close'],
+            'volume': candle.get('volume', 0)
         })
         
         # Update current delta
@@ -746,7 +749,17 @@ class OrderFlowBrain(StrategyBrain):
             
             # Check total volume versus recent average
             total_volume = buy_volume + sell_volume
-            # TODO: Compare against recent average volume
+            recent_avg = (
+                np.mean(self.recent_cluster_volumes)
+                if self.recent_cluster_volumes
+                else 0
+            )
+            if self.recent_cluster_volumes and total_volume > recent_avg:
+                is_significant = True
+                significance_reason.append("volume_spike")
+
+            # Update cluster volume history
+            self.recent_cluster_volumes.append(total_volume)
             
             if is_significant:
                 self.significant_transactions.append({
@@ -1397,12 +1410,16 @@ class OrderFlowBrain(StrategyBrain):
         # Check body to range ratio
         body_range_ratio = body_size / candle_range if candle_range > 0 else 0
         
-        # A candle is significant if:
-        # 1. It has a large body (>60% of range)
-        # 2. Above average volume
-        # TODO: Compare with average volume
-        
-        return body_range_ratio > 0.6
+        lookback = self.params.get("volume_lookback", 20)
+        recent = list(self.delta_history)[-lookback:]
+        avg_volume = (
+            sum(item.get("volume", 0) for item in recent) / len(recent)
+            if recent
+            else 0
+        )
+        high_volume = candle.get("volume", 0) > avg_volume if avg_volume > 0 else False
+
+        return body_range_ratio > 0.6 and high_volume
     
     def _get_current_price(self) -> float:
         """
