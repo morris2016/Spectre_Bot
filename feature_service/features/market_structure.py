@@ -1423,30 +1423,5 @@ class MarketStructureFeature(BaseFeature):
         else:
             return False, "", 0.0
 
-# In feature_service/features/market_structure.py
-
-class MarketStructureAnalyzer:
-    """
-    Analyzes market structure patterns like support/resistance, 
-    trends, and chart patterns
-    """
-    def __init__(self, timeframe='1h'):
-        self.timeframe = timeframe
-        
-    def identify_support_resistance(self, price_data, window=20):
-        """Identify support and resistance levels"""
-        # Implementation
-        pass
-    
-    def detect_trend(self, price_data):
-        """Detect current market trend (bullish, bearish, sideways)"""
-        # Implementation
-        pass
-    
-    def find_chart_patterns(self, price_data):
-        """Find common chart patterns"""
-        # Implementation
-        pass
-
 # Add MarketStructureFeatures class (plural form) as an alias for MarketStructureFeature
 MarketStructureFeatures = MarketStructureFeature
