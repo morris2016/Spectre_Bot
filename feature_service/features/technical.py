@@ -9,7 +9,7 @@ and adaptive parameterization for effective pattern recognition and signal gener
 
 import numpy as np
 import pandas as pd
-import talib
+import pandas_ta as ta
 from numba import jit, cuda
 from typing import Dict, List, Union, Tuple, Optional, Any
 from common.logger import get_logger
@@ -93,9 +93,9 @@ class TechnicalFeatures(BaseFeature):
         # Set up the thread pool for parallel calculation
         self.executor = ThreadPoolExecutor(max_workers=self.max_workers)
         
-        # Suppress known TA-Lib warnings
-        warnings.filterwarnings('ignore', category=RuntimeWarning, 
-                               module='talib')
+        # Suppress pandas_ta warnings
+        warnings.filterwarnings('ignore', category=RuntimeWarning,
+                               module='pandas_ta')
     
     @timeit
     def calculate_features(self, data: pd.DataFrame) -> pd.DataFrame:
@@ -233,7 +233,7 @@ class TechnicalFeatures(BaseFeature):
             for period in periods:
                 if period > 0:
                     col_name = f'sma_{period}'
-                    result[col_name] = talib.SMA(data['close'].values, timeperiod=period)
+                    result[col_name] = ta.sma(data['close'], length=period)
             
             return result
         except Exception as e:
@@ -249,7 +249,7 @@ class TechnicalFeatures(BaseFeature):
             for period in periods:
                 if period > 0:
                     col_name = f'ema_{period}'
-                    result[col_name] = talib.EMA(data['close'].values, timeperiod=period)
+                    result[col_name] = ta.ema(data['close'], length=period)
             
             return result
         except Exception as e:
@@ -266,13 +266,11 @@ class TechnicalFeatures(BaseFeature):
             slowperiod = params.get('slowperiod', 26)
             signalperiod = params.get('signalperiod', 9)
             
-            macd, macdsignal, macdhist = talib.MACD(
-                data['close'].values,
-                fastperiod=fastperiod,
-                slowperiod=slowperiod,
-                signalperiod=signalperiod
-            )
-            
+            macd_df = ta.macd(data['close'], fast=fastperiod, slow=slowperiod, signal=signalperiod)
+            macd = macd_df.iloc[:, 0]
+            macdsignal = macd_df.iloc[:, 2]
+            macdhist = macd_df.iloc[:, 1]
+
             result['macd'] = macd
             result['macdsignal'] = macdsignal
             result['macdhist'] = macdhist
@@ -299,7 +297,7 @@ class TechnicalFeatures(BaseFeature):
             for period in periods:
                 if period > 0:
                     col_name = f'rsi_{period}'
-                    result[col_name] = talib.RSI(data['close'].values, timeperiod=period)
+                    result[col_name] = ta.rsi(data['close'], length=period)
             
             # Set the default period as main RSI
             default_period = self.indicator_params.get('RSI', {}).get('default_period', 14)
@@ -410,13 +408,10 @@ class TechnicalFeatures(BaseFeature):
             nbdevdn = params.get('nbdevdn', 2)
             matype = params.get('matype', 0)  # 0=SMA
             
-            upperband, middleband, lowerband = talib.BBANDS(
-                data['close'].values,
-                timeperiod=period,
-                nbdevup=nbdevup,
-                nbdevdn=nbdevdn,
-                matype=matype
-            )
+            bb = ta.bbands(data['close'], length=period, std=nbdevup)
+            upperband = bb.iloc[:, 0]
+            middleband = bb.iloc[:, 1]
+            lowerband = bb.iloc[:, 2]
             
             result['bb_upper'] = upperband
             result['bb_middle'] = middleband
@@ -449,12 +444,7 @@ class TechnicalFeatures(BaseFeature):
             for period in periods:
                 if period > 0:
                     col_name = f'atr_{period}'
-                    result[col_name] = talib.ATR(
-                        data['high'].values,
-                        data['low'].values,
-                        data['close'].values,
-                        timeperiod=period
-                    )
+                    result[col_name] = ta.atr(high=data['high'], low=data['low'], close=data['close'], length=period)
             
             # Set the default period as main ATR
             default_period = self.indicator_params.get('ATR', {}).get('default_period', 14)
@@ -483,26 +473,10 @@ class TechnicalFeatures(BaseFeature):
             
             period = params.get('period', 14)
             
-            result['adx'] = talib.ADX(
-                data['high'].values,
-                data['low'].values,
-                data['close'].values,
-                timeperiod=period
-            )
-            
-            result['plus_di'] = talib.PLUS_DI(
-                data['high'].values,
-                data['low'].values,
-                data['close'].values,
-                timeperiod=period
-            )
-            
-            result['minus_di'] = talib.MINUS_DI(
-                data['high'].values,
-                data['low'].values,
-                data['close'].values,
-                timeperiod=period
-            )
+            adx_df = ta.adx(high=data['high'], low=data['low'], close=data['close'], length=period)
+            result['adx'] = adx_df['ADX_{}'.format(period)]
+            result['plus_di'] = adx_df['DMP_{}'.format(period)]
+            result['minus_di'] = adx_df['DMN_{}'.format(period)]
             
             # Trend strength classification
             result['trend_strength'] = pd.cut(
@@ -532,16 +506,10 @@ class TechnicalFeatures(BaseFeature):
             slowd_period = params.get('slowd_period', 3)
             slowd_matype = params.get('slowd_matype', 0)
             
-            slowk, slowd = talib.STOCH(
-                data['high'].values,
-                data['low'].values,
-                data['close'].values,
-                fastk_period=fastk_period,
-                slowk_period=slowk_period,
-                slowk_matype=slowk_matype,
-                slowd_period=slowd_period,
-                slowd_matype=slowd_matype
-            )
+            stoch_df = ta.stoch(high=data['high'], low=data['low'], close=data['close'],
+                                k=fastk_period, d=slowd_period, smooth_k=slowk_period)
+            slowk = stoch_df.iloc[:, 0]
+            slowd = stoch_df.iloc[:, 1]
             
             result['stoch_k'] = slowk
             result['stoch_d'] = slowd
@@ -574,12 +542,7 @@ class TechnicalFeatures(BaseFeature):
             
             period = params.get('period', 14)
             
-            result['cci'] = talib.CCI(
-                data['high'].values,
-                data['low'].values,
-                data['close'].values,
-                timeperiod=period
-            )
+            result['cci'] = ta.cci(high=data['high'], low=data['low'], close=data['close'], length=period)
             
             # Overbought/oversold signals
             overbought = params.get('overbought', 100)
@@ -708,12 +671,7 @@ class TechnicalFeatures(BaseFeature):
             # Ensure we have ATR available
             if 'atr' not in data.columns:
                 # Calculate ATR if not already present
-                atr = talib.ATR(
-                    data['high'].values,
-                    data['low'].values,
-                    data['close'].values,
-                    timeperiod=period
-                )
+                atr = ta.atr(high=data['high'], low=data['low'], close=data['close'], length=period)
             else:
                 atr = data['atr'].values
             
@@ -792,16 +750,11 @@ class TechnicalFeatures(BaseFeature):
             multiplier = params.get('multiplier', 2)
             
             # Calculate EMA
-            ema = talib.EMA(data['close'].values, timeperiod=period)
+            ema = ta.ema(data['close'], length=period)
             
             # Ensure we have ATR
             if 'atr' not in data.columns:
-                atr = talib.ATR(
-                    data['high'].values,
-                    data['low'].values,
-                    data['close'].values,
-                    timeperiod=period
-                )
+                atr = ta.atr(high=data['high'], low=data['low'], close=data['close'], length=period)
             else:
                 atr = data['atr'].values
             

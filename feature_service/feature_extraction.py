@@ -15,8 +15,7 @@ from typing import Dict, List, Tuple, Any, Optional, Union, Callable
 import inspect
 from functools import wraps, lru_cache
 import time
-import talib
-import talib.abstract as ta
+import pandas_ta as ta
 from scipy import stats, signal
 import pywt
 from sklearn import preprocessing
@@ -313,7 +312,7 @@ class FeatureExtractor:
             Series containing SMA values
         """
         period = params.get('sma_period', 14)
-        return ta.SMA(data, timeperiod=period)
+        return ta.sma(data['close'], length=period)
     
     def sma_gpu(self, data: cudf.DataFrame, params: Dict[str, Any]) -> cudf.Series:
         """GPU-accelerated SMA calculation."""
@@ -334,7 +333,7 @@ class FeatureExtractor:
             Series containing EMA values
         """
         period = params.get('ema_period', 14)
-        return ta.EMA(data, timeperiod=period)
+        return ta.ema(data['close'], length=period)
     
     def ema_gpu(self, data: cudf.DataFrame, params: Dict[str, Any]) -> cudf.Series:
         """GPU-accelerated EMA calculation."""
@@ -355,7 +354,7 @@ class FeatureExtractor:
             Series containing RSI values
         """
         period = params.get('rsi_period', 14)
-        return ta.RSI(data, timeperiod=period)
+        return ta.rsi(data['close'], length=period)
     
     @feature_calculation
     def macd(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
@@ -376,14 +375,8 @@ class FeatureExtractor:
         slow_period = params.get('macd_slow_period', 26)
         signal_period = params.get('macd_signal_period', 9)
         
-        macd_line, signal_line, hist = ta.MACD(
-            data,
-            fastperiod=fast_period,
-            slowperiod=slow_period,
-            signalperiod=signal_period
-        )
-        
-        return macd_line
+        macd_df = ta.macd(data['close'], fast=fast_period, slow=slow_period, signal=signal_period)
+        return macd_df.iloc[:, 0]
     
     @feature_calculation
     def macd_signal(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
@@ -404,14 +397,8 @@ class FeatureExtractor:
         slow_period = params.get('macd_slow_period', 26)
         signal_period = params.get('macd_signal_period', 9)
         
-        macd_line, signal_line, hist = ta.MACD(
-            data,
-            fastperiod=fast_period,
-            slowperiod=slow_period,
-            signalperiod=signal_period
-        )
-        
-        return signal_line
+        macd_df = ta.macd(data['close'], fast=fast_period, slow=slow_period, signal=signal_period)
+        return macd_df.iloc[:, 2]
     
     @feature_calculation
     def macd_hist(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
@@ -432,14 +419,8 @@ class FeatureExtractor:
         slow_period = params.get('macd_slow_period', 26)
         signal_period = params.get('macd_signal_period', 9)
         
-        macd_line, signal_line, hist = ta.MACD(
-            data,
-            fastperiod=fast_period,
-            slowperiod=slow_period,
-            signalperiod=signal_period
-        )
-        
-        return hist
+        macd_df = ta.macd(data['close'], fast=fast_period, slow=slow_period, signal=signal_period)
+        return macd_df.iloc[:, 1]
     
     @feature_calculation
     def bollinger_upper(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
@@ -458,15 +439,8 @@ class FeatureExtractor:
         period = params.get('bb_period', 20)
         std_dev = params.get('bb_std_dev', 2.0)
         
-        upper, middle, lower = ta.BBANDS(
-            data,
-            timeperiod=period,
-            nbdevup=std_dev,
-            nbdevdn=std_dev,
-            matype=0
-        )
-        
-        return upper
+        bb = ta.bbands(data['close'], length=period, std=std_dev)
+        return bb.iloc[:, 0]
     
     @feature_calculation
     def bollinger_middle(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
@@ -485,15 +459,8 @@ class FeatureExtractor:
         period = params.get('bb_period', 20)
         std_dev = params.get('bb_std_dev', 2.0)
         
-        upper, middle, lower = ta.BBANDS(
-            data,
-            timeperiod=period,
-            nbdevup=std_dev,
-            nbdevdn=std_dev,
-            matype=0
-        )
-        
-        return middle
+        bb = ta.bbands(data['close'], length=period, std=std_dev)
+        return bb.iloc[:, 1]
     
     @feature_calculation
     def bollinger_lower(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
@@ -512,15 +479,8 @@ class FeatureExtractor:
         period = params.get('bb_period', 20)
         std_dev = params.get('bb_std_dev', 2.0)
         
-        upper, middle, lower = ta.BBANDS(
-            data,
-            timeperiod=period,
-            nbdevup=std_dev,
-            nbdevdn=std_dev,
-            matype=0
-        )
-        
-        return lower
+        bb = ta.bbands(data['close'], length=period, std=std_dev)
+        return bb.iloc[:, 2]
     
     @feature_calculation
     def bollinger_width(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
@@ -539,16 +499,8 @@ class FeatureExtractor:
         period = params.get('bb_period', 20)
         std_dev = params.get('bb_std_dev', 2.0)
         
-        upper, middle, lower = ta.BBANDS(
-            data,
-            timeperiod=period,
-            nbdevup=std_dev,
-            nbdevdn=std_dev,
-            matype=0
-        )
-        
-        # Calculate bandwidth: (upper - lower) / middle
-        bandwidth = (upper - lower) / middle
+        bb = ta.bbands(data['close'], length=period, std=std_dev)
+        bandwidth = (bb.iloc[:, 0] - bb.iloc[:, 2]) / bb.iloc[:, 1]
         return bandwidth
     
     @feature_calculation
@@ -570,14 +522,10 @@ class FeatureExtractor:
         d_period = params.get('stoch_d_period', 3)
         slowing = params.get('stoch_slowing', 3)
         
-        k, d = ta.STOCH(
-            data,
-            fastk_period=k_period,
-            slowk_period=slowing,
-            slowk_matype=0,
-            slowd_period=d_period,
-            slowd_matype=0
-        )
+        stoch = ta.stoch(high=data['high'], low=data['low'], close=data['close'],
+                          k=k_period, d=d_period, smooth_k=slowing)
+        k = stoch.iloc[:, 0]
+        d = stoch.iloc[:, 1]
         
         return k
     
@@ -600,16 +548,9 @@ class FeatureExtractor:
         d_period = params.get('stoch_d_period', 3)
         slowing = params.get('stoch_slowing', 3)
         
-        k, d = ta.STOCH(
-            data,
-            fastk_period=k_period,
-            slowk_period=slowing,
-            slowk_matype=0,
-            slowd_period=d_period,
-            slowd_matype=0
-        )
-        
-        return d
+        stoch = ta.stoch(high=data['high'], low=data['low'], close=data['close'],
+                          k=k_period, d=d_period, smooth_k=slowing)
+        return stoch.iloc[:, 1]
     
     @feature_calculation
     def atr(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
@@ -625,7 +566,7 @@ class FeatureExtractor:
             Series containing ATR values
         """
         period = params.get('atr_period', 14)
-        return ta.ATR(data, timeperiod=period)
+        return ta.atr(high=data['high'], low=data['low'], close=data['close'], length=period)
     
     @feature_calculation
     def adx(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
@@ -641,7 +582,7 @@ class FeatureExtractor:
             Series containing ADX values
         """
         period = params.get('adx_period', 14)
-        return ta.ADX(data, timeperiod=period)
+        return ta.adx(high=data['high'], low=data['low'], close=data['close'], length=period)
     
     @feature_calculation
     def plus_di(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
@@ -657,7 +598,7 @@ class FeatureExtractor:
             Series containing +DI values
         """
         period = params.get('di_period', 14)
-        return ta.PLUS_DI(data, timeperiod=period)
+        return ta.adx(high=data['high'], low=data['low'], close=data['close'], length=period)['DMP_{}_{}'.format(period, period)]
     
     @feature_calculation
     def minus_di(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
@@ -673,7 +614,7 @@ class FeatureExtractor:
             Series containing -DI values
         """
         period = params.get('di_period', 14)
-        return ta.MINUS_DI(data, timeperiod=period)
+        return ta.adx(high=data['high'], low=data['low'], close=data['close'], length=period)['DMN_{}_{}'.format(period, period)]
     
     @feature_calculation
     def obv(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
@@ -687,7 +628,7 @@ class FeatureExtractor:
         Returns:
             Series containing OBV values
         """
-        return ta.OBV(data)
+        return ta.obv(close=data['close'], volume=data['volume'])
     
     @feature_calculation
     def cci(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
@@ -703,7 +644,7 @@ class FeatureExtractor:
             Series containing CCI values
         """
         period = params.get('cci_period', 14)
-        return ta.CCI(data, timeperiod=period)
+        return ta.cci(high=data['high'], low=data['low'], close=data['close'], length=period)
     
     @feature_calculation
     def mfi(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
@@ -719,7 +660,7 @@ class FeatureExtractor:
             Series containing MFI values
         """
         period = params.get('mfi_period', 14)
-        return ta.MFI(data, timeperiod=period)
+        return ta.mfi(high=data['high'], low=data['low'], close=data['close'], volume=data['volume'], length=period)
     
     @feature_calculation
     def williams_r(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
@@ -735,7 +676,7 @@ class FeatureExtractor:
             Series containing Williams %R values
         """
         period = params.get('willr_period', 14)
-        return ta.WILLR(data, timeperiod=period)
+        return ta.willr(high=data['high'], low=data['low'], close=data['close'], length=period)
     
     @feature_calculation
     def ichimoku_conversion(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
@@ -805,7 +746,7 @@ class FeatureExtractor:
         middle = typical_price.ewm(span=period, adjust=False).mean()
         
         # Calculate ATR
-        atr = ta.ATR(data, timeperiod=atr_period)
+        atr = ta.atr(high=data['high'], low=data['low'], close=data['close'], length=atr_period)
         
         # Calculate upper band
         upper = middle + (multiplier * atr)
@@ -857,7 +798,7 @@ class FeatureExtractor:
         middle = typical_price.ewm(span=period, adjust=False).mean()
         
         # Calculate ATR
-        atr = ta.ATR(data, timeperiod=atr_period)
+        atr = ta.atr(high=data['high'], low=data['low'], close=data['close'], length=atr_period)
         
         # Calculate lower band
         lower = middle - (multiplier * atr)
@@ -915,7 +856,7 @@ class FeatureExtractor:
             Series containing TRIX values
         """
         period = params.get('trix_period', 14)
-        return ta.TRIX(data, timeperiod=period)
+        return ta.trix(data['close'], length=period)
     
     @feature_calculation
     def rate_of_change(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
@@ -931,7 +872,7 @@ class FeatureExtractor:
             Series containing ROC values
         """
         period = params.get('roc_period', 10)
-        return ta.ROC(data, timeperiod=period)
+        return ta.roc(data['close'], length=period)
     
     @feature_calculation
     def awesome_oscillator(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
@@ -980,7 +921,7 @@ class FeatureExtractor:
         threshold = params.get('trend_threshold', 25)
         
         # Calculate ADX
-        adx = ta.ADX(data, timeperiod=period)
+        adx = ta.adx(high=data['high'], low=data['low'], close=data['close'], length=period)
         
         # Normalize to 0-1 range with threshold
         trend_strength = (adx - threshold).clip(lower=0) / (100 - threshold)
@@ -1005,7 +946,7 @@ class FeatureExtractor:
         multiplier = params.get('supertrend_multiplier', 3.0)
         
         # Calculate ATR
-        atr = ta.ATR(data, timeperiod=period)
+        atr = ta.atr(high=data['high'], low=data['low'], close=data['close'], length=period)
         
         # Calculate basic upper and lower bands
         hl2 = (data['high'] + data['low']) / 2
@@ -1420,7 +1361,7 @@ class FeatureExtractor:
         lookback = params.get('divergence_lookback', 20)
         
         # Calculate RSI
-        rsi = ta.RSI(data, timeperiod=rsi_period)
+        rsi = ta.rsi(data['close'], length=rsi_period)
         
         # Initialize divergence series
         divergence = pd.Series(0, index=data.index)

@@ -20,7 +20,7 @@ import logging
 from dataclasses import dataclass
 from scipy.signal import argrelextrema
 from scipy.stats import linregress
-import talib
+import pandas_ta as ta
 
 from common.logger import get_logger
 from common.utils import parallelize_calculation, window_calculation
@@ -957,11 +957,10 @@ class MarketStructureFeature(BaseFeature):
         try:
             # Calculate some basic indicators for phase determination
             df_temp = df.copy()
-            df_temp['sma20'] = talib.SMA(df['close'].values, timeperiod=20)
-            df_temp['sma50'] = talib.SMA(df['close'].values, timeperiod=50)
-            df_temp['sma200'] = talib.SMA(df['close'].values, timeperiod=200)
-            df_temp['atr'] = talib.ATR(df['high'].values, df['low'].values, 
-                                      df['close'].values, timeperiod=14)
+            df_temp['sma20'] = ta.sma(df['close'], length=20)
+            df_temp['sma50'] = ta.sma(df['close'], length=50)
+            df_temp['sma200'] = ta.sma(df['close'], length=200)
+            df_temp['atr'] = ta.atr(high=df['high'], low=df['low'], close=df['close'], length=14)
             
             # Calculate trend direction and strength
             df_temp['trend_direction'] = np.where(df_temp['sma20'] > df_temp['sma50'], 1, 
@@ -1058,19 +1057,17 @@ class MarketStructureFeature(BaseFeature):
             # Use multiple indicators to gauge trend strength
             # 1. Moving average directions
             df_temp = df.copy()
-            df_temp['sma20'] = talib.SMA(df['close'].values, timeperiod=20)
-            df_temp['sma50'] = talib.SMA(df['close'].values, timeperiod=50)
-            df_temp['sma100'] = talib.SMA(df['close'].values, timeperiod=100)
+            df_temp['sma20'] = ta.sma(df['close'], length=20)
+            df_temp['sma50'] = ta.sma(df['close'], length=50)
+            df_temp['sma100'] = ta.sma(df['close'], length=100)
             
             # 2. ADX for trend strength
-            df_temp['adx'] = talib.ADX(df['high'].values, df['low'].values, 
-                                      df['close'].values, timeperiod=14)
+            df_temp['adx'] = ta.adx(high=df['high'], low=df['low'], close=df['close'], length=14)['ADX_14']
             
             # 3. MACD for momentum
-            macd, macd_signal, _ = talib.MACD(df['close'].values, 
-                                             fastperiod=12, slowperiod=26, signalperiod=9)
-            df_temp['macd'] = macd
-            df_temp['macd_signal'] = macd_signal
+            macd_df = ta.macd(df['close'], fast=12, slow=26, signal=9)
+            df_temp['macd'] = macd_df.iloc[:, 0]
+            df_temp['macd_signal'] = macd_df.iloc[:, 2]
             
             # Calculate trend strength components
             ma_alignment = np.zeros(len(df))

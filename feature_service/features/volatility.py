@@ -9,7 +9,7 @@ and adaptive parameterization for effective market regime detection and risk man
 
 import numpy as np
 import pandas as pd
-import talib
+import pandas_ta as ta
 from numba import jit
 from typing import Dict, List, Union, Tuple, Optional, Any
 from common.logger import get_logger
@@ -96,9 +96,9 @@ class VolatilityFeatures(BaseFeature):
         # Set up the thread pool for parallel calculation
         self.executor = ThreadPoolExecutor(max_workers=self.max_workers)
         
-        # Suppress known TA-Lib warnings
-        warnings.filterwarnings('ignore', category=RuntimeWarning, 
-                               module='talib')
+        # Suppress pandas_ta warnings
+        warnings.filterwarnings('ignore', category=RuntimeWarning,
+                               module='pandas_ta')
     
     @timeit
     def calculate_features(self, data: pd.DataFrame) -> pd.DataFrame:
@@ -278,12 +278,7 @@ class VolatilityFeatures(BaseFeature):
             for period in periods:
                 if period > 0:
                     col_name = f'atr_{period}'
-                    result[col_name] = talib.ATR(
-                        data['high'].values,
-                        data['low'].values,
-                        data['close'].values,
-                        timeperiod=period
-                    )
+                    result[col_name] = ta.atr(high=data['high'], low=data['low'], close=data['close'], length=period)
             
             # Set default period as main ATR
             default_period = params.get('default_period', 14)
@@ -417,11 +412,7 @@ class VolatilityFeatures(BaseFeature):
             # 1. Current high - current low
             # 2. Absolute value of current high - previous close
             # 3. Absolute value of current low - previous close
-            result['true_range'] = talib.TRANGE(
-                data['high'].values,
-                data['low'].values,
-                data['close'].values
-            )
+            result['true_range'] = ta.true_range(high=data['high'], low=data['low'], close=data['close'])
             
             # True Range as percentage of close price
             result['true_range_percent'] = result['true_range'] / data['close'] * 100
@@ -670,19 +661,14 @@ class VolatilityFeatures(BaseFeature):
             
             # Calculate ATR if not already in the result
             if 'atr' not in result.columns:
-                atr = talib.ATR(
-                    data['high'].values,
-                    data['low'].values,
-                    data['close'].values,
-                    timeperiod=20
-                )
+                atr = ta.atr(high=data['high'], low=data['low'], close=data['close'], length=20)
             else:
                 atr = result['atr'].values
             
             for period in periods:
                 for multiplier in multipliers:
                     # Calculate EMA
-                    ema = talib.EMA(data['close'].values, timeperiod=period)
+                    ema = ta.ema(data['close'], length=period)
                     
                     # Calculate Keltner Channels
                     upper = ema + multiplier * atr

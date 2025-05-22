@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 from typing import Dict, List, Tuple, Union, Optional, Any, Callable
 from enum import Enum, auto
-import talib
+import pandas_ta as ta
 from dataclasses import dataclass
 import logging
 from scipy import stats
@@ -404,7 +404,7 @@ class CandlestickPatterns:
         
         detected_patterns = []
         
-        # Run TALib pattern recognition functions
+        # Run pandas_ta pattern recognition functions
         talib_patterns = self._detect_talib_patterns(df)
         
         # Run custom pattern detection functions
@@ -433,7 +433,7 @@ class CandlestickPatterns:
 
     def _detect_talib_patterns(self, df: pd.DataFrame) -> List[CandlestickPattern]:
         """
-        Detect patterns using TALib functions.
+        Detect patterns using pandas_ta functions.
         
         Args:
             df: DataFrame containing OHLCV data
@@ -443,77 +443,37 @@ class CandlestickPatterns:
         """
         patterns = []
         
-        # Define TALib pattern functions to use
-        talib_patterns = {
-            # Single candle patterns
-            'CDL_DOJI': 'doji',
-            'CDL_HAMMER': 'hammer',
-            'CDL_INVERTEDHAMMER': 'inverted_hammer',
-            'CDL_HANGINGMAN': 'hanging_man',
-            'CDL_SHOOTINGSTAR': 'shooting_star',
-            'CDL_SPINNINGTOP': 'spinning_top',
-            'CDL_MARUBOZU': 'marubozu',
-            
-            # Two candle patterns
-            'CDL_ENGULFING': 'engulfing',  # Will be processed as bullish or bearish
-            'CDL_HARAMI': 'harami',  # Will be processed as bullish or bearish
-            'CDL_PIERCINGLINE': 'piercing_line',
-            'CDL_DARKCLOUDCOVER': 'dark_cloud_cover',
-            'CDL_TWEEZERBTM': 'tweezer_bottom',
-            'CDL_TWEEZERTOP': 'tweezer_top',
-            'CDL_MATCHINGLOW': 'matching_low',
-            'CDL_KICKING': 'kicking',  # Will be processed as bullish or bearish
-            'CDL_BELTHOLD': 'belt_hold',  # Will be processed as bullish or bearish
-            
-            # Three candle patterns
-            'CDL_MORNINGSTAR': 'morning_star',
-            'CDL_EVENINGSTAR': 'evening_star',
-            'CDL_3WHITESOLDIERS': 'three_white_soldiers',
-            'CDL_3BLACKCROWS': 'three_black_crows',
-            'CDL_3INSIDE': 'three_inside',  # Will be processed as up or down
-            'CDL_3OUTSIDE': 'three_outside',  # Will be processed as up or down
-            'CDL_UPSIDEGAP2CROWS': 'upside_gap_two_crows',
-            'CDL_TASUKIGAP': 'tasuki_gap',  # Will be processed as bullish or bearish
-            'CDL_3STARSINSOUTH': 'three_stars_in_the_south',
-            'CDL_HIKKAKE': 'hikkake',  # Will be processed as bullish or bearish
-            
-            # Four or more candle patterns
-            'CDL_CONCEALBABYSWALL': 'concealing_baby_swallow',
-            'CDL_3LINESTRIKE': 'three_line_strike',  # Will be processed as bullish or bearish
-            'CDL_LADDERBOTTOM': 'ladder_bottom',
-            'CDL_ABANDONEDBABY': 'abandoned_baby',  # Will be processed as bullish or bearish
-        }
-        
+        pattern_names = [
+            'doji', 'hammer', 'inverted_hammer', 'hanging_man', 'shooting_star',
+            'spinning_top', 'marubozu', 'engulfing', 'harami', 'piercing_line',
+            'dark_cloud_cover', 'tweezer_bottom', 'tweezer_top', 'matching_low',
+            'kicking', 'belt_hold', 'morning_star', 'evening_star',
+            'three_white_soldiers', 'three_black_crows', 'three_inside',
+            'three_outside', 'upside_gap_two_crows', 'tasuki_gap',
+            'three_stars_in_the_south', 'hikkake', 'concealing_baby_swallow',
+            'three_line_strike', 'ladder_bottom', 'abandoned_baby'
+        ]
+
         try:
-            for func_name, pattern_name in talib_patterns.items():
-                # Get TALib function
-                talib_func = getattr(talib, func_name, None)
-                if talib_func is None:
-                    logger.warning(f"TALib function {func_name} not found")
+            for pattern in pattern_names:
+                results = df.ta.cdl_pattern(name=pattern)
+                if results is None:
                     continue
-                
-                # Run pattern detection function
-                results = talib_func(
-                    df['open'].values, 
-                    df['high'].values, 
-                    df['low'].values, 
-                    df['close'].values
-                )
-                
+
                 # Process results
                 for i in range(len(results)):
-                    signal = results[i]
+                    signal = results.iloc[i]
                     if signal != 0:  # 0 means no pattern
                         # Determine if bullish or bearish for pattern types that need it
-                        if pattern_name in ['engulfing', 'harami', 'kicking', 'belt_hold', 
-                                          'three_inside', 'three_outside', 'tasuki_gap', 
-                                          'three_line_strike', 'abandoned_baby', 'hikkake']:
+                        if pattern in ['engulfing', 'harami', 'kicking', 'belt_hold',
+                                       'three_inside', 'three_outside', 'tasuki_gap',
+                                       'three_line_strike', 'abandoned_baby', 'hikkake']:
                             if signal > 0:
-                                actual_pattern = f"{pattern_name}_bullish"
+                                actual_pattern = f"{pattern}_bullish"
                             else:
-                                actual_pattern = f"{pattern_name}_bearish"
+                                actual_pattern = f"{pattern}_bearish"
                         else:
-                            actual_pattern = pattern_name
+                            actual_pattern = pattern
                         
                         # Skip if pattern not in our definitions
                         if actual_pattern not in self.PATTERN_TYPES:
@@ -573,11 +533,11 @@ class CandlestickPatterns:
                         
                         patterns.append(pattern)
             
-            logger.debug(f"Detected {len(patterns)} patterns using TALib functions")
+            logger.debug(f"Detected {len(patterns)} patterns using pandas_ta functions")
             return patterns
             
         except Exception as e:
-            logger.error(f"Error in TALib pattern detection: {str(e)}")
+            logger.error(f"Error in pandas_ta pattern detection: {str(e)}")
             return []
 
     def _detect_custom_patterns(self, df: pd.DataFrame) -> List[CandlestickPattern]:
