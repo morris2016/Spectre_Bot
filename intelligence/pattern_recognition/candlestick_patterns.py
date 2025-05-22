@@ -12,7 +12,8 @@ import numpy as np
 import pandas as pd
 from typing import Dict, List, Tuple, Union, Optional, Any, Callable
 from enum import Enum, auto
-import pandas_ta as ta
+import ta
+from common.ta_candles import cdl_pattern
 from dataclasses import dataclass
 import logging
 from scipy import stats
@@ -404,7 +405,7 @@ class CandlestickPatterns:
         
         detected_patterns = []
         
-        # Run pandas_ta pattern recognition functions
+        # Run candlestick pattern recognition functions
         talib_patterns = self._detect_talib_patterns(df)
         
         # Run custom pattern detection functions
@@ -433,7 +434,7 @@ class CandlestickPatterns:
 
     def _detect_talib_patterns(self, df: pd.DataFrame) -> List[CandlestickPattern]:
         """
-        Detect patterns using pandas_ta functions.
+        Detect patterns using candlestick utilities.
         
         Args:
             df: DataFrame containing OHLCV data
@@ -456,7 +457,7 @@ class CandlestickPatterns:
 
         try:
             for pattern in pattern_names:
-                results = df.ta.cdl_pattern(name=pattern)
+                results = cdl_pattern(df, name=pattern)
                 if results is None:
                     continue
 
@@ -533,11 +534,11 @@ class CandlestickPatterns:
                         
                         patterns.append(pattern)
             
-            logger.debug(f"Detected {len(patterns)} patterns using pandas_ta functions")
+            logger.debug(f"Detected {len(patterns)} patterns using candlestick utilities")
             return patterns
             
         except Exception as e:
-            logger.error(f"Error in pandas_ta pattern detection: {str(e)}")
+            logger.error(f"Error in candlestick pattern detection: {str(e)}")
             return []
 
     def _detect_custom_patterns(self, df: pd.DataFrame) -> List[CandlestickPattern]:

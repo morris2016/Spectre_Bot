@@ -16,7 +16,8 @@ import pandas as pd
 from typing import Dict, List, Tuple, Optional, Union, Any, Callable
 from scipy import stats
 from scipy.signal import argrelextrema, find_peaks
-import pandas_ta as ta
+import ta
+from common.ta_candles import cdl_pattern
 from dataclasses import dataclass
 import logging
 from datetime import datetime, timedelta
@@ -114,8 +115,8 @@ class PatternFeatures:
         return result
     
     def _add_talib_patterns(self, data: pd.DataFrame) -> None:
-        """Add candlestick pattern features using pandas_ta."""
-        logger.debug("Adding pandas_ta pattern recognition features")
+        """Add candlestick pattern features using ta_candles utilities."""
+        logger.debug("Adding candlestick pattern recognition features")
 
         pattern_names = [
             'abandoned_baby', 'doji', 'engulfing', 'hammer', 'hanging_man',
@@ -126,7 +127,7 @@ class PatternFeatures:
 
         for name in pattern_names:
             try:
-                series = data.ta.cdl_pattern(name=name)
+                series = cdl_pattern(data, name=name)
                 data[f'pattern_CDL_{name.upper()}'] = series
             except Exception as e:
                 logger.error(f"Error calculating {name}: {str(e)}")

@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-import pandas_ta as ta
+from common.ta_candles import cdl_pattern
 
 from feature_service.feature_extraction import FeatureExtractor
 
@@ -64,7 +64,7 @@ def test_cdl_pattern_detection():
         "close": [1.0, 1.25],
         "volume": [100, 120],
     })
-    pattern_series = df.ta.cdl_pattern(name="doji")
+    pattern_series = cdl_pattern(df, name="doji")
     assert isinstance(pattern_series, pd.Series)
     assert pattern_series.iloc[0] != 0
 
