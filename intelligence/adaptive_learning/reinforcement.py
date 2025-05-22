@@ -25,8 +25,8 @@ import torch.nn.functional as F
 from torch.distributions import Categorical, Normal
 from collections import deque, namedtuple
 import random
-import gym
-from gym import spaces
+import gymnasium as gym
+from gymnasium import spaces
 import datetime
 from concurrent.futures import ThreadPoolExecutor
 
@@ -195,10 +195,10 @@ class MarketEnvironment:
         
     def reset(self):
         """
-        Reset the environment to initial state.
-        
+        Reset the environment to its initial state.
+
         Returns:
-            numpy.ndarray: Initial state observation
+            tuple: (initial_state, info)
         """
         # Set initial position to the beginning or a random point if specified
         if self.randomize_start:
@@ -229,7 +229,7 @@ class MarketEnvironment:
         self.cumulative_reward = 0.0
         
         # Get initial state
-        return self._get_state()
+        return self._get_state(), {}
     
     def step(self, action, position_size_pct=None):
         """
@@ -240,7 +240,7 @@ class MarketEnvironment:
             position_size_pct: Position size as percentage of maximum (0.0-1.0)
             
         Returns:
-            tuple: (next_state, reward, done, info)
+            tuple: (next_state, reward, terminated, truncated, info)
         """
         # Validate action
         if action not in [0, 1, 2, 3]:
@@ -299,7 +299,9 @@ class MarketEnvironment:
             'cumulative_reward': self.cumulative_reward
         })
         
-        return next_state, reward, done, info
+        terminated = done
+        truncated = False
+        return next_state, reward, terminated, truncated, info
     
     def _get_state(self):
         """
@@ -1611,7 +1613,7 @@ class ReinforcementLearningService:
         try:
             with Timer() as timer:
                 for episode in range(dqn_config['training_episodes']):
-                    state = train_env.reset()
+                    state, _ = train_env.reset()
                     episode_reward = 0
                     losses = []
                     
@@ -1620,7 +1622,8 @@ class ReinforcementLearningService:
                         action = agent.select_action(state)
                         
                         # Take action in environment
-                        next_state, reward, done, info = train_env.step(action)
+                        next_state, reward, terminated, truncated, info = train_env.step(action)
+                        done = terminated or truncated
                         
                         # Store transition in replay memory
                         agent.store_transition(state, action, reward, next_state, done)
@@ -1716,14 +1719,15 @@ class ReinforcementLearningService:
         drawdowns = []
         
         for episode in range(episodes):
-            state = env.reset()
+            state, _ = env.reset()
             episode_reward = 0
             
             # Run episode without exploration
             done = False
             while not done:
                 action = agent.select_action(state, test_mode=True)
-                next_state, reward, done, info = env.step(action)
+                next_state, reward, terminated, truncated, info = env.step(action)
+                done = terminated or truncated
                 state = next_state
                 episode_reward += reward
                 
@@ -1891,7 +1895,7 @@ class ReinforcementLearningService:
         )
         
         # Run a single evaluation episode
-        state = env.reset()
+        state, _ = env.reset()
         done = False
         
         # Track actions for analysis
@@ -1911,7 +1915,8 @@ class ReinforcementLearningService:
             actions.append(action)
             
             # Take action in environment
-            next_state, reward, done, info = env.step(action)
+            next_state, reward, terminated, truncated, info = env.step(action)
+            done = terminated or truncated
             rewards.append(reward)
             
             # Track metrics

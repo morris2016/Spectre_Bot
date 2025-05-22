@@ -118,7 +118,7 @@ streamlit==1.27.1
 plotly==5.17.0
 
 # Reinforcement Learning
-gym==0.26.2  # post-0.25 versions changed API; validate with your code
+gymnasium==0.29.1  # updated from gym
 
 # Audio
 soundfile==0.12.1

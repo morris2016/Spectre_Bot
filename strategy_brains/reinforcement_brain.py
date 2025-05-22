@@ -21,8 +21,8 @@ import tensorflow as tf
 from tensorflow.keras.models import Sequential, Model, load_model
 from tensorflow.keras.layers import Dense, LSTM, GRU, Conv1D, Flatten, Input, Concatenate
 from tensorflow.keras.optimizers import Adam
-import gym
-from gym import spaces
+import gymnasium as gym
+from gymnasium import spaces
 import random
 from collections import deque
 
@@ -124,9 +124,9 @@ class TradingEnvironment(gym.Env):
     def reset(self):
         """
         Reset the environment to initial state.
-        
+
         Returns:
-            observation: Initial state
+            tuple: (observation, info)
         """
         self.balance = self.initial_balance
         self.position = 0.0
@@ -136,7 +136,7 @@ class TradingEnvironment(gym.Env):
         self.trades = []
         self.portfolio_values = [self.initial_balance]
         
-        return self._get_observation()
+        return self._get_observation(), {}
     
     def _get_observation(self):
         """
@@ -234,12 +234,13 @@ class TradingEnvironment(gym.Env):
         Returns:
             observation: New state
             reward: Reward for the action
-            done: Whether the episode is finished
+            terminated: Whether the episode has terminated
+            truncated: Whether the episode was truncated
             info: Additional information
         """
         if self.current_step >= len(self.data) - 1:
-            done = True
-            return self._get_observation(), 0, done, {}
+            terminated = True
+            return self._get_observation(), 0, terminated, False, {}
         
         # Get current price data
         current_price = self.data.iloc[self.current_step]['close']
@@ -283,7 +284,9 @@ class TradingEnvironment(gym.Env):
             'timestamp': self.data.iloc[self.current_step]['timestamp']
         }
         
-        return self._get_observation(), reward, done, info
+        terminated = done
+        truncated = False
+        return self._get_observation(), reward, terminated, truncated, info
     
     def _process_discrete_action(self, action, current_price):
         """
@@ -1098,7 +1101,7 @@ class ReinforcementBrain(BaseBrain):
         )
         
         # Reset the environment to get initial state
-        initial_state = self.env.reset()
+        initial_state, _ = self.env.reset()
         self.current_state = initial_state
         
         # Determine state and action dimensions
@@ -1204,7 +1207,7 @@ class ReinforcementBrain(BaseBrain):
         for episode in range(episodes):
             self.current_episode = episode
             # Reset environment
-            state = self.env.reset()
+            state, _ = self.env.reset()
             self.current_state = state
             
             done = False
@@ -1217,7 +1220,8 @@ class ReinforcementBrain(BaseBrain):
                 action = self.agent.act(state, training=True)
                 
                 # Take action
-                next_state, reward, done, info = self.env.step(action)
+                next_state, reward, terminated, truncated, info = self.env.step(action)
+                done = terminated or truncated
                 
                 # Store in replay memory
                 if self.config['model_type'] == 'dqn':
@@ -1310,7 +1314,7 @@ class ReinforcementBrain(BaseBrain):
         )
         
         # Reset environment
-        state = analysis_env.reset()
+        state, _ = analysis_env.reset()
         
         # Analysis results
         actions = []
@@ -1323,9 +1327,10 @@ class ReinforcementBrain(BaseBrain):
         while not done:
             # Select action (without exploration)
             action = self.agent.act(state, training=False)
-            
+
             # Take action
-            next_state, reward, done, info = analysis_env.step(action)
+            next_state, reward, terminated, truncated, info = analysis_env.step(action)
+            done = terminated or truncated
             
             # Record results
             if self.config['action_type'] == 'discrete':
