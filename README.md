@@ -33,7 +33,7 @@ The QuantumSpectre Elite Trading System is built with a modular, microservice-ba
 
 ### Prerequisites
 
-- Python 3.9+
+ - Python 3.11+
 - Redis
 - PostgreSQL
 - Node.js 16+ (for UI)
