@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
 QuantumSpectre Elite Trading System
-Strategy Brain Service
+Strategy Brains Service
 
-This module implements the Strategy Brain Service which manages multiple trading
+This module implements the Strategy Brains Service which manages multiple trading
 strategy brains, orchestrates signal generation, and manages adaptive tactics.
 """
 
@@ -37,7 +37,7 @@ class StrategyBrainService:
     
     def __init__(self, config, loop=None, redis_client=None, db_client=None):
         """
-        Initialize the Strategy Brain Service.
+        Initialize the Strategy Brains Service.
         
         Args:
             config: System configuration
@@ -62,8 +62,8 @@ class StrategyBrainService:
         self.regime_updated_at = time.time()
         
     async def start(self):
-        """Start the Strategy Brain Service."""
-        self.logger.info("Starting Strategy Brain Service")
+        """Start the Strategy Brains Service."""
+        self.logger.info("Starting Strategy Brains Service")
         
         # Initialize strategy brains
         await self._initialize_brains()
@@ -90,11 +90,11 @@ class StrategyBrainService:
         await self._subscribe_to_regime_changes()
         
         self.running = True
-        self.logger.info("Strategy Brain Service started successfully")
+        self.logger.info("Strategy Brains Service started successfully")
         
     async def stop(self):
-        """Stop the Strategy Brain Service."""
-        self.logger.info("Stopping Strategy Brain Service")
+        """Stop the Strategy Brains Service."""
+        self.logger.info("Stopping Strategy Brains Service")
         self.running = False
         
         # Cancel all tasks
@@ -114,11 +114,11 @@ class StrategyBrainService:
             except Exception as e:
                 self.logger.error(f"Error stopping brain {brain_name}: {str(e)}")
                 
-        self.logger.info("Strategy Brain Service stopped successfully")
+        self.logger.info("Strategy Brains Service stopped successfully")
         
     async def health_check(self) -> bool:
         """
-        Perform a health check on the Strategy Brain Service.
+        Perform a health check on the Strategy Brains Service.
         
         Returns:
             bool: True if healthy, False otherwise
@@ -506,7 +506,7 @@ class StrategyBrainService:
 
 def create_app(config: Dict[str, Any]) -> StrategyBrainService:
     """
-    Create and configure a Strategy Brain Service instance.
+    Create and configure a Strategy Brains Service instance.
     
     Args:
         config: Application configuration

@@ -9,18 +9,18 @@ paths:
 services:
   enabled:
     - data_ingest
-    - data_feed
+    - data_feeds
     - feature_service
     - intelligence
-    - ml_model
-    - strategy_brain
+    - ml_models
+    - strategy_brains
     - brain_council
     - execution_engine
     - risk_manager
     - backtester
     - monitoring
     - api_gateway
-    - ui_server
+    - ui
 
 database:
   host: localhost

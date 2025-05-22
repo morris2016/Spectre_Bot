@@ -55,7 +55,7 @@ class DataFeedService:
     
     async def start(self):
         """Start the data feed service."""
-        self.logger.info("Starting Data Feed Service")
+        self.logger.info("Starting Data Feeds Service")
         
         # Initialize configured feeds
         await self._initialize_feeds()
@@ -67,11 +67,11 @@ class DataFeedService:
         self.task = asyncio.create_task(self._monitor_feeds())
         
         self.running = True
-        self.logger.info("Data Feed Service started successfully")
+        self.logger.info("Data Feeds Service started successfully")
     
     async def stop(self):
         """Stop the data feed service."""
-        self.logger.info("Stopping Data Feed Service")
+        self.logger.info("Stopping Data Feeds Service")
         self.shutting_down = True
         
         # Cancel monitoring task
@@ -86,7 +86,7 @@ class DataFeedService:
         await self._stop_feeds()
         
         self.running = False
-        self.logger.info("Data Feed Service stopped successfully")
+        self.logger.info("Data Feeds Service stopped successfully")
     
     async def health_check(self):
         """Perform health check on all feeds."""
