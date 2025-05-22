@@ -16,6 +16,33 @@ import redis.asyncio as redis
 from common.logger import get_logger
 from common.exceptions import RedisError, RedisConnectionError
 
+_redis_client: Optional['RedisClient'] = None
+_redis_pool = None
+
+
+async def get_redis_pool(host: str = "localhost", port: int = 6379, db: int = 0,
+                        password: Optional[str] = None, ssl: bool = False,
+                        timeout: int = 10, max_connections: int = 50):
+    """Get a shared Redis connection pool.
+
+    Creates a :class:`RedisClient` on first use and reuses its connection pool
+    on subsequent calls.
+    """
+    global _redis_client, _redis_pool
+    if _redis_pool is None:
+        _redis_client = RedisClient(
+            host=host,
+            port=port,
+            db=db,
+            password=password,
+            ssl=ssl,
+            timeout=timeout,
+            max_connections=max_connections,
+        )
+        await _redis_client.initialize()
+        _redis_pool = _redis_client.client.connection_pool
+    return _redis_pool
+
 class RedisClient:
     """Client for Redis operations."""
     

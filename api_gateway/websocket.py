@@ -16,7 +16,7 @@ import time
 from typing import Dict, List, Set, Any, Optional, Callable
 from datetime import datetime
 
-import aioredis
+import redis.asyncio as redis
 from fastapi import WebSocket, WebSocketDisconnect, Depends, status
 from websockets.exceptions import ConnectionClosed
 
@@ -62,7 +62,7 @@ class WebSocketManager:
     async def initialize(self):
         """Initialize the WebSocket manager with required connections."""
         self.redis_pool = await get_redis_pool()
-        redis_subscriber = aioredis.Redis(connection_pool=self.redis_pool)
+        redis_subscriber = redis.Redis(connection_pool=self.redis_pool)
         self.pubsub = redis_subscriber.pubsub()
         await self.pubsub.subscribe('websocket_broadcast')
         

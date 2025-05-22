@@ -12,7 +12,7 @@ from typing import Dict, List, Any, Optional
 import asyncio
 from datetime import datetime
 
-import aioredis
+import redis.asyncio as redis
 from fastapi import Request, HTTPException, status, Depends
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.base import RequestResponseEndpoint
@@ -92,12 +92,12 @@ class RateLimiter:
     async def _check_rate_limit_redis(self, key: str) -> bool:
         """Redis-based implementation of rate limiting for distributed systems."""
         try:
-            redis = aioredis.Redis(connection_pool=self.redis_pool)
+            redis_client = redis.Redis(connection_pool=self.redis_pool)
             current_time = time.time()
             redis_key = f"rate_limit:{key}"
             
             # Using Redis pipeline for atomic operations
-            pipe = redis.pipeline()
+            pipe = redis_client.pipeline()
             
             # Add current timestamp to the sorted set
             pipe.zadd(redis_key, {str(current_time): current_time})
@@ -160,12 +160,12 @@ class RateLimiter:
     async def _get_remaining_redis(self, key: str) -> int:
         """Redis implementation for remaining request calculation."""
         try:
-            redis = aioredis.Redis(connection_pool=self.redis_pool)
+            redis_client = redis.Redis(connection_pool=self.redis_pool)
             current_time = time.time()
             redis_key = f"rate_limit:{key}"
             
             # Using Redis pipeline for atomic operations
-            pipe = redis.pipeline()
+            pipe = redis_client.pipeline()
             
             # Remove timestamps outside the current time window
             cutoff_time = current_time - self.time_frame
@@ -197,8 +197,8 @@ class RateLimiter:
         """
         if self.use_redis and self.redis_pool:
             try:
-                redis = aioredis.Redis(connection_pool=self.redis_pool)
-                await redis.delete(f"rate_limit:{key}")
+                redis_client = redis.Redis(connection_pool=self.redis_pool)
+                await redis_client.delete(f"rate_limit:{key}")
                 return True
             except Exception as e:
                 logger.error(f"Failed to reset rate limit in Redis: {str(e)}")
