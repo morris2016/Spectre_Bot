@@ -13,6 +13,7 @@ import pandas as pd
 import time
 from typing import Dict, List, Any, Optional, Tuple, Union
 from collections import defaultdict, Counter
+from dataclasses import dataclass, field
 import asyncio
 
 from common.logger import get_logger
@@ -22,6 +23,60 @@ from common.constants import (
     VOTE_THRESHOLDS, SIGNAL_TYPES, CONFIDENCE_LEVELS,
     DEFAULT_VOTING_CONFIG
 )
+
+
+@dataclass
+class VoterPerformance:
+    """Performance metrics for a single voter."""
+
+    total_votes: int = 0
+    correct_votes: int = 0
+    win_rate: float = 0.0
+    avg_pnl: float = 0.0
+    pnl_sum: float = 0.0
+    confidence_accuracy_correlation: float = 0.0
+    _confidences: List[float] = field(default_factory=list, repr=False)
+    _successes: List[int] = field(default_factory=list, repr=False)
+
+    def update(self, vote: Dict[str, Any], decision: Dict[str, Any],
+               outcome_successful: bool, outcome_pnl: float) -> None:
+        """Update metrics based on a single vote."""
+        self.total_votes += 1
+        if vote['direction'] == decision['direction'] and outcome_successful:
+            self.correct_votes += 1
+        self.pnl_sum += outcome_pnl
+        self._confidences.append(vote.get('confidence', 0))
+        self._successes.append(
+            1 if vote['direction'] == decision['direction'] and outcome_successful else 0
+        )
+
+    def finalize(self) -> None:
+        """Calculate derived metrics after all votes have been processed."""
+        if self.total_votes:
+            self.win_rate = self.correct_votes / self.total_votes
+            self.avg_pnl = self.pnl_sum / self.total_votes
+
+        if len(set(self._successes)) > 1 and len(self._confidences) > 1:
+            self.confidence_accuracy_correlation = float(
+                np.corrcoef(self._confidences, self._successes)[0, 1]
+            )
+        else:
+            self.confidence_accuracy_correlation = 0.0
+
+        # Clear temporary data
+        self._confidences.clear()
+        self._successes.clear()
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Return a serializable representation of the metrics."""
+        return {
+            'total_votes': self.total_votes,
+            'correct_votes': self.correct_votes,
+            'win_rate': self.win_rate,
+            'avg_pnl': self.avg_pnl,
+            'pnl_sum': self.pnl_sum,
+            'confidence_accuracy_correlation': self.confidence_accuracy_correlation,
+        }
 
 class VotingSystem:
     """
@@ -669,55 +724,31 @@ class VotingSystem:
         return False
     
     async def get_voter_performance(self) -> Dict[str, Dict[str, Any]]:
-        """
-        Get performance metrics for each voter based on historical data.
-        
-        Returns:
-            Dictionary mapping each voter to their performance metrics
-        """
+        """Return performance metrics for each voter."""
         if len(self.voting_history) < 10:
             return {}
+
+        voter_metrics = defaultdict(VoterPerformance)
         
-        # Track metrics for each voter
-        voter_metrics = defaultdict(lambda: {
-            'total_votes': 0,
-            'correct_votes': 0,
-            'win_rate': 0,
-            'avg_pnl': 0,
-            'pnl_sum': 0,
-            'confidence_accuracy_correlation': 0
-        })
-        
-        # Process historical decisions
         for record in self.voting_history:
-            # Skip records without outcome data
             if record.get('outcome_successful') is None:
                 continue
-                
+
             outcome_successful = record['outcome_successful']
             outcome_pnl = record.get('outcome_pnl', 0)
-            
-            # Process each voter's contribution
+
             for voter, vote in record.get('votes', {}).items():
-                voter_metrics[voter]['total_votes'] += 1
-                
-                # Check if this voter's direction matched the outcome
-                if vote['direction'] == record['decision']['direction'] and outcome_successful:
-                    voter_metrics[voter]['correct_votes'] += 1
-                
-                # Track PnL
-                voter_metrics[voter]['pnl_sum'] += outcome_pnl
-                
-                # TODO: Add confidence-accuracy correlation calculation
-                # This requires more sophisticated statistical analysis
+                voter_metrics[voter].update(
+                    vote,
+                    record['decision'],
+                    outcome_successful,
+                    outcome_pnl,
+                )
         
-        # Calculate derived metrics
-        for voter, metrics in voter_metrics.items():
-            if metrics['total_votes'] > 0:
-                metrics['win_rate'] = metrics['correct_votes'] / metrics['total_votes']
-                metrics['avg_pnl'] = metrics['pnl_sum'] / metrics['total_votes']
-        
-        return dict(voter_metrics)
+        for metrics in voter_metrics.values():
+            metrics.finalize()
+
+        return {voter: m.to_dict() for voter, m in voter_metrics.items()}
     
     def get_voting_statistics(self) -> Dict[str, Any]:
         """
