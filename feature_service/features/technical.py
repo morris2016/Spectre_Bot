@@ -9,7 +9,7 @@ and adaptive parameterization for effective pattern recognition and signal gener
 
 import numpy as np
 import pandas as pd
-import pandas_ta as ta
+import ta
 from numba import jit, cuda
 from typing import Dict, List, Union, Tuple, Optional, Any
 from common.logger import get_logger

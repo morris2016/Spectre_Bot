@@ -11,7 +11,8 @@ import time
 import logging
 from typing import Dict, List, Any, Optional, Union, Tuple
 from datetime import datetime, timedelta
-import pandas_ta as ta
+import ta
+import pandas_ta as pta
 from sklearn.preprocessing import MinMaxScaler
 import joblib
 import os
@@ -304,264 +305,223 @@ class FeatureExtractor:
             # Calculate feature based on name
             if feature_name == 'ta_rsi_14':
                 # 14-period RSI
-                rsi = ta.RSI(close_price, timeperiod=14)
-                return rsi[-1]
+                rsi = ta.momentum.rsi(pd.Series(close_price), window=14)
+                return rsi.iloc[-1]
                 
             elif feature_name == 'ta_rsi_7':
                 # 7-period RSI
-                rsi = ta.RSI(close_price, timeperiod=7)
-                return rsi[-1]
+                rsi = ta.momentum.rsi(pd.Series(close_price), window=7)
+                return rsi.iloc[-1]
                 
             elif feature_name == 'ta_macd':
                 # MACD
-                macd, signal, hist = ta.MACD(
-                    close_price, 
-                    fastperiod=12, 
-                    slowperiod=26, 
-                    signalperiod=9
-                )
-                return macd[-1]
+                macd = ta.trend.macd(pd.Series(close_price), window_fast=12, window_slow=26, window_sign=9)
+                return macd.iloc[-1]
                 
             elif feature_name == 'ta_macd_signal':
                 # MACD signal line
-                macd, signal, hist = ta.MACD(
-                    close_price, 
-                    fastperiod=12, 
-                    slowperiod=26, 
-                    signalperiod=9
-                )
-                return signal[-1]
+                signal = ta.trend.macd_signal(pd.Series(close_price), window_fast=12, window_slow=26, window_sign=9)
+                return signal.iloc[-1]
                 
             elif feature_name == 'ta_macd_hist':
                 # MACD histogram
-                macd, signal, hist = ta.MACD(
-                    close_price, 
-                    fastperiod=12, 
-                    slowperiod=26, 
-                    signalperiod=9
-                )
-                return hist[-1]
+                hist = ta.trend.macd_diff(pd.Series(close_price), window_fast=12, window_slow=26, window_sign=9)
+                return hist.iloc[-1]
                 
             elif feature_name == 'ta_sma_10':
                 # 10-period SMA
-                sma = ta.SMA(close_price, timeperiod=10)
-                return sma[-1]
+                sma = ta.trend.sma_indicator(pd.Series(close_price), window=10)
+                return sma.iloc[-1]
                 
             elif feature_name == 'ta_sma_20':
                 # 20-period SMA
-                sma = ta.SMA(close_price, timeperiod=20)
-                return sma[-1]
+                sma = ta.trend.sma_indicator(pd.Series(close_price), window=20)
+                return sma.iloc[-1]
                 
             elif feature_name == 'ta_sma_50':
                 # 50-period SMA
-                sma = ta.SMA(close_price, timeperiod=50)
-                return sma[-1]
+                sma = ta.trend.sma_indicator(pd.Series(close_price), window=50)
+                return sma.iloc[-1]
                 
             elif feature_name == 'ta_sma_200':
                 # 200-period SMA
-                sma = ta.SMA(close_price, timeperiod=200)
-                return sma[-1]
+                sma = ta.trend.sma_indicator(pd.Series(close_price), window=200)
+                return sma.iloc[-1]
                 
             elif feature_name == 'ta_ema_10':
                 # 10-period EMA
-                ema = ta.EMA(close_price, timeperiod=10)
-                return ema[-1]
+                ema = ta.trend.ema_indicator(pd.Series(close_price), window=10)
+                return ema.iloc[-1]
                 
             elif feature_name == 'ta_ema_20':
                 # 20-period EMA
-                ema = ta.EMA(close_price, timeperiod=20)
-                return ema[-1]
+                ema = ta.trend.ema_indicator(pd.Series(close_price), window=20)
+                return ema.iloc[-1]
                 
             elif feature_name == 'ta_ema_50':
                 # 50-period EMA
-                ema = ta.EMA(close_price, timeperiod=50)
-                return ema[-1]
+                ema = ta.trend.ema_indicator(pd.Series(close_price), window=50)
+                return ema.iloc[-1]
                 
             elif feature_name == 'ta_ema_200':
                 # 200-period EMA
-                ema = ta.EMA(close_price, timeperiod=200)
-                return ema[-1]
+                ema = ta.trend.ema_indicator(pd.Series(close_price), window=200)
+                return ema.iloc[-1]
                 
             elif feature_name == 'ta_bollinger_upper':
                 # Bollinger Band Upper (20, 2)
-                upper, middle, lower = ta.BBANDS(
-                    close_price, 
-                    timeperiod=20, 
-                    nbdevup=2, 
-                    nbdevdn=2
-                )
-                return upper[-1]
+                upper = ta.volatility.bollinger_hband(pd.Series(close_price), window=20, window_dev=2)
+                return upper.iloc[-1]
                 
             elif feature_name == 'ta_bollinger_middle':
                 # Bollinger Band Middle (20, 2)
-                upper, middle, lower = ta.BBANDS(
-                    close_price, 
-                    timeperiod=20, 
-                    nbdevup=2, 
-                    nbdevdn=2
-                )
-                return middle[-1]
+                middle = ta.volatility.bollinger_mavg(pd.Series(close_price), window=20)
+                return middle.iloc[-1]
                 
             elif feature_name == 'ta_bollinger_lower':
                 # Bollinger Band Lower (20, 2)
-                upper, middle, lower = ta.BBANDS(
-                    close_price, 
-                    timeperiod=20, 
-                    nbdevup=2, 
-                    nbdevdn=2
-                )
-                return lower[-1]
+                lower = ta.volatility.bollinger_lband(pd.Series(close_price), window=20, window_dev=2)
+                return lower.iloc[-1]
                 
             elif feature_name == 'ta_bollinger_width':
                 # Bollinger Band Width (20, 2)
-                upper, middle, lower = ta.BBANDS(
-                    close_price, 
-                    timeperiod=20, 
-                    nbdevup=2, 
-                    nbdevdn=2
-                )
-                return (upper[-1] - lower[-1]) / middle[-1]
+                upper = ta.volatility.bollinger_hband(pd.Series(close_price), window=20, window_dev=2)
+                lower = ta.volatility.bollinger_lband(pd.Series(close_price), window=20, window_dev=2)
+                middle = ta.volatility.bollinger_mavg(pd.Series(close_price), window=20)
+                return (upper.iloc[-1] - lower.iloc[-1]) / middle.iloc[-1]
                 
             elif feature_name == 'ta_bollinger_pct':
                 # Position within Bollinger Bands as percentage
-                upper, middle, lower = ta.BBANDS(
-                    close_price, 
-                    timeperiod=20, 
-                    nbdevup=2, 
-                    nbdevdn=2
-                )
-                band_width = upper[-1] - lower[-1]
+                upper = ta.volatility.bollinger_hband(pd.Series(close_price), window=20, window_dev=2)
+                lower = ta.volatility.bollinger_lband(pd.Series(close_price), window=20, window_dev=2)
+                band_width = upper.iloc[-1] - lower.iloc[-1]
                 if band_width > 0:
-                    return (close_price[-1] - lower[-1]) / band_width
+                    return (close_price[-1] - lower.iloc[-1]) / band_width
                 else:
                     return 0.5
                     
             elif feature_name == 'ta_stoch_k':
                 # Stochastic %K (14, 3, 3)
-                k, d = ta.STOCH(
-                    high_price, 
-                    low_price, 
-                    close_price, 
-                    fastk_period=14, 
-                    slowk_period=3, 
-                    slowk_matype=0, 
-                    slowd_period=3, 
-                    slowd_matype=0
+                k = ta.momentum.stoch(
+                    pd.Series(high_price),
+                    pd.Series(low_price),
+                    pd.Series(close_price),
+                    k=14,
+                    d=3,
+                    smooth_k=3,
                 )
-                return k[-1]
+                return k.iloc[-1]
                 
             elif feature_name == 'ta_stoch_d':
                 # Stochastic %D (14, 3, 3)
-                k, d = ta.STOCH(
-                    high_price, 
-                    low_price, 
-                    close_price, 
-                    fastk_period=14, 
-                    slowk_period=3, 
-                    slowk_matype=0, 
-                    slowd_period=3, 
-                    slowd_matype=0
+                d = ta.momentum.stoch_signal(
+                    pd.Series(high_price),
+                    pd.Series(low_price),
+                    pd.Series(close_price),
+                    k=14,
+                    d=3,
+                    smooth_k=3,
                 )
-                return d[-1]
+                return d.iloc[-1]
                 
             elif feature_name == 'ta_adx':
                 # ADX (14)
-                adx = ta.ADX(high_price, low_price, close_price, timeperiod=14)
-                return adx[-1]
+                adx = ta.trend.adx(pd.Series(high_price), pd.Series(low_price), pd.Series(close_price), window=14)
+                return adx.iloc[-1]
                 
             elif feature_name == 'ta_adx_di_plus':
                 # +DI (14)
-                plus_di, minus_di = ta.PLUS_DI(high_price, low_price, close_price, timeperiod=14), ta.MINUS_DI(high_price, low_price, close_price, timeperiod=14)
-                return plus_di[-1]
+                plus_di = ta.trend.adx_pos(pd.Series(high_price), pd.Series(low_price), pd.Series(close_price), window=14)
+                return plus_di.iloc[-1]
                 
             elif feature_name == 'ta_adx_di_minus':
                 # -DI (14)
-                minus_di = ta.MINUS_DI(high_price, low_price, close_price, timeperiod=14)
-                return minus_di[-1]
+                minus_di = ta.trend.adx_neg(pd.Series(high_price), pd.Series(low_price), pd.Series(close_price), window=14)
+                return minus_di.iloc[-1]
                 
             elif feature_name == 'ta_atr':
                 # ATR (14)
-                atr = ta.ATR(high_price, low_price, close_price, timeperiod=14)
-                return atr[-1]
+                atr = ta.volatility.average_true_range(pd.Series(high_price), pd.Series(low_price), pd.Series(close_price), window=14)
+                return atr.iloc[-1]
                 
             elif feature_name == 'ta_atr_percent':
                 # ATR as percentage of price
-                atr = ta.ATR(high_price, low_price, close_price, timeperiod=14)
-                return atr[-1] / close_price[-1] * 100 if close_price[-1] > 0 else 0
+                atr = ta.volatility.average_true_range(pd.Series(high_price), pd.Series(low_price), pd.Series(close_price), window=14)
+                return atr.iloc[-1] / close_price[-1] * 100 if close_price[-1] > 0 else 0
                 
             elif feature_name == 'ta_cci':
                 # CCI (14)
-                cci = ta.CCI(high_price, low_price, close_price, timeperiod=14)
-                return cci[-1]
+                cci = ta.trend.cci(pd.Series(high_price), pd.Series(low_price), pd.Series(close_price), window=14)
+                return cci.iloc[-1]
                 
             elif feature_name == 'ta_obv':
                 # OBV
                 if volume is not None:
-                    obv = ta.OBV(close_price, volume)
-                    return obv[-1]
+                    obv = ta.volume.on_balance_volume(pd.Series(close_price), pd.Series(volume))
+                    return obv.iloc[-1]
                 else:
                     logger.warning("Volume data not available for OBV calculation")
                     return None
                     
             elif feature_name == 'ta_roc':
                 # Rate of Change (10)
-                roc = ta.ROC(close_price, timeperiod=10)
-                return roc[-1]
+                roc = ta.momentum.roc(pd.Series(close_price), window=10)
+                return roc.iloc[-1]
                 
             elif feature_name == 'ta_roc_5':
                 # Rate of Change (5)
-                roc = ta.ROC(close_price, timeperiod=5)
-                return roc[-1]
+                roc = ta.momentum.roc(pd.Series(close_price), window=5)
+                return roc.iloc[-1]
                 
             elif feature_name == 'ta_roc_21':
                 # Rate of Change (21)
-                roc = ta.ROC(close_price, timeperiod=21)
-                return roc[-1]
+                roc = ta.momentum.roc(pd.Series(close_price), window=21)
+                return roc.iloc[-1]
                 
             elif feature_name == 'ta_willr':
                 # Williams %R (14)
-                willr = ta.WILLR(high_price, low_price, close_price, timeperiod=14)
-                return willr[-1]
+                willr = ta.momentum.williams_r(pd.Series(high_price), pd.Series(low_price), pd.Series(close_price), lbp=14)
+                return willr.iloc[-1]
                 
             elif feature_name == 'ta_mom':
                 # Momentum (10)
-                mom = ta.MOM(close_price, timeperiod=10)
-                return mom[-1]
+                mom = pd.Series(close_price).diff(10)
+                return mom.iloc[-1]
                 
             elif feature_name == 'ta_mom_5':
                 # Momentum (5)
-                mom = ta.MOM(close_price, timeperiod=5)
-                return mom[-1]
+                mom = pd.Series(close_price).diff(5)
+                return mom.iloc[-1]
                 
             elif feature_name == 'ta_mom_21':
                 # Momentum (21)
-                mom = ta.MOM(close_price, timeperiod=21)
-                return mom[-1]
+                mom = pd.Series(close_price).diff(21)
+                return mom.iloc[-1]
                 
             elif feature_name == 'ta_trix':
                 # TRIX (30)
-                trix = ta.TRIX(close_price, timeperiod=30)
-                return trix[-1]
+                trix = ta.trend.trix(pd.Series(close_price), window=30)
+                return trix.iloc[-1]
                 
             elif feature_name == 'ta_ultosc':
                 # Ultimate Oscillator (7, 14, 28)
-                ultosc = ta.ULTOSC(high_price, low_price, close_price, timeperiod1=7, timeperiod2=14, timeperiod3=28)
-                return ultosc[-1]
+                ultosc = ta.momentum.uo(pd.Series(high_price), pd.Series(low_price), pd.Series(close_price), s=7, m=14, l=28)
+                return ultosc.iloc[-1]
                 
             elif feature_name == 'ta_natr':
                 # Normalized ATR (14)
-                natr = ta.NATR(high_price, low_price, close_price, timeperiod=14)
-                return natr[-1]
+                natr = ta.volatility.natr(pd.Series(high_price), pd.Series(low_price), pd.Series(close_price), window=14)
+                return natr.iloc[-1]
                 
             elif feature_name == 'ta_kama':
                 # Kaufman Adaptive Moving Average (30)
-                kama = ta.KAMA(close_price, timeperiod=30)
-                return kama[-1]
+                kama = ta.trend.kama(pd.Series(close_price), window=30)
+                return kama.iloc[-1]
                 
             elif feature_name == 'ta_tema':
                 # Triple Exponential Moving Average (30)
-                tema = ta.TEMA(close_price, timeperiod=30)
-                return tema[-1]
+                tema = ta.trend.tema(pd.Series(close_price), window=30)
+                return tema.iloc[-1]
                 
             else:
                 # Unknown technical feature
@@ -978,27 +938,27 @@ class FeatureExtractor:
                 high_price = candles['high'].values
                 low_price = candles['low'].values
                 close_price = candles['close'].values
-                
-                atr = ta.ATR(high_price, low_price, close_price, timeperiod=14)
-                return atr[-1]
+
+                atr = ta.volatility.average_true_range(pd.Series(high_price), pd.Series(low_price), pd.Series(close_price), window=14)
+                return atr.iloc[-1]
                 
             elif feature_name == 'volatility_atr_14_pct':
                 # 14-period ATR as percentage of price
                 high_price = candles['high'].values
                 low_price = candles['low'].values
                 close_price = candles['close'].values
-                
-                atr = ta.ATR(high_price, low_price, close_price, timeperiod=14)
-                return atr[-1] / close_price[-1] * 100 if close_price[-1] > 0 else 0
+
+                atr = ta.volatility.average_true_range(pd.Series(high_price), pd.Series(low_price), pd.Series(close_price), window=14)
+                return atr.iloc[-1] / close_price[-1] * 100 if close_price[-1] > 0 else 0
                 
             elif feature_name == 'volatility_natr_14':
                 # 14-period Normalized ATR
                 high_price = candles['high'].values
                 low_price = candles['low'].values
                 close_price = candles['close'].values
-                
-                natr = ta.NATR(high_price, low_price, close_price, timeperiod=14)
-                return natr[-1]
+
+                natr = ta.volatility.natr(pd.Series(high_price), pd.Series(low_price), pd.Series(close_price), window=14)
+                return natr.iloc[-1]
                 
             elif feature_name == 'volatility_stddev_20':
                 # 20-period standard deviation of returns
@@ -1105,14 +1065,11 @@ class FeatureExtractor:
             elif feature_name == 'volatility_bollinger_width':
                 # Bollinger Band Width (20, 2)
                 close_price = candles['close'].values
-                
-                upper, middle, lower = ta.BBANDS(
-                    close_price, 
-                    timeperiod=20, 
-                    nbdevup=2, 
-                    nbdevdn=2
-                )
-                return (upper[-1] - lower[-1]) / middle[-1] * 100  # As percentage
+
+                upper = ta.volatility.bollinger_hband(pd.Series(close_price), window=20, window_dev=2)
+                lower = ta.volatility.bollinger_lband(pd.Series(close_price), window=20, window_dev=2)
+                middle = ta.volatility.bollinger_mavg(pd.Series(close_price), window=20)
+                return (upper.iloc[-1] - lower.iloc[-1]) / middle.iloc[-1] * 100  # As percentage
                 
             elif feature_name == 'volatility_chaikin':
                 # Chaikin Volatility
@@ -1123,8 +1080,8 @@ class FeatureExtractor:
                 hl_range = high_price - low_price
                 
                 # Calculate EMA of range
-                ema10 = ta.EMA(hl_range, timeperiod=10)
-                ema1 = ta.EMA(hl_range, timeperiod=1)
+                ema10 = ta.trend.ema_indicator(pd.Series(hl_range), window=10)
+                ema1 = ta.trend.ema_indicator(pd.Series(hl_range), window=1)
                 
                 # Chaikin Volatility
                 chaikin = (ema10[-1] - ema1[-1]) / ema1[-1] * 100 if ema1[-1] > 0 else 0
@@ -1399,7 +1356,7 @@ class FeatureExtractor:
             elif feature_name.startswith('pattern_cdl_'):
                 pattern_name = feature_name[len('pattern_cdl_'):]
                 try:
-                    result = ta.cdl_pattern(open_=open_price, high=high_price, low=low_price,
+                    result = pta.cdl_pattern(open_=open_price, high=high_price, low=low_price,
                                             close=close_price, name=pattern_name)
                     value = result.iloc[-1] / 100.0
                     return value
@@ -1438,12 +1395,12 @@ class FeatureExtractor:
             # Calculate feature based on name
             if feature_name == 'trend_adx':
                 # ADX (14)
-                adx = ta.ADX(high_price, low_price, close_price, timeperiod=14)
-                return adx[-1]
+                adx = ta.trend.adx(pd.Series(high_price), pd.Series(low_price), pd.Series(close_price), window=14)
+                return adx.iloc[-1]
                 
             elif feature_name == 'trend_adx_slope':
                 # Slope of ADX (14)
-                adx = ta.ADX(high_price, low_price, close_price, timeperiod=14)
+                adx = ta.trend.adx(pd.Series(high_price), pd.Series(low_price), pd.Series(close_price), window=14)
                 
                 if len(adx) >= 5:
                     slope = (adx[-1] - adx[-5]) / 5.0
@@ -1453,39 +1410,41 @@ class FeatureExtractor:
                     
             elif feature_name == 'trend_aroon_up':
                 # Aroon Up (14)
-                aroon_up, _ = ta.AROON(high_price, low_price, timeperiod=14)
-                return aroon_up[-1]
+                aroon_up = ta.trend.aroon_up(pd.Series(close_price), window=14)
+                return aroon_up.iloc[-1]
                 
             elif feature_name == 'trend_aroon_down':
                 # Aroon Down (14)
-                _, aroon_down = ta.AROON(high_price, low_price, timeperiod=14)
-                return aroon_down[-1]
+                aroon_down = ta.trend.aroon_down(pd.Series(close_price), window=14)
+                return aroon_down.iloc[-1]
                 
             elif feature_name == 'trend_aroon_oscillator':
                 # Aroon Oscillator (14)
-                aroon_osc = ta.AROONOSC(high_price, low_price, timeperiod=14)
-                return aroon_osc[-1]
+                aroon_up = ta.trend.aroon_up(pd.Series(close_price), window=14)
+                aroon_down = ta.trend.aroon_down(pd.Series(close_price), window=14)
+                aroon_osc = aroon_up - aroon_down
+                return aroon_osc.iloc[-1]
                 
             elif feature_name == 'trend_di_plus':
                 # +DI (14)
-                plus_di = ta.PLUS_DI(high_price, low_price, close_price, timeperiod=14)
-                return plus_di[-1]
+                plus_di = ta.trend.adx_pos(pd.Series(high_price), pd.Series(low_price), pd.Series(close_price), window=14)
+                return plus_di.iloc[-1]
                 
             elif feature_name == 'trend_di_minus':
                 # -DI (14)
-                minus_di = ta.MINUS_DI(high_price, low_price, close_price, timeperiod=14)
-                return minus_di[-1]
+                minus_di = ta.trend.adx_neg(pd.Series(high_price), pd.Series(low_price), pd.Series(close_price), window=14)
+                return minus_di.iloc[-1]
                 
             elif feature_name == 'trend_di_diff':
                 # Difference between +DI and -DI
-                plus_di = ta.PLUS_DI(high_price, low_price, close_price, timeperiod=14)
-                minus_di = ta.MINUS_DI(high_price, low_price, close_price, timeperiod=14)
-                return plus_di[-1] - minus_di[-1]
+                plus_di = ta.trend.adx_pos(pd.Series(high_price), pd.Series(low_price), pd.Series(close_price), window=14)
+                minus_di = ta.trend.adx_neg(pd.Series(high_price), pd.Series(low_price), pd.Series(close_price), window=14)
+                return plus_di.iloc[-1] - minus_di.iloc[-1]
                 
             elif feature_name == 'trend_ma_10_20_cross':
                 # Crossover between 10 and 20 period MA
-                ma10 = ta.SMA(close_price, timeperiod=10)
-                ma20 = ta.SMA(close_price, timeperiod=20)
+                ma10 = ta.trend.sma_indicator(pd.Series(close_price), window=10)
+                ma20 = ta.trend.sma_indicator(pd.Series(close_price), window=20)
                 
                 if len(ma10) >= 2 and len(ma20) >= 2:
                     current_diff = ma10[-1] - ma20[-1]
@@ -1500,8 +1459,8 @@ class FeatureExtractor:
                 
             elif feature_name == 'trend_ma_20_50_cross':
                 # Crossover between 20 and 50 period MA
-                ma20 = ta.SMA(close_price, timeperiod=20)
-                ma50 = ta.SMA(close_price, timeperiod=50)
+                ma20 = ta.trend.sma_indicator(pd.Series(close_price), window=20)
+                ma50 = ta.trend.sma_indicator(pd.Series(close_price), window=50)
                 
                 if len(ma20) >= 2 and len(ma50) >= 2:
                     current_diff = ma20[-1] - ma50[-1]
@@ -1516,8 +1475,8 @@ class FeatureExtractor:
                 
             elif feature_name == 'trend_ma_50_200_cross':
                 # Crossover between 50 and 200 period MA (golden/death cross)
-                ma50 = ta.SMA(close_price, timeperiod=50)
-                ma200 = ta.SMA(close_price, timeperiod=200)
+                ma50 = ta.trend.sma_indicator(pd.Series(close_price), window=50)
+                ma200 = ta.trend.sma_indicator(pd.Series(close_price), window=200)
                 
                 if len(ma50) >= 2 and len(ma200) >= 2:
                     current_diff = ma50[-1] - ma200[-1]
@@ -1532,41 +1491,32 @@ class FeatureExtractor:
                 
             elif feature_name == 'trend_price_ma_20':
                 # Price relative to 20-period MA
-                ma20 = ta.SMA(close_price, timeperiod=20)
-                return close_price[-1] / ma20[-1] - 1.0 if ma20[-1] > 0 else 0.0
+                ma20 = ta.trend.sma_indicator(pd.Series(close_price), window=20)
+                return close_price[-1] / ma20.iloc[-1] - 1.0 if ma20.iloc[-1] > 0 else 0.0
                 
             elif feature_name == 'trend_price_ma_50':
                 # Price relative to 50-period MA
-                ma50 = ta.SMA(close_price, timeperiod=50)
-                return close_price[-1] / ma50[-1] - 1.0 if ma50[-1] > 0 else 0.0
+                ma50 = ta.trend.sma_indicator(pd.Series(close_price), window=50)
+                return close_price[-1] / ma50.iloc[-1] - 1.0 if ma50.iloc[-1] > 0 else 0.0
                 
             elif feature_name == 'trend_price_ma_200':
                 # Price relative to 200-period MA
-                ma200 = ta.SMA(close_price, timeperiod=200)
-                return close_price[-1] / ma200[-1] - 1.0 if ma200[-1] > 0 else 0.0
+                ma200 = ta.trend.sma_indicator(pd.Series(close_price), window=200)
+                return close_price[-1] / ma200.iloc[-1] - 1.0 if ma200.iloc[-1] > 0 else 0.0
                 
             elif feature_name == 'trend_macd_histogram':
                 # MACD histogram
-                macd, signal, hist = ta.MACD(
-                    close_price, 
-                    fastperiod=12, 
-                    slowperiod=26, 
-                    signalperiod=9
-                )
-                return hist[-1]
+                hist = ta.trend.macd_diff(pd.Series(close_price), window_fast=12, window_slow=26, window_sign=9)
+                return hist.iloc[-1]
                 
             elif feature_name == 'trend_macd_cross':
                 # MACD line crossing Signal line
-                macd, signal, hist = ta.MACD(
-                    close_price, 
-                    fastperiod=12, 
-                    slowperiod=26,
-                    signalperiod=9
-                )
+                macd = ta.trend.macd(pd.Series(close_price), window_fast=12, window_slow=26, window_sign=9)
+                signal = ta.trend.macd_signal(pd.Series(close_price), window_fast=12, window_slow=26, window_sign=9)
 
                 if len(macd) >= 2 and len(signal) >= 2:
-                    current_diff = macd[-1] - signal[-1]
-                    previous_diff = macd[-2] - signal[-2]
+                    current_diff = macd.iloc[-1] - signal.iloc[-1]
+                    previous_diff = macd.iloc[-2] - signal.iloc[-2]
 
                     if current_diff > 0 and previous_diff <= 0:
                         return 1.0  # Bullish MACD crossover
