@@ -166,6 +166,33 @@ For high-performance deployments, use the Docker and Kubernetes configurations i
 - Enable two-factor authentication for exchange accounts
 - Regularly rotate API keys
 - Monitor for unauthorized access
+- Ensure compliance with local laws when collecting data from online sources
+
+### Dark Web Feed Legal Notice
+
+The optional dark web intelligence feed is **disabled by default**. Gathering
+information from the dark web can expose you to legal and ethical liabilities.
+Only enable this feed if you understand the laws in your jurisdiction and have a
+legitimate reason for monitoring public dark web content. The project
+maintainers do not condone or support any illegal activity.
+
+To enable the feed, set `data_feeds.dark_web.enabled` to `true` in your YAML
+configuration. Leave it `false` (the default) to opt out.
+
+```yaml
+data_feeds:
+  dark_web:
+    enabled: true   # opt-in
+    tor_proxy: "socks5h://localhost:9050"
+```
+
+Disabling is as simple as:
+
+```yaml
+data_feeds:
+  dark_web:
+    enabled: false  # default
+```
 
 ## License
 

@@ -3,9 +3,22 @@
 QuantumSpectre Elite Trading System
 Dark Web Intelligence Feed
 
-This module implements a sophisticated system for gathering trading-relevant intelligence
-from dark web sources in a legal and ethical manner. It focuses on identifying market
-manipulation patterns, upcoming events, and sentiment that may affect trading decisions.
+This module implements a sophisticated system for gathering trading-relevant
+intelligence from dark web sources **only** through publicly accessible
+channels. It does not purchase data or attempt to bypass authentication
+mechanisms.
+
+**Legal Notice**
+----------------
+Operating on the dark web carries significant legal risk. Ensure you fully
+understand and comply with the laws in your jurisdiction before enabling this
+feed. The maintainers provide this functionality for educational and research
+purposes and assume **no** responsibility for misuse. The feed is disabled by
+default and must be explicitly opted into via configuration.
+
+This module focuses on identifying market manipulation patterns, upcoming
+events, and sentiment that may affect trading decisions while adhering to legal
+and ethical boundaries.
 """
 
 import os
