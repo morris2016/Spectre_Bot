@@ -16,7 +16,7 @@ import pandas as pd
 from typing import Dict, List, Tuple, Optional, Union, Any, Callable
 from scipy import stats
 from scipy.signal import argrelextrema, find_peaks
-import talib
+import pandas_ta as ta
 from dataclasses import dataclass
 import logging
 from datetime import datetime, timedelta
@@ -114,50 +114,23 @@ class PatternFeatures:
         return result
     
     def _add_talib_patterns(self, data: pd.DataFrame) -> None:
-        """
-        Add candlestick pattern features using TA-Lib.
-        
-        Args:
-            data: DataFrame to add features to (modified in-place)
-        """
-        logger.debug("Adding TA-Lib pattern recognition features")
-        
-        # Define the TA-Lib pattern functions we want to use
-        pattern_functions = {
-            # Reversal patterns
-            'CDL_ABANDONEDBABY': talib.CDLABANDONEDBABY,
-            'CDL_DOJI': talib.CDLDOJI,
-            'CDL_ENGULFING': talib.CDLENGULFING,
-            'CDL_HAMMER': talib.CDLHAMMER,
-            'CDL_HANGINGMAN': talib.CDLHANGINGMAN,
-            'CDL_HARAMI': talib.CDLHARAMI,
-            'CDL_MORNINGSTAR': talib.CDLMORNINGSTAR,
-            'CDL_SHOOTINGSTAR': talib.CDLSHOOTINGSTAR,
-            
-            # Continuation patterns
-            'CDL_MARUBOZU': talib.CDLMARUBOZU,
-            'CDL_SPINNINGTOP': talib.CDLSPINNINGTOP,
-            
-            # Complex patterns
-            'CDL_3WHITESOLDIERS': talib.CDL3WHITESOLDIERS,
-            'CDL_3BLACKCROWS': talib.CDL3BLACKCROWS,
-            'CDL_EVENINGSTAR': talib.CDLEVENINGSTAR,
-            'CDL_DARKCLOUDCOVER': talib.CDLDARKCLOUDCOVER,
-            'CDL_BREAKAWAY': talib.CDLBREAKAWAY,
-            'CDL_DRAGONFLYDOJI': talib.CDLDRAGONFLYDOJI,
-            'CDL_GRAVESTONEDOJI': talib.CDLGRAVESTONEDOJI,
-        }
-        
-        # Calculate each pattern and add to dataframe
-        for pattern_name, pattern_func in pattern_functions.items():
+        """Add candlestick pattern features using pandas_ta."""
+        logger.debug("Adding pandas_ta pattern recognition features")
+
+        pattern_names = [
+            'abandoned_baby', 'doji', 'engulfing', 'hammer', 'hanging_man',
+            'harami', 'morning_star', 'shooting_star', 'marubozu', 'spinning_top',
+            'three_white_soldiers', 'three_black_crows', 'evening_star',
+            'dark_cloud_cover', 'breakaway', 'dragonfly_doji', 'gravestone_doji'
+        ]
+
+        for name in pattern_names:
             try:
-                data[f'pattern_{pattern_name}'] = pattern_func(
-                    data['open'].values, data['high'].values, 
-                    data['low'].values, data['close'].values
-                )
+                series = data.ta.cdl_pattern(name=name)
+                data[f'pattern_CDL_{name.upper()}'] = series
             except Exception as e:
-                logger.error(f"Error calculating {pattern_name}: {str(e)}")
-                data[f'pattern_{pattern_name}'] = 0
+                logger.error(f"Error calculating {name}: {str(e)}")
+                data[f'pattern_CDL_{name.upper()}'] = 0
         
         # Normalize pattern signals to [-1, 0, 1] range
         for col in data.columns:

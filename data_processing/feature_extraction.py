@@ -11,7 +11,7 @@ import time
 import logging
 from typing import Dict, List, Any, Optional, Union, Tuple
 from datetime import datetime, timedelta
-import talib
+import pandas_ta as ta
 from sklearn.preprocessing import MinMaxScaler
 import joblib
 import os
@@ -304,17 +304,17 @@ class FeatureExtractor:
             # Calculate feature based on name
             if feature_name == 'ta_rsi_14':
                 # 14-period RSI
-                rsi = talib.RSI(close_price, timeperiod=14)
+                rsi = ta.RSI(close_price, timeperiod=14)
                 return rsi[-1]
                 
             elif feature_name == 'ta_rsi_7':
                 # 7-period RSI
-                rsi = talib.RSI(close_price, timeperiod=7)
+                rsi = ta.RSI(close_price, timeperiod=7)
                 return rsi[-1]
                 
             elif feature_name == 'ta_macd':
                 # MACD
-                macd, signal, hist = talib.MACD(
+                macd, signal, hist = ta.MACD(
                     close_price, 
                     fastperiod=12, 
                     slowperiod=26, 
@@ -324,7 +324,7 @@ class FeatureExtractor:
                 
             elif feature_name == 'ta_macd_signal':
                 # MACD signal line
-                macd, signal, hist = talib.MACD(
+                macd, signal, hist = ta.MACD(
                     close_price, 
                     fastperiod=12, 
                     slowperiod=26, 
@@ -334,7 +334,7 @@ class FeatureExtractor:
                 
             elif feature_name == 'ta_macd_hist':
                 # MACD histogram
-                macd, signal, hist = talib.MACD(
+                macd, signal, hist = ta.MACD(
                     close_price, 
                     fastperiod=12, 
                     slowperiod=26, 
@@ -344,47 +344,47 @@ class FeatureExtractor:
                 
             elif feature_name == 'ta_sma_10':
                 # 10-period SMA
-                sma = talib.SMA(close_price, timeperiod=10)
+                sma = ta.SMA(close_price, timeperiod=10)
                 return sma[-1]
                 
             elif feature_name == 'ta_sma_20':
                 # 20-period SMA
-                sma = talib.SMA(close_price, timeperiod=20)
+                sma = ta.SMA(close_price, timeperiod=20)
                 return sma[-1]
                 
             elif feature_name == 'ta_sma_50':
                 # 50-period SMA
-                sma = talib.SMA(close_price, timeperiod=50)
+                sma = ta.SMA(close_price, timeperiod=50)
                 return sma[-1]
                 
             elif feature_name == 'ta_sma_200':
                 # 200-period SMA
-                sma = talib.SMA(close_price, timeperiod=200)
+                sma = ta.SMA(close_price, timeperiod=200)
                 return sma[-1]
                 
             elif feature_name == 'ta_ema_10':
                 # 10-period EMA
-                ema = talib.EMA(close_price, timeperiod=10)
+                ema = ta.EMA(close_price, timeperiod=10)
                 return ema[-1]
                 
             elif feature_name == 'ta_ema_20':
                 # 20-period EMA
-                ema = talib.EMA(close_price, timeperiod=20)
+                ema = ta.EMA(close_price, timeperiod=20)
                 return ema[-1]
                 
             elif feature_name == 'ta_ema_50':
                 # 50-period EMA
-                ema = talib.EMA(close_price, timeperiod=50)
+                ema = ta.EMA(close_price, timeperiod=50)
                 return ema[-1]
                 
             elif feature_name == 'ta_ema_200':
                 # 200-period EMA
-                ema = talib.EMA(close_price, timeperiod=200)
+                ema = ta.EMA(close_price, timeperiod=200)
                 return ema[-1]
                 
             elif feature_name == 'ta_bollinger_upper':
                 # Bollinger Band Upper (20, 2)
-                upper, middle, lower = talib.BBANDS(
+                upper, middle, lower = ta.BBANDS(
                     close_price, 
                     timeperiod=20, 
                     nbdevup=2, 
@@ -394,7 +394,7 @@ class FeatureExtractor:
                 
             elif feature_name == 'ta_bollinger_middle':
                 # Bollinger Band Middle (20, 2)
-                upper, middle, lower = talib.BBANDS(
+                upper, middle, lower = ta.BBANDS(
                     close_price, 
                     timeperiod=20, 
                     nbdevup=2, 
@@ -404,7 +404,7 @@ class FeatureExtractor:
                 
             elif feature_name == 'ta_bollinger_lower':
                 # Bollinger Band Lower (20, 2)
-                upper, middle, lower = talib.BBANDS(
+                upper, middle, lower = ta.BBANDS(
                     close_price, 
                     timeperiod=20, 
                     nbdevup=2, 
@@ -414,7 +414,7 @@ class FeatureExtractor:
                 
             elif feature_name == 'ta_bollinger_width':
                 # Bollinger Band Width (20, 2)
-                upper, middle, lower = talib.BBANDS(
+                upper, middle, lower = ta.BBANDS(
                     close_price, 
                     timeperiod=20, 
                     nbdevup=2, 
@@ -424,7 +424,7 @@ class FeatureExtractor:
                 
             elif feature_name == 'ta_bollinger_pct':
                 # Position within Bollinger Bands as percentage
-                upper, middle, lower = talib.BBANDS(
+                upper, middle, lower = ta.BBANDS(
                     close_price, 
                     timeperiod=20, 
                     nbdevup=2, 
@@ -438,7 +438,7 @@ class FeatureExtractor:
                     
             elif feature_name == 'ta_stoch_k':
                 # Stochastic %K (14, 3, 3)
-                k, d = talib.STOCH(
+                k, d = ta.STOCH(
                     high_price, 
                     low_price, 
                     close_price, 
@@ -452,7 +452,7 @@ class FeatureExtractor:
                 
             elif feature_name == 'ta_stoch_d':
                 # Stochastic %D (14, 3, 3)
-                k, d = talib.STOCH(
+                k, d = ta.STOCH(
                     high_price, 
                     low_price, 
                     close_price, 
@@ -466,38 +466,38 @@ class FeatureExtractor:
                 
             elif feature_name == 'ta_adx':
                 # ADX (14)
-                adx = talib.ADX(high_price, low_price, close_price, timeperiod=14)
+                adx = ta.ADX(high_price, low_price, close_price, timeperiod=14)
                 return adx[-1]
                 
             elif feature_name == 'ta_adx_di_plus':
                 # +DI (14)
-                plus_di, minus_di = talib.PLUS_DI(high_price, low_price, close_price, timeperiod=14), talib.MINUS_DI(high_price, low_price, close_price, timeperiod=14)
+                plus_di, minus_di = ta.PLUS_DI(high_price, low_price, close_price, timeperiod=14), ta.MINUS_DI(high_price, low_price, close_price, timeperiod=14)
                 return plus_di[-1]
                 
             elif feature_name == 'ta_adx_di_minus':
                 # -DI (14)
-                minus_di = talib.MINUS_DI(high_price, low_price, close_price, timeperiod=14)
+                minus_di = ta.MINUS_DI(high_price, low_price, close_price, timeperiod=14)
                 return minus_di[-1]
                 
             elif feature_name == 'ta_atr':
                 # ATR (14)
-                atr = talib.ATR(high_price, low_price, close_price, timeperiod=14)
+                atr = ta.ATR(high_price, low_price, close_price, timeperiod=14)
                 return atr[-1]
                 
             elif feature_name == 'ta_atr_percent':
                 # ATR as percentage of price
-                atr = talib.ATR(high_price, low_price, close_price, timeperiod=14)
+                atr = ta.ATR(high_price, low_price, close_price, timeperiod=14)
                 return atr[-1] / close_price[-1] * 100 if close_price[-1] > 0 else 0
                 
             elif feature_name == 'ta_cci':
                 # CCI (14)
-                cci = talib.CCI(high_price, low_price, close_price, timeperiod=14)
+                cci = ta.CCI(high_price, low_price, close_price, timeperiod=14)
                 return cci[-1]
                 
             elif feature_name == 'ta_obv':
                 # OBV
                 if volume is not None:
-                    obv = talib.OBV(close_price, volume)
+                    obv = ta.OBV(close_price, volume)
                     return obv[-1]
                 else:
                     logger.warning("Volume data not available for OBV calculation")
@@ -505,62 +505,62 @@ class FeatureExtractor:
                     
             elif feature_name == 'ta_roc':
                 # Rate of Change (10)
-                roc = talib.ROC(close_price, timeperiod=10)
+                roc = ta.ROC(close_price, timeperiod=10)
                 return roc[-1]
                 
             elif feature_name == 'ta_roc_5':
                 # Rate of Change (5)
-                roc = talib.ROC(close_price, timeperiod=5)
+                roc = ta.ROC(close_price, timeperiod=5)
                 return roc[-1]
                 
             elif feature_name == 'ta_roc_21':
                 # Rate of Change (21)
-                roc = talib.ROC(close_price, timeperiod=21)
+                roc = ta.ROC(close_price, timeperiod=21)
                 return roc[-1]
                 
             elif feature_name == 'ta_willr':
                 # Williams %R (14)
-                willr = talib.WILLR(high_price, low_price, close_price, timeperiod=14)
+                willr = ta.WILLR(high_price, low_price, close_price, timeperiod=14)
                 return willr[-1]
                 
             elif feature_name == 'ta_mom':
                 # Momentum (10)
-                mom = talib.MOM(close_price, timeperiod=10)
+                mom = ta.MOM(close_price, timeperiod=10)
                 return mom[-1]
                 
             elif feature_name == 'ta_mom_5':
                 # Momentum (5)
-                mom = talib.MOM(close_price, timeperiod=5)
+                mom = ta.MOM(close_price, timeperiod=5)
                 return mom[-1]
                 
             elif feature_name == 'ta_mom_21':
                 # Momentum (21)
-                mom = talib.MOM(close_price, timeperiod=21)
+                mom = ta.MOM(close_price, timeperiod=21)
                 return mom[-1]
                 
             elif feature_name == 'ta_trix':
                 # TRIX (30)
-                trix = talib.TRIX(close_price, timeperiod=30)
+                trix = ta.TRIX(close_price, timeperiod=30)
                 return trix[-1]
                 
             elif feature_name == 'ta_ultosc':
                 # Ultimate Oscillator (7, 14, 28)
-                ultosc = talib.ULTOSC(high_price, low_price, close_price, timeperiod1=7, timeperiod2=14, timeperiod3=28)
+                ultosc = ta.ULTOSC(high_price, low_price, close_price, timeperiod1=7, timeperiod2=14, timeperiod3=28)
                 return ultosc[-1]
                 
             elif feature_name == 'ta_natr':
                 # Normalized ATR (14)
-                natr = talib.NATR(high_price, low_price, close_price, timeperiod=14)
+                natr = ta.NATR(high_price, low_price, close_price, timeperiod=14)
                 return natr[-1]
                 
             elif feature_name == 'ta_kama':
                 # Kaufman Adaptive Moving Average (30)
-                kama = talib.KAMA(close_price, timeperiod=30)
+                kama = ta.KAMA(close_price, timeperiod=30)
                 return kama[-1]
                 
             elif feature_name == 'ta_tema':
                 # Triple Exponential Moving Average (30)
-                tema = talib.TEMA(close_price, timeperiod=30)
+                tema = ta.TEMA(close_price, timeperiod=30)
                 return tema[-1]
                 
             else:
@@ -979,7 +979,7 @@ class FeatureExtractor:
                 low_price = candles['low'].values
                 close_price = candles['close'].values
                 
-                atr = talib.ATR(high_price, low_price, close_price, timeperiod=14)
+                atr = ta.ATR(high_price, low_price, close_price, timeperiod=14)
                 return atr[-1]
                 
             elif feature_name == 'volatility_atr_14_pct':
@@ -988,7 +988,7 @@ class FeatureExtractor:
                 low_price = candles['low'].values
                 close_price = candles['close'].values
                 
-                atr = talib.ATR(high_price, low_price, close_price, timeperiod=14)
+                atr = ta.ATR(high_price, low_price, close_price, timeperiod=14)
                 return atr[-1] / close_price[-1] * 100 if close_price[-1] > 0 else 0
                 
             elif feature_name == 'volatility_natr_14':
@@ -997,7 +997,7 @@ class FeatureExtractor:
                 low_price = candles['low'].values
                 close_price = candles['close'].values
                 
-                natr = talib.NATR(high_price, low_price, close_price, timeperiod=14)
+                natr = ta.NATR(high_price, low_price, close_price, timeperiod=14)
                 return natr[-1]
                 
             elif feature_name == 'volatility_stddev_20':
@@ -1106,7 +1106,7 @@ class FeatureExtractor:
                 # Bollinger Band Width (20, 2)
                 close_price = candles['close'].values
                 
-                upper, middle, lower = talib.BBANDS(
+                upper, middle, lower = ta.BBANDS(
                     close_price, 
                     timeperiod=20, 
                     nbdevup=2, 
@@ -1123,8 +1123,8 @@ class FeatureExtractor:
                 hl_range = high_price - low_price
                 
                 # Calculate EMA of range
-                ema10 = talib.EMA(hl_range, timeperiod=10)
-                ema1 = talib.EMA(hl_range, timeperiod=1)
+                ema10 = ta.EMA(hl_range, timeperiod=10)
+                ema1 = ta.EMA(hl_range, timeperiod=1)
                 
                 # Chaikin Volatility
                 chaikin = (ema10[-1] - ema1[-1]) / ema1[-1] * 100 if ema1[-1] > 0 else 0
@@ -1397,17 +1397,14 @@ class FeatureExtractor:
                 return 0.0  # No dark cloud cover pattern
                 
             elif feature_name.startswith('pattern_cdl_'):
-                # Use TALib candlestick pattern recognition
-                pattern_name = feature_name[len('pattern_cdl_'):].upper()
-                
-                # Get the corresponding TALib function
-                if hasattr(talib, f'CDL{pattern_name}'):
-                    pattern_func = getattr(talib, f'CDL{pattern_name}')
-                    result = pattern_func(open_price, high_price, low_price, close_price)
-                    
-                    # Return normalized result
-                    normalized = result[-1] / 100.0 if abs(result[-1]) == 100 else result[-1] / 100.0
-                    return normalized
+                pattern_name = feature_name[len('pattern_cdl_'):]
+                try:
+                    result = ta.cdl_pattern(open_=open_price, high=high_price, low=low_price,
+                                            close=close_price, name=pattern_name)
+                    value = result.iloc[-1] / 100.0
+                    return value
+                except Exception:
+                    return 0.0
                 else:
                     logger.warning(f"Unknown TALib pattern: CDL{pattern_name}")
                     return None
@@ -1441,12 +1438,12 @@ class FeatureExtractor:
             # Calculate feature based on name
             if feature_name == 'trend_adx':
                 # ADX (14)
-                adx = talib.ADX(high_price, low_price, close_price, timeperiod=14)
+                adx = ta.ADX(high_price, low_price, close_price, timeperiod=14)
                 return adx[-1]
                 
             elif feature_name == 'trend_adx_slope':
                 # Slope of ADX (14)
-                adx = talib.ADX(high_price, low_price, close_price, timeperiod=14)
+                adx = ta.ADX(high_price, low_price, close_price, timeperiod=14)
                 
                 if len(adx) >= 5:
                     slope = (adx[-1] - adx[-5]) / 5.0
@@ -1456,39 +1453,39 @@ class FeatureExtractor:
                     
             elif feature_name == 'trend_aroon_up':
                 # Aroon Up (14)
-                aroon_up, _ = talib.AROON(high_price, low_price, timeperiod=14)
+                aroon_up, _ = ta.AROON(high_price, low_price, timeperiod=14)
                 return aroon_up[-1]
                 
             elif feature_name == 'trend_aroon_down':
                 # Aroon Down (14)
-                _, aroon_down = talib.AROON(high_price, low_price, timeperiod=14)
+                _, aroon_down = ta.AROON(high_price, low_price, timeperiod=14)
                 return aroon_down[-1]
                 
             elif feature_name == 'trend_aroon_oscillator':
                 # Aroon Oscillator (14)
-                aroon_osc = talib.AROONOSC(high_price, low_price, timeperiod=14)
+                aroon_osc = ta.AROONOSC(high_price, low_price, timeperiod=14)
                 return aroon_osc[-1]
                 
             elif feature_name == 'trend_di_plus':
                 # +DI (14)
-                plus_di = talib.PLUS_DI(high_price, low_price, close_price, timeperiod=14)
+                plus_di = ta.PLUS_DI(high_price, low_price, close_price, timeperiod=14)
                 return plus_di[-1]
                 
             elif feature_name == 'trend_di_minus':
                 # -DI (14)
-                minus_di = talib.MINUS_DI(high_price, low_price, close_price, timeperiod=14)
+                minus_di = ta.MINUS_DI(high_price, low_price, close_price, timeperiod=14)
                 return minus_di[-1]
                 
             elif feature_name == 'trend_di_diff':
                 # Difference between +DI and -DI
-                plus_di = talib.PLUS_DI(high_price, low_price, close_price, timeperiod=14)
-                minus_di = talib.MINUS_DI(high_price, low_price, close_price, timeperiod=14)
+                plus_di = ta.PLUS_DI(high_price, low_price, close_price, timeperiod=14)
+                minus_di = ta.MINUS_DI(high_price, low_price, close_price, timeperiod=14)
                 return plus_di[-1] - minus_di[-1]
                 
             elif feature_name == 'trend_ma_10_20_cross':
                 # Crossover between 10 and 20 period MA
-                ma10 = talib.SMA(close_price, timeperiod=10)
-                ma20 = talib.SMA(close_price, timeperiod=20)
+                ma10 = ta.SMA(close_price, timeperiod=10)
+                ma20 = ta.SMA(close_price, timeperiod=20)
                 
                 if len(ma10) >= 2 and len(ma20) >= 2:
                     current_diff = ma10[-1] - ma20[-1]
@@ -1503,8 +1500,8 @@ class FeatureExtractor:
                 
             elif feature_name == 'trend_ma_20_50_cross':
                 # Crossover between 20 and 50 period MA
-                ma20 = talib.SMA(close_price, timeperiod=20)
-                ma50 = talib.SMA(close_price, timeperiod=50)
+                ma20 = ta.SMA(close_price, timeperiod=20)
+                ma50 = ta.SMA(close_price, timeperiod=50)
                 
                 if len(ma20) >= 2 and len(ma50) >= 2:
                     current_diff = ma20[-1] - ma50[-1]
@@ -1519,8 +1516,8 @@ class FeatureExtractor:
                 
             elif feature_name == 'trend_ma_50_200_cross':
                 # Crossover between 50 and 200 period MA (golden/death cross)
-                ma50 = talib.SMA(close_price, timeperiod=50)
-                ma200 = talib.SMA(close_price, timeperiod=200)
+                ma50 = ta.SMA(close_price, timeperiod=50)
+                ma200 = ta.SMA(close_price, timeperiod=200)
                 
                 if len(ma50) >= 2 and len(ma200) >= 2:
                     current_diff = ma50[-1] - ma200[-1]
@@ -1535,22 +1532,22 @@ class FeatureExtractor:
                 
             elif feature_name == 'trend_price_ma_20':
                 # Price relative to 20-period MA
-                ma20 = talib.SMA(close_price, timeperiod=20)
+                ma20 = ta.SMA(close_price, timeperiod=20)
                 return close_price[-1] / ma20[-1] - 1.0 if ma20[-1] > 0 else 0.0
                 
             elif feature_name == 'trend_price_ma_50':
                 # Price relative to 50-period MA
-                ma50 = talib.SMA(close_price, timeperiod=50)
+                ma50 = ta.SMA(close_price, timeperiod=50)
                 return close_price[-1] / ma50[-1] - 1.0 if ma50[-1] > 0 else 0.0
                 
             elif feature_name == 'trend_price_ma_200':
                 # Price relative to 200-period MA
-                ma200 = talib.SMA(close_price, timeperiod=200)
+                ma200 = ta.SMA(close_price, timeperiod=200)
                 return close_price[-1] / ma200[-1] - 1.0 if ma200[-1] > 0 else 0.0
                 
             elif feature_name == 'trend_macd_histogram':
                 # MACD histogram
-                macd, signal, hist = talib.MACD(
+                macd, signal, hist = ta.MACD(
                     close_price, 
                     fastperiod=12, 
                     slowperiod=26, 
@@ -1560,7 +1557,7 @@ class FeatureExtractor:
                 
             elif feature_name == 'trend_macd_cross':
                 # MACD line crossing Signal line
-                macd, signal, hist = talib.MACD(
+                macd, signal, hist = ta.MACD(
                     close_price, 
                     fastperiod=12, 
                     slowperiod=26,
