@@ -7,9 +7,9 @@ This module provides advanced market structure analysis capabilities for the
 QuantumSpectre Elite Trading System. It identifies swing highs/lows, support/resistance
 levels, market phases, and trend strength across multiple timeframes.
 
-This analysis forms the foundation for many trading strategies that rely on 
-structural market movements and plays a critical role in achieving the system's
-80%+ win rate.
+This analysis forms the foundation for many trading strategies that rely on
+structural market movements and plays a critical role in delivering
+consistently strong performance for the system.
 """
 
 import numpy as np

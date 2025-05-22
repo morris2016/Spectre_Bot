@@ -34,8 +34,8 @@ class MasterCouncil(BaseCouncil):
     """
     Master Council coordinates all specialized councils and makes final trading decisions.
     It dynamically weights contributions from various councils based on their historical 
-    performance, market conditions, and confidence levels to generate high-probability 
-    trading signals with 80%+ success rates.
+    performance, market conditions, and confidence levels to generate high-probability
+    trading signals with consistently strong success rates.
     """
     
     def __init__(self, config: Dict[str, Any], debug_mode: bool = False):

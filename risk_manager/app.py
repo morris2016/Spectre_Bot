@@ -9,8 +9,8 @@ risk management capabilities to the QuantumSpectre Elite Trading System. It orch
 various risk components including position sizing, stop-loss management, take-profit strategies,
 exposure monitoring, circuit breakers, and drawdown protection.
 
-The Risk Manager is a critical component for achieving 80%+ win rates by ensuring capital 
-preservation while maximizing returns. It adapts risk parameters based on market conditions, 
+The Risk Manager is a critical component for targeting high win rates by ensuring capital
+preservation while maximizing returns. It adapts risk parameters based on market conditions,
 strategy performance, and account growth.
 """
 

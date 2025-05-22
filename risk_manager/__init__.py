@@ -16,8 +16,8 @@ Risk Manager Module Initialization
 
 This module initializes the Risk Manager component of the QuantumSpectre Elite Trading System,
 which is responsible for comprehensive risk management, position sizing, and capital preservation.
-The risk management system is critical for achieving 80%+ win rates by ensuring losses are minimized
-and risk is always carefully controlled.
+The risk management system is critical for targeting high win rates by ensuring
+losses are minimized and risk is always carefully controlled.
 """
 
 import logging

@@ -10,7 +10,7 @@ This module initializes the Intelligence system components, which are responsibl
 - Predictive modeling and signal generation
 
 The Intelligence system is the core of the QuantumSpectre Elite Trading System's
-80%+ win rate capability, continuously evolving and adapting to market conditions.
+high win rate potential, continuously evolving and adapting to market conditions.
 """
 
 import os
