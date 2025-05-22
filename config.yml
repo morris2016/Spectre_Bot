@@ -21,6 +21,7 @@ services:
     - monitoring
     - api_gateway
     - ui_server
+    - voice_assistant
 
 database:
   host: localhost
