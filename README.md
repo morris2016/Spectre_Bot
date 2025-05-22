@@ -13,6 +13,7 @@ A high-performance, production-grade trading system with advanced AI capabilitie
 - **Sophisticated Risk Management**: Capital preservation with adaptive position sizing and circuit breakers
 - **Continuous Evolution**: Self-learning systems that adapt and improve based on market conditions
 - **Comprehensive Backtesting**: Rigorous historical testing and strategy validation
+- **QuantStats Reporting**: Detailed performance reports powered by quantstats
 - **High-Performance Architecture**: Low-latency, scalable design optimized for real-time trading
 
 ## System Architecture
@@ -51,6 +52,7 @@ The QuantumSpectre Elite Trading System is built with a modular, microservice-ba
    pip install -r requirements-core.txt
    ```
    Optional packages can be added later with `pip install -r requirements.txt`.
+   The optional list now includes **quantstats** for rich performance reports.
 
 3. Run the environment setup script:
    ```bash
