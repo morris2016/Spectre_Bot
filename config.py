@@ -11,7 +11,14 @@ import os
 import sys
 import json
 import yaml
-import toml
+try:
+    import tomllib as toml_parser  # Python 3.11+
+except ModuleNotFoundError:  # pragma: no cover - older Pythons
+    import tomli as toml_parser
+try:  # optional writer support
+    import tomli_w
+except ModuleNotFoundError:  # pragma: no cover - writer is optional
+    tomli_w = None
 import logging
 import pkgutil
 import importlib
@@ -681,13 +688,18 @@ class Config:
             ConfigurationError: If format is unsupported or save fails
         """
         try:
-            with open(path, 'w') as f:
+            mode = 'wb' if format.lower() == "toml" else 'w'
+            with open(path, mode) as f:
                 if format.lower() == "json":
                     json.dump(self.data, f, indent=2)
                 elif format.lower() == "yaml":
                     yaml.dump(self.data, f)
                 elif format.lower() == "toml":
-                    toml.dump(self.data, f)
+                    if tomli_w is None:
+                        raise ConfigurationError(
+                            "Saving to TOML requires the optional tomli-w package"
+                        )
+                    tomli_w.dump(self.data, f)
                 else:
                     raise ConfigurationError(f"Unsupported configuration format: {format}")
         except Exception as e:
@@ -761,9 +773,9 @@ class Config:
             ConfigurationError: If TOML parsing fails
         """
         try:
-            data = toml.loads(toml_str)
+            data = toml_parser.loads(toml_str)
             return cls(data)
-        except toml.TomlDecodeError as e:
+        except toml_parser.TOMLDecodeError as e:
             raise ConfigurationError(f"Invalid TOML: {str(e)}")
 
 def load_config(path: str) -> Config:
