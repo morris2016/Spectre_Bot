@@ -1501,6 +1501,111 @@ class TimeSeriesStorage:
         """
         logger.info(f"Storing indicator {indicator} for {symbol}/{timeframe} (compatibility mode)")
         return len(data)
+
+    def get_sentiment(self, symbol, timeframe, source,
+                      start_time=None, end_time=None, limit=None):
+        """Retrieve sentiment records for the given parameters."""
+        backend = getattr(self.manager, 'backend', 'pandas')
+
+        try:
+            if backend == 'pandas':
+                return self._get_sentiment_pandas(symbol, timeframe, source,
+                                                 start_time, end_time, limit)
+            elif backend == 'timescale':
+                return self._get_sentiment_timescale(symbol, timeframe, source,
+                                                   start_time, end_time, limit)
+            elif backend == 'influx':
+                return self._get_sentiment_influx(symbol, timeframe, source,
+                                                start_time, end_time, limit)
+        except Exception as e:
+            logger.error(
+                f"Error retrieving sentiment data for {symbol}/{timeframe} from {source}: {str(e)}")
+
+        return []
+
+    def _get_sentiment_pandas(self, symbol, timeframe, source,
+                              start_time, end_time, limit):
+        path = os.path.join(self.manager.data_path, 'sentiment', symbol,
+                            source, f"{timeframe}.parquet")
+        if not os.path.exists(path):
+            return []
+
+        filters = []
+        if start_time:
+            filters.append(('timestamp', '>=', int(start_time.timestamp())))
+        if end_time:
+            filters.append(('timestamp', '<=', int(end_time.timestamp())))
+
+        if filters:
+            df = pd.read_parquet(path, filters=filters)
+        else:
+            df = pd.read_parquet(path)
+
+        if limit is not None and len(df) > limit:
+            df = df.tail(limit)
+
+        df = df.sort_values('timestamp').reset_index(drop=True)
+        return df.to_dict('records')
+
+    def _get_sentiment_timescale(self, symbol, timeframe, source,
+                                 start_time, end_time, limit):
+        if not TIMESCALE_AVAILABLE or not self.manager.client:
+            return []
+
+        query = (
+            "SELECT timestamp, compound, positive, negative, neutral, reliability "
+            "FROM sentiment_data WHERE asset=%s AND timeframe=%s AND source=%s"
+        )
+        params = [symbol, timeframe, source]
+        if start_time:
+            query += " AND timestamp >= %s"
+            params.append(start_time)
+        if end_time:
+            query += " AND timestamp <= %s"
+            params.append(end_time)
+        query += " ORDER BY timestamp DESC"
+        if limit:
+            query += " LIMIT %s"
+            params.append(limit)
+
+        with self.manager.client.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+            cur.execute(query, params)
+            rows = cur.fetchall()
+
+        return [dict(row) for row in rows][::-1]
+
+    def _get_sentiment_influx(self, symbol, timeframe, source,
+                              start_time, end_time, limit):
+        if not INFLUXDB_AVAILABLE or not self.manager.client:
+            return []
+
+        start_clause = f"|> range(start: {start_time.isoformat()})" if start_time else "|> range(start: -100y)"
+        if end_time:
+            end_clause = f", stop: {end_time.isoformat()}"
+        else:
+            end_clause = ""
+        query = f"""
+        from(bucket: "{self.manager.bucket}")
+          {start_clause}{end_clause}
+          |> filter(fn: (r) => r["_measurement"] == "sentiment")
+          |> filter(fn: (r) => r["asset"] == "{symbol}")
+          |> filter(fn: (r) => r["timeframe"] == "{timeframe}")
+          |> filter(fn: (r) => r["source"] == "{source}")
+          |> sort(columns:["_time"])
+        """
+        if limit:
+            query += f"|> tail(n:{limit})"
+
+        result = self.manager.query_api.query(query, org=self.manager.org)
+        entries = []
+        for table in result:
+            for record in table.records:
+                entries.append({
+                    'timestamp': record.get_time().timestamp(),
+                    'compound': record.get_value(),
+                    'source': source,
+                })
+        return entries
     
     def get_available_symbols(self):
         """Get available symbols from constants"""
