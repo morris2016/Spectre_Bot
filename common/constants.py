@@ -100,7 +100,8 @@ SERVICE_NAMES = {
     "backtester": "Backtester Service",
     "monitoring": "Monitoring Service",
     "api_gateway": "API Gateway Service",
-    "ui_server": "UI Server"
+    "ui_server": "UI Server",
+    "voice_assistant": "Voice Assistant Service"
 }
 
 SERVICE_DEPENDENCIES = {
@@ -116,7 +117,8 @@ SERVICE_DEPENDENCIES = {
     "backtester": ["feature_service", "strategy_brain", "risk_manager"],
     "monitoring": [],
     "api_gateway": ["brain_council", "execution_engine", "monitoring"],
-    "ui_server": ["api_gateway"]
+    "ui_server": ["api_gateway"],
+    "voice_assistant": []
 }
 
 SERVICE_STARTUP_ORDER = [
@@ -132,7 +134,8 @@ SERVICE_STARTUP_ORDER = [
     "backtester",
     "monitoring",
     "api_gateway",
-    "ui_server"
+    "ui_server",
+    "voice_assistant"
 ]
 
 DATA_INGEST_METRICS_PREFIX = "data_ingest"
