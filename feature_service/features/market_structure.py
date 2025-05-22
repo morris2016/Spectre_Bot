@@ -20,7 +20,7 @@ import logging
 from dataclasses import dataclass
 from scipy.signal import argrelextrema
 from scipy.stats import linregress
-import pandas_ta as ta
+import ta
 
 from common.logger import get_logger
 from common.utils import parallelize_calculation, window_calculation
