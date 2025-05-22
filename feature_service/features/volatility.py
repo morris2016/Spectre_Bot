@@ -96,9 +96,6 @@ class VolatilityFeatures(BaseFeature):
         # Set up the thread pool for parallel calculation
         self.executor = ThreadPoolExecutor(max_workers=self.max_workers)
         
-        # Suppress pandas_ta warnings
-        warnings.filterwarnings('ignore', category=RuntimeWarning,
-                               module='pandas_ta')
     
     @timeit
     def calculate_features(self, data: pd.DataFrame) -> pd.DataFrame:

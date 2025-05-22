@@ -12,7 +12,7 @@ import logging
 from typing import Dict, List, Any, Optional, Union, Tuple
 from datetime import datetime, timedelta
 import ta
-import pandas_ta as pta
+from common import ta_candles
 from sklearn.preprocessing import MinMaxScaler
 import joblib
 import os
@@ -1356,8 +1356,8 @@ class FeatureExtractor:
             elif feature_name.startswith('pattern_cdl_'):
                 pattern_name = feature_name[len('pattern_cdl_'):]
                 try:
-                    result = pta.cdl_pattern(open_=open_price, high=high_price, low=low_price,
-                                            close=close_price, name=pattern_name)
+                    result = ta_candles.cdl_pattern(open_=open_price, high=high_price, low=low_price,
+                                                  close=close_price, name=pattern_name)
                     value = result.iloc[-1] / 100.0
                     return value
                 except Exception:

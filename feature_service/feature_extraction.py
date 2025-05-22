@@ -15,7 +15,7 @@ from typing import Dict, List, Tuple, Any, Optional, Union, Callable
 import inspect
 from functools import wraps, lru_cache
 import time
-import pandas_ta as ta
+import ta
 from scipy import stats, signal
 import pywt
 from sklearn import preprocessing
