@@ -42,8 +42,13 @@ eli5==0.14.0  # fixed from 0.14.1 (which does not exist)
 
 # Time Series / Finance
 empyrical==0.5.3  # safer than 0.5.5
+
+quantstats==0.0.63  # performance analytics
+arch  # for GARCH models, optional
+=======
 pyfolio==0.9.2  # outdated, monitor compatibility with pandas
 arch>=6.0,<7.0  # for GARCH models, optional
+
 prophet==1.1.4  # install with conda if pip fails
 
 # Text Processing & NLP
