@@ -35,10 +35,10 @@ import pandas as pd
 import numpy as np
 
 # Blockchain specific libraries
-from web3 import Web3
-# from web3.middleware.proof_of_authority import geth_poa_middleware # Removed due to web3 v6 changes
 from bitcoinrpc.authproxy import AuthServiceProxy
 from etherscan import Etherscan
+from eth_utils import to_checksum_address
+from eth_abi import decode as eth_decode  # noqa: F401  # imported for potential ABI decoding
 
 # Internal imports
 # Add compatibility for inspect.getargspec
@@ -64,6 +64,59 @@ from data_feeds.base_feed import BaseDataFeed
 
 # Initialize logger
 logger = get_logger(__name__)
+
+
+class EthereumRPCClient:
+    """Minimal JSON-RPC client for Ethereum-compatible chains using httpx."""
+
+    def __init__(self, endpoint: str):
+        self.endpoint = endpoint
+        self._http = httpx.Client()
+        self.eth = self.Eth(self)
+
+    class Eth:
+        def __init__(self, parent: "EthereumRPCClient"):
+            self._parent = parent
+
+        def _call(self, method: str, params=None):
+            return self._parent._call(method, params)
+
+        @property
+        def block_number(self) -> int:
+            return int(self._call("eth_blockNumber"), 16)
+
+        @property
+        def gas_price(self) -> int:
+            return int(self._call("eth_gasPrice"), 16)
+
+        def get_block(self, block_number: Union[int, str], full_transactions: bool = True) -> Dict[str, Any]:
+            if isinstance(block_number, int):
+                block_number = hex(block_number)
+            return self._call("eth_getBlockByNumber", [block_number, full_transactions])
+
+        def get_transaction_receipt(self, tx_hash: str) -> Dict[str, Any]:
+            return self._call("eth_getTransactionReceipt", [tx_hash])
+
+        def get_code(self, address: str) -> str:
+            return self._call("eth_getCode", [address, "latest"])
+
+    def _call(self, method: str, params=None):
+        if params is None:
+            params = []
+        payload = {"jsonrpc": "2.0", "id": 1, "method": method, "params": params}
+        resp = self._http.post(self.endpoint, json=payload, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        if "error" in data:
+            raise RuntimeError(data["error"])
+        return data["result"]
+
+    def is_connected(self) -> bool:
+        try:
+            self.eth.block_number
+            return True
+        except Exception:
+            return False
 
 class BlockchainNetwork(Enum):
     """Enum for supported blockchain networks"""
@@ -386,21 +439,14 @@ class OnchainDataFeed(BaseDataFeed):
             logger.error(f"No RPC endpoint configured for {blockchain.value}")
             raise BlockchainConnectionError(f"No RPC endpoint configured for {blockchain.value}")
         
-        # Initialize Web3 client
+        # Initialize JSON-RPC client
         try:
-            if endpoint.startswith('http'):
-                w3 = Web3(Web3.HTTPProvider(endpoint))
-            elif endpoint.startswith('ws'):
-                w3 = Web3(Web3.WebsocketProvider(endpoint))
-            else:
-                logger.error(f"Unsupported Ethereum endpoint protocol: {endpoint}")
-                raise BlockchainConnectionError(f"Unsupported Ethereum endpoint protocol: {endpoint}")
+            w3 = EthereumRPCClient(endpoint)
         except Exception as e:
-            logger.error(f"Error creating Web3 provider for {blockchain.value} at {endpoint}: {e}")
+            logger.error(f"Error creating RPC client for {blockchain.value} at {endpoint}: {e}")
             raise
         
-        # Add middleware for POA chains
-        # w3.middleware_onion.inject(geth_poa_middleware, layer=0) # Removed due to web3 v6 changes
+        # Placeholder for POA chain adjustments if needed
         
         # Test connection
         logger.debug(f"Testing connection to {blockchain.value} node at {endpoint}...")
@@ -484,17 +530,11 @@ class OnchainDataFeed(BaseDataFeed):
             logger.error(f"No RPC endpoint configured for {blockchain.value}")
             raise BlockchainConnectionError(f"No RPC endpoint configured for {blockchain.value}")
         
-        # Initialize Web3 client
+        # Initialize JSON-RPC client
         try:
-            if endpoint.startswith('http'):
-                w3 = Web3(Web3.HTTPProvider(endpoint))
-            elif endpoint.startswith('ws'):
-                w3 = Web3(Web3.WebsocketProvider(endpoint))
-            else:
-                logger.error(f"Unsupported {blockchain.value} endpoint protocol: {endpoint}")
-                raise BlockchainConnectionError(f"Unsupported BSC endpoint protocol: {endpoint}")
+            w3 = EthereumRPCClient(endpoint)
         except Exception as e:
-            logger.error(f"Error creating Web3 provider for {blockchain.value} at {endpoint}: {e}")
+            logger.error(f"Error creating RPC client for {blockchain.value} at {endpoint}: {e}")
             raise
 
         # Test connection
@@ -532,21 +572,14 @@ class OnchainDataFeed(BaseDataFeed):
             logger.error(f"No RPC endpoint configured for {blockchain.value}")
             raise BlockchainConnectionError(f"No RPC endpoint configured for {blockchain.value}")
         
-        # Initialize Web3 client
+        # Initialize JSON-RPC client
         try:
-            if endpoint.startswith('http'):
-                w3 = Web3(Web3.HTTPProvider(endpoint))
-            elif endpoint.startswith('ws'):
-                w3 = Web3(Web3.WebsocketProvider(endpoint))
-            else:
-                logger.error(f"Unsupported {blockchain.value} endpoint protocol: {endpoint}")
-                raise BlockchainConnectionError(f"Unsupported Polygon endpoint protocol: {endpoint}")
+            w3 = EthereumRPCClient(endpoint)
         except Exception as e:
-            logger.error(f"Error creating Web3 provider for {blockchain.value} at {endpoint}: {e}")
+            logger.error(f"Error creating RPC client for {blockchain.value} at {endpoint}: {e}")
             raise
 
-        # Add middleware for POA chains
-        # w3.middleware_onion.inject(geth_poa_middleware, layer=0) # Removed due to web3 v6 changes
+        # Placeholder for POA chain adjustments if needed
         
         # Test connection
         logger.debug(f"Testing connection to {blockchain.value} node at {endpoint}...")
@@ -1104,7 +1137,7 @@ class OnchainDataFeed(BaseDataFeed):
             if not label and blockchain in [BlockchainNetwork.ETHEREUM, BlockchainNetwork.BINANCE_SMART_CHAIN, BlockchainNetwork.POLYGON]:
                 w3 = self.blockchain_clients.get(blockchain.value)
                 if w3:
-                    code = w3.eth.get_code(Web3.to_checksum_address(address))
+                    code = w3.eth.get_code(to_checksum_address(address))
                     if code and code != '0x':  # Has contract code
                         label = "Contract"
             

@@ -68,7 +68,8 @@ uvicorn
 # Blockchain / Crypto
 ccxt==2.6.30
 python-binance==1.0.17
-#web3==6.10.0
+eth-abi==4.1.0
+eth-utils==2.2.0
 etherscan-python==2.1.0
 python-bitcoinrpc==1.0
 pycoingecko==3.1.0
