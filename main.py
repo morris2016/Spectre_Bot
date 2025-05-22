@@ -114,7 +114,7 @@ class ServiceManager:
             "backtester": BacktesterService,
             "monitoring": MonitoringService,
             "api_gateway": APIGatewayService,
-            "ui": UIService,
+            "ui_server": UIService,
             "voice_assistant": VoiceAssistantService
         }
 
