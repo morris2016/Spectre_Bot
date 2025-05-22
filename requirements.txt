@@ -44,7 +44,7 @@ eli5==0.14.0  # fixed from 0.14.1 (which does not exist)
 empyrical==0.5.3  # safer than 0.5.5
 pyfolio==0.9.2  # outdated, monitor compatibility with pandas
 arch>=6.0,<7.0  # for GARCH models, optional
-prophet==1.1.4  # install with conda if pip fails
+prophet==1.1.5  # install with conda if pip fails
 
 # Text Processing & NLP
 nltk==3.8.1

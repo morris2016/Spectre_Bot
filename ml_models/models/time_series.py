@@ -11,6 +11,7 @@ applicable, and includes specialized features for capturing market dynamics.
 
 import os
 import logging
+import json
 import numpy as np
 import pandas as pd
 from typing import Dict, List, Union, Optional, Tuple, Any, Callable
@@ -25,6 +26,7 @@ import statsmodels.api as sm
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 from prophet import Prophet
+from prophet.serialize import model_to_json, model_from_json
 
 # Deep learning
 import tensorflow as tf
@@ -622,7 +624,7 @@ class ProphetModel(BaseModel):
         
         # Save the fitted model
         with open(model_path, 'w') as f:
-            self.model.serialize_prophet_model(f)
+            json.dump(model_to_json(self.model), f)
         
         # Save the scaler
         with open(scaler_path, 'wb') as f:
@@ -658,7 +660,7 @@ class ProphetModel(BaseModel):
         
         # Load the fitted model
         with open(model_path, 'r') as f:
-            self.model = Prophet.deserialize_model(f.read())
+            self.model = model_from_json(json.load(f))
         
         # Load the scaler
         with open(scaler_path, 'rb') as f:

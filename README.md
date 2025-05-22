@@ -51,6 +51,12 @@ The QuantumSpectre Elite Trading System is built with a modular, microservice-ba
    pip install -r requirements-core.txt
    ```
    Optional packages can be added later with `pip install -r requirements.txt`.
+   
+   The `prophet` package now requires `cmdstanpy` and a C++ toolchain for
+   compilation. If installation fails with pip, use conda:
+   ```bash
+   conda install -c conda-forge prophet
+   ```
 
 3. Run the environment setup script:
    ```bash
