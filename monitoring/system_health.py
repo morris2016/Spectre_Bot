@@ -287,7 +287,7 @@ class SystemHealth:
                 self.update_resource_history(resources)
                 
                 # Check for threshold violations
-                self.check_resource_thresholds(resources)
+                await self.check_resource_thresholds(resources)
                 
                 # Publish resource metrics to Redis
                 self.publish_resource_metrics(resources)
@@ -467,7 +467,7 @@ class SystemHealth:
                 for key in self.resource_history:
                     self.resource_history[key] = self.resource_history[key][-self.history_length:]
     
-    def check_resource_thresholds(self, resources: Dict[str, Any]):
+    async def check_resource_thresholds(self, resources: Dict[str, Any]):
         """
         Check if any resource usage exceeds configured thresholds.
         
@@ -480,7 +480,7 @@ class SystemHealth:
         if cpu_usage > cpu_threshold:
             if not self.alerts['cpu']:
                 self.alerts['cpu'] = True
-                self.log_alert('cpu', f"CPU usage exceeds threshold: {cpu_usage:.1f}% > {cpu_threshold}%")
+                await self.log_alert('cpu', f"CPU usage exceeds threshold: {cpu_usage:.1f}% > {cpu_threshold}%")
         else:
             self.alerts['cpu'] = False
         
@@ -491,7 +491,7 @@ class SystemHealth:
         if memory_percent > memory_threshold:
             if not self.alerts['memory']:
                 self.alerts['memory'] = True
-                self.log_alert('memory', f"Memory usage exceeds threshold: {memory_percent:.1f}% > {memory_threshold}%")
+                await self.log_alert('memory', f"Memory usage exceeds threshold: {memory_percent:.1f}% > {memory_threshold}%")
         else:
             self.alerts['memory'] = False
         
@@ -502,7 +502,7 @@ class SystemHealth:
         if disk_percent > disk_threshold:
             if not self.alerts['disk']:
                 self.alerts['disk'] = True
-                self.log_alert('disk', f"Disk usage exceeds threshold: {disk_percent:.1f}% > {disk_threshold}%")
+                await self.log_alert('disk', f"Disk usage exceeds threshold: {disk_percent:.1f}% > {disk_threshold}%")
         else:
             self.alerts['disk'] = False
         
@@ -515,12 +515,12 @@ class SystemHealth:
                 if gpu_memory_percent > gpu_threshold:
                     if not self.alerts['gpu']:
                         self.alerts['gpu'] = True
-                        self.log_alert('gpu', f"GPU {gpu_id} memory usage exceeds threshold: {gpu_memory_percent:.1f}% > {gpu_threshold}%")
+                        await self.log_alert('gpu', f"GPU {gpu_id} memory usage exceeds threshold: {gpu_memory_percent:.1f}% > {gpu_threshold}%")
                     break
             else:
                 self.alerts['gpu'] = False
     
-    def log_alert(self, resource_type: str, message: str):
+    async def log_alert(self, resource_type: str, message: str):
         """
         Log a resource usage alert.
         
@@ -532,7 +532,7 @@ class SystemHealth:
         
         # Store alert in database
         try:
-            self.db_client.execute(
+            await self.db_client.execute(
                 """
                 INSERT INTO system_alerts (
                     timestamp, type, resource, message, acknowledged
@@ -772,7 +772,7 @@ class SystemHealth:
             elif recovery_strategy == 'restart_with_deps':
                 await self.restart_component_with_dependencies(component_name)
             elif recovery_strategy == 'alert_only':
-                self.send_critical_alert(component_name, status, message, failures)
+                await self.send_critical_alert(component_name, status, message, failures)
             elif recovery_strategy == 'custom':
                 await self.execute_custom_recovery(component_name, recovery_config.get('custom_action'))
             else:
@@ -871,7 +871,7 @@ class SystemHealth:
             logger.error(f"Error restarting component with dependencies {component_name}: {str(e)}")
             return False
     
-    def send_critical_alert(self, component_name: str, status: str, message: str, failures: int):
+    async def send_critical_alert(self, component_name: str, status: str, message: str, failures: int):
         """
         Send a critical alert for a component failure.
         
@@ -887,7 +887,7 @@ class SystemHealth:
         
         # Store alert in database
         try:
-            self.db_client.execute(
+            await self.db_client.execute(
                 """
                 INSERT INTO system_alerts (
                     timestamp, type, resource, message, acknowledged, severity
@@ -1137,7 +1137,7 @@ class SystemHealth:
         """
         try:
             start_time = time.time()
-            self.db_client.execute("SELECT 1")
+            await self.db_client.execute("SELECT 1")
             end_time = time.time()
             
             return (end_time - start_time) * 1000  # Convert to milliseconds
@@ -1433,9 +1433,9 @@ class SystemHealth:
         except Exception:
             return 0
     
-    def get_alerts(self, limit: int = 100, offset: int = 0, 
-                 severity: Optional[str] = None, 
-                 acknowledged: Optional[bool] = None) -> List[Dict[str, Any]]:
+    async def get_alerts(self, limit: int = 100, offset: int = 0,
+                         severity: Optional[str] = None,
+                         acknowledged: Optional[bool] = None) -> List[Dict[str, Any]]:
         """
         Get system alerts from the database.
         
@@ -1470,7 +1470,7 @@ class SystemHealth:
             params.extend([limit, offset])
             
             # Execute query
-            results = self.db_client.query(query, params)
+            results = await self.db_client.fetch(query, *params)
             
             alerts = []
             for row in results:
@@ -1490,7 +1490,7 @@ class SystemHealth:
             logger.error(f"Error retrieving alerts: {str(e)}")
             return []
     
-    def acknowledge_alert(self, alert_id: int) -> bool:
+    async def acknowledge_alert(self, alert_id: int) -> bool:
         """
         Acknowledge a system alert.
         
@@ -1501,7 +1501,7 @@ class SystemHealth:
             True if successful, False otherwise
         """
         try:
-            self.db_client.execute(
+            await self.db_client.execute(
                 "UPDATE system_alerts SET acknowledged = 1 WHERE id = ?",
                 (alert_id,)
             )
@@ -1511,8 +1511,8 @@ class SystemHealth:
             logger.error(f"Error acknowledging alert {alert_id}: {str(e)}")
             return False
     
-    def get_recovery_actions(self, limit: int = 100, offset: int = 0, 
-                           component: Optional[str] = None) -> List[Dict[str, Any]]:
+    async def get_recovery_actions(self, limit: int = 100, offset: int = 0,
+                                   component: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Get system recovery actions from the database.
         
@@ -1537,7 +1537,7 @@ class SystemHealth:
             params.extend([limit, offset])
             
             # Execute query
-            results = self.db_client.query(query, params)
+            results = await self.db_client.fetch(query, *params)
             
             actions = []
             for row in results:
