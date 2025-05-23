@@ -40,7 +40,7 @@ from common.exceptions import (
     TakeProfitError, ExposureError, CircuitBreakerError, DrawdownError
 )
 from common.metrics import MetricsCollector
-from common.db_client import DatabaseClient
+from common.db_client import DatabaseClient, get_db_client
 from common.redis_client import RedisClient
 
 # Risk management component imports
@@ -87,7 +87,8 @@ class RiskManagerService(AsyncService):
         self.logger.info("Initializing Risk Manager Service")
         
         # Initialize database and Redis clients
-        self.db_client = DatabaseClient(config)
+        self.db_client = None
+        self._db_params = config
         self.redis_client = RedisClient(config)
         
         # Initialize metrics collector
@@ -123,8 +124,13 @@ class RiskManagerService(AsyncService):
         
         # Register signal handlers
         self._register_signal_handlers()
-        
+
         self.logger.info("Risk Manager Service initialized successfully")
+
+    async def initialize(self) -> None:
+        """Asynchronously obtain a database client if needed."""
+        if self.db_client is None:
+            self.db_client = await get_db_client(**self._db_params)
     
     def _load_configuration(self) -> None:
         """Load risk management configuration from config files."""
@@ -277,8 +283,9 @@ class RiskManagerService(AsyncService):
     async def start(self) -> None:
         """Start the Risk Manager service."""
         self.logger.info("Starting Risk Manager Service")
-        
+
         try:
+            await self.initialize()
             # Initialize the service state
             self.active = True
             

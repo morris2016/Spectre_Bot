@@ -102,6 +102,7 @@ class MLModelService:
         
         # Initialize connections
         await self.redis.connect()
+        await self.model_manager.initialize()
         
         # Start message consumers
         asyncio.create_task(self.training_consumer())

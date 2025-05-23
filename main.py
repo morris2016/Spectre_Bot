@@ -35,7 +35,7 @@ from common.exceptions import (
 )
 from common.async_utils import run_with_timeout, cancel_all_tasks
 from common.redis_client import RedisClient
-from common.db_client import DatabaseClient
+from common.db_client import DatabaseClient, get_db_client
 from common.security import SecureCredentialManager
 
 # Service imports
@@ -469,7 +469,7 @@ async def initialize_db(config: Config) -> DatabaseClient:
     
     try:
         db_config = config.database
-        db_client = DatabaseClient(
+        db_client = await get_db_client(
             db_type=db_config.get("type", "postgresql"),
             host=db_config.get("host", "localhost"),
             port=db_config.get("port", 5432),
@@ -480,9 +480,6 @@ async def initialize_db(config: Config) -> DatabaseClient:
             ssl=db_config.get("ssl", False),
             timeout=db_config.get("timeout", 30)
         )
-        
-        # Initialize the connection
-        await db_client.initialize()
         
         # Run migrations if needed
         if config.system.get("auto_migrate", True):
