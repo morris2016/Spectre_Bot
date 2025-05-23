@@ -53,7 +53,7 @@ class AlertingSystem:
             redis_client: Redis client for real-time alerts and state
         """
         self.config = config
-        self.db_client = db_client or DatabaseClient(config)
+        self.db_client = db_client
         self.redis_client = redis_client or RedisClient(config)
         
         # Alert configuration
@@ -97,8 +97,18 @@ class AlertingSystem:
         # Alert tasks
         self.alert_task = None
         self.is_running = False
-        
+
         logger.info("AlertingSystem initialized")
+
+    async def initialize(self, db_connector: Optional[DatabaseClient] = None) -> None:
+        """Initialize the database client for alerting."""
+        if db_connector is not None:
+            self.db_client = db_connector
+        if self.db_client is None:
+            self.db_client = DatabaseClient(self.config)
+        if getattr(self.db_client, 'pool', None) is None:
+            await self.db_client.initialize()
+            await self.db_client.create_tables()
     
     def _load_templates(self) -> Dict[str, Dict[str, Any]]:
         """
@@ -152,6 +162,7 @@ class AlertingSystem:
             return
         
         logger.info("Starting AlertingSystem...")
+        await self.initialize()
         self.is_running = True
         
         # Load active alerts from storage

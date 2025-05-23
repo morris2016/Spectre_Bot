@@ -87,7 +87,7 @@ class RiskManagerService(AsyncService):
         self.logger.info("Initializing Risk Manager Service")
         
         # Initialize database and Redis clients
-        self.db_client = DatabaseClient(config)
+        self.db_client = None
         self.redis_client = RedisClient(config)
         
         # Initialize metrics collector
@@ -123,8 +123,18 @@ class RiskManagerService(AsyncService):
         
         # Register signal handlers
         self._register_signal_handlers()
-        
+
         self.logger.info("Risk Manager Service initialized successfully")
+
+    async def initialize(self, db_connector: Optional[DatabaseClient] = None) -> None:
+        """Initialize database client for the service."""
+        if db_connector is not None:
+            self.db_client = db_connector
+        if self.db_client is None:
+            self.db_client = DatabaseClient(self.config)
+        if getattr(self.db_client, 'pool', None) is None:
+            await self.db_client.initialize()
+            await self.db_client.create_tables()
     
     def _load_configuration(self) -> None:
         """Load risk management configuration from config files."""
@@ -277,6 +287,8 @@ class RiskManagerService(AsyncService):
     async def start(self) -> None:
         """Start the Risk Manager service."""
         self.logger.info("Starting Risk Manager Service")
+
+        await self.initialize()
         
         try:
             # Initialize the service state

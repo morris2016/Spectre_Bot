@@ -103,8 +103,18 @@ class ModelManager:
         
         # Load existing model registry from disk
         self._load_model_registry()
-        
+
         logger.info(f"Model Manager initialized with {len(self.model_registry)} registered models")
+
+    async def initialize(self, db_connector: Optional[DatabaseClient] = None) -> None:
+        """Initialize database connection for model manager."""
+        if db_connector is not None:
+            self.db_client = db_connector
+        if self.db_client is None and 'db_connection' in self.config:
+            self.db_client = DatabaseClient(self.config['db_connection'])
+        if self.db_client and getattr(self.db_client, 'pool', None) is None:
+            await self.db_client.initialize()
+            await self.db_client.create_tables()
     
     def _configure_gpu(self, memory_limit: float = 0.8, use_mixed_precision: bool = True):
         """

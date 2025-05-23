@@ -57,7 +57,7 @@ class CorrelationRiskManager(BaseCorrelationRiskManager):
             config: Configuration parameters for correlation management
         """
         self.logger = get_logger(self.__class__.__name__)
-        self.db_client = db_client or DatabaseClient()
+        self.db_client = db_client
         self.redis_client = redis_client or RedisClient()
         
         # Default configuration
@@ -89,6 +89,16 @@ class CorrelationRiskManager(BaseCorrelationRiskManager):
         self._correlation_cache = {}
         
         self.logger.info("Correlation Risk Manager initialized with config: %s", self.config)
+
+    async def initialize(self, db_connector: Optional[DatabaseClient] = None) -> None:
+        """Initialize the database client for correlation risk manager."""
+        if db_connector is not None:
+            self.db_client = db_connector
+        if self.db_client is None:
+            self.db_client = DatabaseClient()
+        if getattr(self.db_client, 'pool', None) is None:
+            await self.db_client.initialize()
+            await self.db_client.create_tables()
     
     async def calculate_correlation_matrix(self, 
                                            assets: List[str], 

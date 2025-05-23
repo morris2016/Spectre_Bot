@@ -220,9 +220,9 @@ class MarketDataStore:
         
         # Set up clients
         self.redis_client = redis_client or RedisClient()
-        self.db_client = db_client or DatabaseClient()
-        self.db_manager = DatabaseManager(self.db_client)
-        self.ts_store = TimeSeriesStore(self.db_client)
+        self.db_client = db_client
+        self.db_manager = None
+        self.ts_store = None
         
         # Runtime settings
         self.max_workers = max_workers
@@ -248,8 +248,21 @@ class MarketDataStore:
             'compression_ratio': [],
             'query_time': []
         }
-        
+
         self.logger.info("Market data store initialized")
+
+    async def initialize(self, db_connector: Optional[DatabaseClient] = None) -> None:
+        """Initialize database resources for the market data store."""
+        if db_connector is not None:
+            self.db_client = db_connector
+        if self.db_client is None:
+            self.db_client = DatabaseClient()
+        if self.db_manager is None:
+            self.db_manager = DatabaseManager(self.db_client)
+            self.ts_store = TimeSeriesStore(self.db_client)
+        if getattr(self.db_client, 'pool', None) is None:
+            await self.db_client.initialize()
+            await self.db_client.create_tables()
     
     def _init_storage_paths(self):
         """Initialize storage paths for different data types"""
