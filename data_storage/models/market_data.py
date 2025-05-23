@@ -1181,3 +1181,105 @@ class MarketMetrics:
         return (self.trend_direction == "bearish" and
                 self.trend_strength > 0.5 and
                 self.sentiment_score < 0.0)
+
+
+@dataclass
+class SignalRecord:
+    """Simple record of generated trading signals."""
+
+    symbol: str
+    timeframe: str
+    action: str
+    confidence: float
+    entry_price: float
+    stop_loss: float
+    take_profit: float
+    risk_reward: float
+    reasoning: str
+    timestamp: datetime.datetime
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    extra: Dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary representation."""
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "SignalRecord":
+        """Create instance from dictionary."""
+        return cls(**data)
+
+    def save(self) -> None:
+        """Persist record to storage (placeholder)."""
+        pass
+
+    @classmethod
+    def create(cls, **kwargs) -> "SignalRecord":
+        """Instantiate and store a new record."""
+        record = cls(**kwargs)
+        record.save()
+        return record
+
+
+@dataclass
+class MarketRegimeData:
+    """Data about detected market regimes."""
+
+    asset_id: str
+    platform: str
+    timeframe: str
+    regime: str
+    confidence: float
+    detected_at: datetime.datetime
+    meta: Dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary representation."""
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "MarketRegimeData":
+        """Create instance from dictionary."""
+        return cls(**data)
+
+    async def save(self) -> None:
+        """Persist regime data asynchronously (placeholder)."""
+        return None
+
+    @classmethod
+    async def get_history(cls, **query) -> List["MarketRegimeData"]:
+        """Retrieve historical regime data (placeholder)."""
+        return []
+
+
+@dataclass
+class AssetCharacteristics:
+    """Summary of asset-specific behaviour and statistics."""
+
+    asset_id: str
+    platform: str
+    volatility_profile: Dict[str, Any]
+    liquidity_profile: Dict[str, Any]
+    correlation_data: Dict[str, Any]
+    seasonal_patterns: Dict[str, Any]
+    behavioral_traits: Dict[str, Any]
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary representation."""
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "AssetCharacteristics":
+        """Create instance from dictionary."""
+        return cls(**data)
+
+    async def save(self) -> None:
+        """Persist characteristics asynchronously (placeholder)."""
+        return None
+
+    @classmethod
+    async def get_by_asset_id(cls, asset_id: str, platform: str) -> Optional["AssetCharacteristics"]:
+        """Retrieve characteristics for an asset (placeholder)."""
+        return None
