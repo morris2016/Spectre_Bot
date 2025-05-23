@@ -435,7 +435,7 @@ def safe_divide(numerator: Union[float, int, decimal.Decimal],
         return default
 
 
-def round_to_tick(value: Union[float, decimal.Decimal], 
+def round_to_tick(value: Union[float, decimal.Decimal],
                  tick_size: Union[float, decimal.Decimal]) -> Union[float, decimal.Decimal]:
     """
     Round a value to the nearest tick size.
@@ -459,6 +459,12 @@ def round_to_tick(value: Union[float, decimal.Decimal],
     else:
         # Default float implementation
         return round(value / tick_size) * tick_size
+
+
+def round_to_tick_size(value: Union[float, decimal.Decimal],
+                       tick_size: Union[float, decimal.Decimal]) -> Union[float, decimal.Decimal]:
+    """Alias for :func:`round_to_tick` for backward compatibility."""
+    return round_to_tick(value, tick_size)
 
 
 def calculate_change_percent(current: Union[float, decimal.Decimal], 
@@ -989,6 +995,14 @@ def dict_to_object(d: Dict) -> object:
             return str(self.__dict__)
                 
     return DictObject(d)
+
+
+def dict_to_namedtuple(name: str, data: Dict[str, Any]) -> Any:
+    """Convert a dictionary to a namedtuple."""
+    if not isinstance(data, dict):
+        raise TypeError("data must be a dictionary")
+    NT = collections.namedtuple(name, data.keys())
+    return NT(**data)
 
 
 def group_by(items: List[Any], key_func: Callable) -> Dict:
@@ -1833,6 +1847,33 @@ def calculate_pip_value(size: float, pip_size: float, price: float,
             pip_value = size * pip_size / price
             
     return pip_value
+
+
+def calculate_arbitrage_profit(
+    buy_price: float,
+    sell_price: float,
+    quantity: float,
+    buy_fee_rate: float = 0.0,
+    sell_fee_rate: float = 0.0,
+) -> float:
+    """Calculate net arbitrage profit after fees."""
+    if quantity <= 0:
+        return 0.0
+    gross = (sell_price - buy_price) * quantity
+    fees = (buy_price * buy_fee_rate + sell_price * sell_fee_rate) * quantity
+    return gross - fees
+
+
+def calculate_position_size(
+    account_balance: float,
+    risk_percent: float,
+    stop_loss_percent: float,
+) -> float:
+    """Basic position sizing using risk percentage and stop loss distance."""
+    if account_balance <= 0 or risk_percent <= 0 or stop_loss_percent <= 0:
+        return 0.0
+    risk_amount = account_balance * risk_percent
+    return risk_amount / stop_loss_percent
 
 
 def calculate_win_rate(wins: int, losses: int) -> float:
@@ -4156,7 +4197,7 @@ __all__ = [
     'calculate_price_precision', 'calculate_quantity_precision',
     'round_to_precision', 'convert_timeframe', 'calculate_order_cost',
     'calculate_order_risk', 'normalize_price', 'normalize_quantity',
-    'parse_decimal', 'safe_divide', 'round_to_tick', 'calculate_change_percent',
+    'parse_decimal', 'safe_divide', 'round_to_tick', 'round_to_tick_size', 'calculate_change_percent',
     'normalize_value', 'moving_average', 'exponential_moving_average', 'rolling_window',
     
     # String and format
@@ -4165,7 +4206,7 @@ __all__ = [
     
     # JSON and data structures
     'EnhancedJSONEncoder', 'JsonEncoder', 'json_dumps', 'json_loads', 'deep_update', 'deep_get',
-    'flatten_dict', 'unflatten_dict', 'dict_to_object', 'group_by', 'chunks',
+    'flatten_dict', 'unflatten_dict', 'dict_to_object', 'dict_to_namedtuple', 'group_by', 'chunks',
     'filter_none_values', 'find_duplicate_items', 'merge_lists',
     
     # Security and validation
@@ -4184,8 +4225,8 @@ __all__ = [
     'AtomicCounter', 'SafeDict',
     
     # Trading-specific
-    'calculate_order_size', 'calculate_position_value', 'calculate_pip_value',
-    'calculate_volatility', 'calculate_correlation', 'calculate_drawdown',
+    'calculate_order_size', 'calculate_position_value', 'calculate_pip_value', 'calculate_arbitrage_profit',
+    'calculate_position_size', 'calculate_volatility', 'calculate_correlation', 'calculate_drawdown',
     'calculate_liquidation_price', 'calculate_win_rate',
     'calculate_risk_reward_ratio', 'calculate_expectancy',
     'calculate_kelly_criterion', 'calculate_sharpe_ratio', 'calculate_sortino_ratio',
