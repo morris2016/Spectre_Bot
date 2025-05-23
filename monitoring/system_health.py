@@ -28,7 +28,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from common.logger import get_logger
 from common.redis_client import RedisClient
-from common.db_client import DatabaseClient
+from common.db_client import DatabaseClient, get_db_client
 from common.constants import (
     SERVICE_NAMES, SERVICE_DEPENDENCIES, SERVICE_STARTUP_ORDER,
     RESOURCE_THRESHOLDS, HEALTH_CHECK_INTERVALS
@@ -61,6 +61,8 @@ class SystemHealth:
         self.config = config
         self.redis_client = redis_client or RedisClient(config.get('redis', {}))
         self.db_client = db_client
+        self._db_params = config.get('database', {})
+=======
         
         # System information
         self.system_info = self.get_system_info()
@@ -125,6 +127,11 @@ class SystemHealth:
 
         logger.info("System health monitor initialized successfully")
 
+    async def initialize(self) -> None:
+        """Asynchronously obtain a database client if needed."""
+        if self.db_client is None:
+            self.db_client = await get_db_client(**self._db_params)
+=======
     async def initialize(self, db_connector: Optional[DatabaseClient] = None) -> None:
         """Initialize the database client and ensure tables exist."""
         if db_connector is not None:

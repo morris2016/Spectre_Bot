@@ -55,7 +55,7 @@ from common.exceptions import (
     DataNotFoundError
 )
 from common.redis_client import RedisClient
-from common.db_client import DatabaseClient
+from common.db_client import DatabaseClient, get_db_client
 from data_storage.database import DatabaseManager
 from data_storage.time_series import TimeSeriesStorage
 from data_storage.models.market_data import (
@@ -251,6 +251,14 @@ class MarketDataStore:
 
         self.logger.info("Market data store initialized")
 
+
+    async def initialize(self) -> None:
+        """Asynchronously initialize database-backed components."""
+        if self.db_client is None:
+            self.db_client = await get_db_client()
+        self.db_manager = DatabaseManager(self.db_client)
+        self.ts_store = TimeSeriesStore(self.db_client)
+
     async def initialize(self, db_connector: Optional[DatabaseClient] = None) -> None:
         """Initialize database resources for the market data store."""
         if db_connector is not None:
@@ -263,6 +271,7 @@ class MarketDataStore:
         if getattr(self.db_client, 'pool', None) is None:
             await self.db_client.initialize()
             await self.db_client.create_tables()
+
     
     def _init_storage_paths(self):
         """Initialize storage paths for different data types"""

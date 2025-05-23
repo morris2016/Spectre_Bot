@@ -100,6 +100,11 @@ async def initialize_monitoring(config: Dict[str, Any]) -> None:
     for component_name in _component_registry:
         component = get_component(component_name)
         if hasattr(component, "initialize"):
+            init_func = component.initialize
+            if asyncio.iscoroutinefunction(init_func):
+                await init_func(config.get(component_name, {}))
+            else:
+                init_func(config.get(component_name, {}))
             result = component.initialize(config.get(component_name, {}))
             if asyncio.iscoroutine(result):
                 await result

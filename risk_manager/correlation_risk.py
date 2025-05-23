@@ -16,7 +16,7 @@ from datetime import datetime
 from sklearn.cluster import DBSCAN
 
 from common.logger import get_logger
-from common.db_client import DatabaseClient
+from common.db_client import DatabaseClient, get_db_client
 from common.redis_client import RedisClient
 from common.constants import CORRELATION_LOOKBACK_PERIODS
 from common.exceptions import CorrelationCalculationError
@@ -58,6 +58,8 @@ class CorrelationRiskManager(BaseCorrelationRiskManager):
         """
         self.logger = get_logger(self.__class__.__name__)
         self.db_client = db_client
+        self._db_params = {}
+=======
         self.redis_client = redis_client or RedisClient()
         
         # Default configuration
@@ -87,9 +89,14 @@ class CorrelationRiskManager(BaseCorrelationRiskManager):
         self._asset_clusters = []
         self._cluster_exposures = {}
         self._correlation_cache = {}
-        
+
         self.logger.info("Correlation Risk Manager initialized with config: %s", self.config)
 
+    async def initialize(self) -> None:
+        """Asynchronously obtain a database client if needed."""
+        if self.db_client is None:
+            self.db_client = await get_db_client(**self._db_params)
+=======
     async def initialize(self, db_connector: Optional[DatabaseClient] = None) -> None:
         """Initialize the database client for correlation risk manager."""
         if db_connector is not None:

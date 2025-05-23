@@ -27,7 +27,7 @@ from common.constants import (
     TRADING_ALERT_THRESHOLDS, SYSTEM_ALERT_THRESHOLDS,
     MAX_ALERT_HISTORY, ALERT_COOLDOWN_PERIODS
 )
-from common.db_client import DatabaseClient
+from common.db_client import DatabaseClient, get_db_client
 from common.redis_client import RedisClient
 from common.exceptions import (
     AlertDeliveryError, AlertConfigurationError, 
@@ -54,6 +54,7 @@ class AlertingSystem:
         """
         self.config = config
         self.db_client = db_client
+        self._db_params = config
         self.redis_client = redis_client or RedisClient(config)
         
         # Alert configuration
@@ -93,13 +94,18 @@ class AlertingSystem:
         self.active_alerts = {}
         self.alert_history = []
         self.last_alert_times = {}
-        
+
         # Alert tasks
         self.alert_task = None
         self.is_running = False
 
         logger.info("AlertingSystem initialized")
 
+    async def initialize(self) -> None:
+        """Asynchronously obtain a database client if needed."""
+        if self.db_client is None:
+            self.db_client = await get_db_client(**self._db_params)
+=======
     async def initialize(self, db_connector: Optional[DatabaseClient] = None) -> None:
         """Initialize the database client for alerting."""
         if db_connector is not None:

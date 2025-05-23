@@ -21,7 +21,7 @@ from common.constants import (
     METRIC_TYPES, PERFORMANCE_METRICS, SYSTEM_METRICS, METRIC_PRIORITIES,
     METRIC_COLLECTION_FREQUENCY, SERVICE_NAMES, MAX_METRIC_HISTORY
 )
-from common.db_client import DatabaseClient
+from common.db_client import DatabaseClient, get_db_client
 from common.redis_client import RedisClient
 from common.exceptions import (
     MetricCollectionError, ServiceConnectionError, DataStoreError
@@ -48,6 +48,8 @@ class MetricsCollector:
         """
         self.config = config
         self.db_client = db_client
+        self._db_params = config
+=======
         self.redis_client = redis_client or RedisClient(config)
         
         # Collection settings
@@ -72,6 +74,11 @@ class MetricsCollector:
 
         logger.info(f"MetricsCollector initialized with frequency: {self.collection_frequency}s")
 
+    async def initialize(self) -> None:
+        """Asynchronously obtain a database client if needed."""
+        if self.db_client is None:
+            self.db_client = await get_db_client(**self._db_params)
+=======
     async def initialize(self, db_connector: Optional[DatabaseClient] = None) -> None:
         """Initialize database resources for the collector."""
         if db_connector is not None:

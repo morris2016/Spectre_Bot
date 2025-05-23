@@ -24,7 +24,7 @@ from common.logger import get_logger
 from common.exceptions import ServiceStartupError, ServiceShutdownError
 from common.constants import MONITORING_CONFIG, SERVICE_STATUS
 from common.redis_client import RedisClient
-from common.db_client import DatabaseClient
+from common.db_client import DatabaseClient, get_db_client
 from common.async_utils import create_task_with_error_handling, run_in_executor
 from common.utils import chunked_iterable, merge_configs
 
@@ -116,7 +116,7 @@ class MonitoringService:
             )
             await self.redis_client.initialize()
             
-            self.db_client = DatabaseClient(
+            self.db_client = await get_db_client(
                 dsn=self.config.get("database", {}).get("dsn", ""),
                 pool_size=self.config.get("database", {}).get("pool_size", 10),
                 max_overflow=self.config.get("database", {}).get("max_overflow", 20)

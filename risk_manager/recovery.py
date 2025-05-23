@@ -12,7 +12,7 @@ maintaining risk management discipline.
 
 from typing import Dict, List, Optional, Any, Type
 from datetime import datetime
-from common.db_client import DatabaseClient
+from common.db_client import DatabaseClient, get_db_client
 from common.redis_client import RedisClient
 from common.constants import RECOVERY_STRATEGIES, ACCOUNT_STATES
 from common.logger import get_logger
@@ -65,6 +65,8 @@ class RecoveryManager(BaseRecoveryManager):
         """
         self.logger = get_logger(self.__class__.__name__)
         self.db_client = db_client
+        self._db_params = {}
+=======
         self.redis_client = redis_client or RedisClient()
         self.position_sizer = position_sizer or PositionSizer()
         self.exposure_manager = exposure_manager or ExposureManager()
@@ -102,6 +104,11 @@ class RecoveryManager(BaseRecoveryManager):
 
         self.logger.info("Recovery Manager initialized with config: %s", self.config)
 
+    async def initialize(self) -> None:
+        """Asynchronously obtain a database client if needed."""
+        if self.db_client is None:
+            self.db_client = await get_db_client(**self._db_params)
+=======
     async def initialize(self, db_connector: Optional[DatabaseClient] = None) -> None:
         """Initialize the database client for recovery manager."""
         if db_connector is not None:
