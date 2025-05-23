@@ -21,6 +21,17 @@ from common.exceptions import (
     DatabaseError, DatabaseConnectionError, DatabaseQueryError
 )
 
+_db_client: Optional['DatabaseClient'] = None
+
+
+async def get_db_client(**kwargs) -> 'DatabaseClient':
+    """Get a shared :class:`DatabaseClient` instance."""
+    global _db_client
+    if _db_client is None:
+        _db_client = DatabaseClient(**kwargs)
+        await _db_client.initialize()
+    return _db_client
+
 class DatabaseClient:
     """Client for database operations."""
     
