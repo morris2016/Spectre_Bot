@@ -253,24 +253,12 @@ class MarketDataStore:
 
 
     async def initialize(self) -> None:
-        """Asynchronously initialize database-backed components."""
+        """Initialize database resources for the market data store."""
         if self.db_client is None:
             self.db_client = await get_db_client()
         self.db_manager = DatabaseManager(self.db_client)
         self.ts_store = TimeSeriesStore(self.db_client)
-
-    async def initialize(self, db_connector: Optional[DatabaseClient] = None) -> None:
-        """Initialize database resources for the market data store."""
-        if db_connector is not None:
-            self.db_client = db_connector
-        if self.db_client is None:
-            self.db_client = DatabaseClient()
-        if self.db_manager is None:
-            self.db_manager = DatabaseManager(self.db_client)
-            self.ts_store = TimeSeriesStore(self.db_client)
-        if getattr(self.db_client, 'pool', None) is None:
-            await self.db_client.initialize()
-            await self.db_client.create_tables()
+        await self.db_client.create_tables()
 
     
     def _init_storage_paths(self):
