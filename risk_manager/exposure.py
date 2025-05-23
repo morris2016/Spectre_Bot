@@ -31,7 +31,7 @@ import asyncio
 import numpy as np
 from decimal import Decimal
 
-from common.constants import PLATFORMS, EXPOSURE_LIMITS
+from common.constants import PLATFORMS
 from common.utils import calculate_correlation_matrix
 from common.async_utils import run_in_threadpool
 from data_storage.market_data import MarketDataRepository
