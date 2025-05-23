@@ -11,6 +11,12 @@ from common.utils import (
     calculate_arbitrage_profit,
     calculate_position_size,
     calculate_correlation_matrix,
+    calculate_risk_reward,
+    calculate_confidence_score,
+    normalize_probability,
+    weighted_average,
+    time_weighted_average,
+    validate_signal,
 )
 
 
@@ -70,3 +76,54 @@ def test_calculate_arbitrage_profit():
 def test_calculate_position_size():
     size = calculate_position_size(1000, 0.02, 0.05)
     assert math.isclose(size, 400.0, rel_tol=1e-9)
+
+
+def test_calculate_risk_reward():
+    assert math.isclose(calculate_risk_reward(100, 95, 110), 2.0, rel_tol=1e-9)
+    assert math.isclose(
+        calculate_risk_reward("sell", 100, 105, 95), 2.0, rel_tol=1e-9
+    )
+
+
+def test_calculate_confidence_score():
+    votes = {"buy": 0.6, "sell": 0.4}
+    reasoning = {
+        "c1": {"action": "buy", "confidence": 0.8},
+        "c2": {"action": "sell", "confidence": 0.6},
+    }
+    result = calculate_confidence_score(votes, reasoning)
+    assert math.isclose(result, 0.72, rel_tol=1e-9)
+
+
+def test_normalize_probability():
+    assert math.isclose(normalize_probability(0.75), 0.75, rel_tol=1e-9)
+    assert math.isclose(normalize_probability(75), 0.75, rel_tol=1e-9)
+    assert math.isclose(normalize_probability(-5), 0.0, rel_tol=1e-9)
+    assert math.isclose(normalize_probability(150), 1.0, rel_tol=1e-9)
+
+
+def test_weighted_average():
+    values = [1, 2, 3]
+    weights = [1, 1, 2]
+    assert math.isclose(weighted_average(values, weights), 2.25, rel_tol=1e-9)
+
+
+def test_time_weighted_average():
+    values = [10, 20, 30]
+    times = [0, 1, 3]
+    assert math.isclose(time_weighted_average(values, times), 22.5, rel_tol=1e-9)
+
+
+def test_validate_signal():
+    valid_signal = {
+        "symbol": "BTCUSD",
+        "action": "buy",
+        "entry_price": 100.0,
+        "stop_loss": 90.0,
+        "take_profit": 120.0,
+        "confidence": 0.8,
+    }
+    assert validate_signal(valid_signal)
+
+    invalid_signal = {"symbol": "BTCUSD", "confidence": 1.2}
+    assert not validate_signal(invalid_signal)
