@@ -73,9 +73,13 @@ class SignalGenerator:
         # Counters for statistics
         self.signals_generated = 0
         self.signals_filtered = 0
-        
-        self.logger.info("Signal Generator initialized with min confidence: %.2f", 
+
+        self.logger.info("Signal Generator initialized with min confidence: %.2f",
                         self.min_confidence)
+
+    async def initialize(self) -> None:
+        """Initialize dependent components."""
+        await self.performance_tracker.initialize()
     
     async def generate_signal(self, voting_results: Dict[str, VotingResult], 
                        market_data: Dict[str, Any], 
