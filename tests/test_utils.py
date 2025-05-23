@@ -1,5 +1,6 @@
 import math
 from decimal import Decimal
+import numpy as np
 from common.utils import (
     round_to_tick_size,
     dict_to_namedtuple,
@@ -9,6 +10,7 @@ from common.utils import (
     calculate_liquidation_price,
     calculate_arbitrage_profit,
     calculate_position_size,
+    calculate_correlation_matrix,
 )
 
 
@@ -36,6 +38,16 @@ def test_calculate_correlation():
     s1 = [1, 2, 3, 4, 5]
     s2 = [2, 4, 6, 8, 10]
     assert math.isclose(calculate_correlation(s1, s2), 1.0, rel_tol=1e-9)
+
+
+def test_calculate_correlation_matrix():
+    data = {
+        "A": np.array([1, 2, 3]),
+        "B": np.array([2, 4, 6]),
+        "C": np.array([1, 0, 1]),
+    }
+    matrix = calculate_correlation_matrix(data)
+    assert math.isclose(matrix.loc["A", "B"], 1.0, rel_tol=1e-9)
 
 
 def test_calculate_drawdown():
