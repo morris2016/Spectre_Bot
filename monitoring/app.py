@@ -25,8 +25,6 @@ from common.exceptions import ServiceStartupError, ServiceShutdownError
 from common.constants import MONITORING_CONFIG, SERVICE_STATUS
 from common.redis_client import RedisClient
 from common.db_client import get_db_client
-=======
-from common.db_client import DatabaseClient, get_db_client
 from common.async_utils import create_task_with_error_handling, run_in_executor
 from common.utils import chunked_iterable, merge_configs
 
@@ -113,6 +111,19 @@ class MonitoringService:
             )
             await self.redis_client.initialize()
 
+            self.db_client = await get_db_client(
+                db_type=self.config.get("database", {}).get("type", "postgresql"),
+                host=self.config.get("database", {}).get("host", "localhost"),
+                port=self.config.get("database", {}).get("port", 5432),
+                username=self.config.get("database", {}).get("username", "postgres"),
+                password=self.config.get("database", {}).get("password", ""),
+                database=self.config.get("database", {}).get("database", "quantumspectre"),
+                pool_size=self.config.get("database", {}).get("pool_size", 10),
+                ssl=self.config.get("database", {}).get("ssl", False),
+                timeout=self.config.get("database", {}).get("timeout", 30),
+            )
+            await self.db_client.initialize()
+=======
             if db_connector is not None:
                 self.db_client = db_connector
             if self.db_client is None:
@@ -322,8 +333,6 @@ class MonitoringService:
             if self.redis_client:
                 await self.redis_client.close()
 
-=======
-            
             if self.db_client:
                 await self.db_client.close()
             
