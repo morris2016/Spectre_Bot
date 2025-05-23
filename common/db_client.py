@@ -247,7 +247,7 @@ class DatabaseClient:
     async def transaction(self):
         """
         Start a transaction.
-        
+
         Returns:
             Transaction object
             
@@ -258,6 +258,18 @@ class DatabaseClient:
             raise DatabaseError("Database not initialized")
             
         return self.pool.transaction()
+
+    async def commit(self):
+        """Commit the current transaction if one exists."""
+        if not self.pool:
+            raise DatabaseError("Database not initialized")
+
+        async with self.pool.acquire() as connection:
+            try:
+                await connection.execute("COMMIT")
+            except Exception as e:
+                self.logger.error(f"Commit failed: {str(e)}")
+                raise DatabaseError(f"Commit failed: {str(e)}")
         
     async def run_migrations(self, migrations_dir="./migrations"):
         """
