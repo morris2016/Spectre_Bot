@@ -64,7 +64,7 @@ class RecoveryManager(BaseRecoveryManager):
             config: Configuration parameters for recovery strategies
         """
         self.logger = get_logger(self.__class__.__name__)
-        self.db_client = db_client or DatabaseClient()
+        self.db_client = db_client
         self.redis_client = redis_client or RedisClient()
         self.position_sizer = position_sizer or PositionSizer()
         self.exposure_manager = exposure_manager or ExposureManager()
@@ -99,8 +99,18 @@ class RecoveryManager(BaseRecoveryManager):
         self._recovery_progress = 0.0
         self._active_recovery_steps = []
         self._past_recoveries = []
-        
+
         self.logger.info("Recovery Manager initialized with config: %s", self.config)
+
+    async def initialize(self, db_connector: Optional[DatabaseClient] = None) -> None:
+        """Initialize the database client for recovery manager."""
+        if db_connector is not None:
+            self.db_client = db_connector
+        if self.db_client is None:
+            self.db_client = DatabaseClient()
+        if getattr(self.db_client, 'pool', None) is None:
+            await self.db_client.initialize()
+            await self.db_client.create_tables()
     
     async def analyze_account_state(self, account_data: Dict[str, Any]) -> str:
         """

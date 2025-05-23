@@ -12,6 +12,7 @@ of system health, performance, and trading metrics.
 import os
 import sys
 import logging
+import asyncio
 from typing import Dict, List, Set, Any, Optional
 
 # Version
@@ -86,7 +87,7 @@ def get_component(component_name: str) -> Any:
             
     return _component_registry[component_name]
 
-def initialize_monitoring(config: Dict[str, Any]) -> None:
+async def initialize_monitoring(config: Dict[str, Any]) -> None:
     """
     Initialize all monitoring components with the provided configuration.
     
@@ -99,7 +100,9 @@ def initialize_monitoring(config: Dict[str, Any]) -> None:
     for component_name in _component_registry:
         component = get_component(component_name)
         if hasattr(component, "initialize"):
-            component.initialize(config.get(component_name, {}))
+            result = component.initialize(config.get(component_name, {}))
+            if asyncio.iscoroutine(result):
+                await result
             
     logger.info("Monitoring system initialization complete")
 

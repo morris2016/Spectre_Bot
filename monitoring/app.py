@@ -131,7 +131,7 @@ class MonitoringService:
             self.log_analyzer = monitoring.get_component("log_analyzer")
             
             # Configure components
-            monitoring.initialize_monitoring(self.config)
+            await monitoring.initialize_monitoring(self.config)
             monitoring.register_exporters(self.config)
             monitoring.register_alert_handlers(self.config)
             

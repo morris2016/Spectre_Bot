@@ -55,7 +55,7 @@ class PerformanceTracker:
         """
         self.config = config
         self.redis_client = redis_client or RedisClient(config.get('redis', {}))
-        self.db_client = db_client or DatabaseClient(config.get('database', {}))
+        self.db_client = db_client
         
         # Performance data storage
         self.trade_history = {}  # Asset-specific trade history
@@ -127,8 +127,18 @@ class PerformanceTracker:
         # Initialize monitoring task
         self.monitoring_task = None
         self.start_monitoring()
-        
+
         logger.info("Performance tracker initialized successfully")
+
+    async def initialize(self, db_connector: Optional[DatabaseClient] = None) -> None:
+        """Initialize the database client for the tracker."""
+        if db_connector is not None:
+            self.db_client = db_connector
+        if self.db_client is None:
+            self.db_client = DatabaseClient(self.config.get('database', {}))
+        if getattr(self.db_client, 'pool', None) is None:
+            await self.db_client.initialize()
+            await self.db_client.create_tables()
     
     def initialize_asset_trackers(self):
         """Initialize performance trackers for each configured asset"""
