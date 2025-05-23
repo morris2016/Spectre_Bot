@@ -201,7 +201,8 @@ class PerformanceTracker:
             # Load asset-specific performance
             for asset_key in self.asset_performance:
                 asset_metrics = self.db_client.query(
-                    "SELECT * FROM performance_metrics WHERE type = 'asset' AND name = ? ORDER BY timestamp DESC LIMIT 1",
+                    "SELECT * FROM performance_metrics WHERE type = 'asset' "
+                    "AND name = ? ORDER BY timestamp DESC LIMIT 1",
                     (asset_key,)
                 )
                 
@@ -213,7 +214,8 @@ class PerformanceTracker:
             # Load strategy-specific performance
             for strategy_key in self.strategy_performance:
                 strategy_metrics = self.db_client.query(
-                    "SELECT * FROM performance_metrics WHERE type = 'strategy' AND name = ? ORDER BY timestamp DESC LIMIT 1",
+                    "SELECT * FROM performance_metrics WHERE type = 'strategy' "
+                    "AND name = ? ORDER BY timestamp DESC LIMIT 1",
                     (strategy_key,)
                 )
                 

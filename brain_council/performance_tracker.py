@@ -11,12 +11,10 @@ over time, and maintains historical records for strategy evaluation and weightin
 import numpy as np
 import pandas as pd
 from typing import Dict, List, Tuple, Any, Optional, Union
-import logging
 import time
 from datetime import datetime, timedelta
 import asyncio
 import json
-import sqlite3
 from collections import defaultdict, deque
 import math
 from enum import Enum
@@ -197,6 +195,37 @@ class PerformanceTracker:
             )
 
             # Indices for performance query optimization
+            self.db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_strategy_signals_strategy_id "
+                "ON strategy_signals(strategy_id)"
+            )
+            self.db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_strategy_signals_council_id "
+                "ON strategy_signals(council_id)"
+            )
+            self.db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_strategy_signals_asset "
+                "ON strategy_signals(asset)"
+            )
+            self.db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_strategy_signals_platform "
+                "ON strategy_signals(platform)"
+            )
+            self.db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_strategy_signals_entry_time "
+                "ON strategy_signals(entry_time)"
+            )
+            self.db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_strategy_performance_strategy_id "
+                "ON strategy_performance(strategy_id)"
+            )
+            self.db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_council_performance_council_id "
+                "ON council_performance(council_id)"
+            )
+            
+            self.db.commit()
+=======
             await self.db.execute(
                 "CREATE INDEX IF NOT EXISTS idx_strategy_signals_strategy_id ON strategy_signals(strategy_id)"
             )
