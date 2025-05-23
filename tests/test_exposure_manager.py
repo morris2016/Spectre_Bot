@@ -4,7 +4,7 @@ from decimal import Decimal
 import pandas as pd
 import pytest
 
-from common.constants import PLATFORMS
+from common.constants import Exchange
 from risk_manager.exposure import ExposureManager, MarketDataRepository
 
 
@@ -19,10 +19,10 @@ async def test_update_exposure_with_market_repo(monkeypatch):
     manager = ExposureManager({'correlation_lookback': 5})
 
     positions = [
-        {'symbol': 'BTCUSDT', 'platform': PLATFORMS.BINANCE, 'position_value': Decimal('100')},
-        {'symbol': 'ETHUSDT', 'platform': PLATFORMS.BINANCE, 'position_value': Decimal('50')},
+        {'symbol': 'BTCUSDT', 'platform': Exchange.BINANCE, 'position_value': Decimal('100')},
+        {'symbol': 'ETHUSDT', 'platform': Exchange.BINANCE, 'position_value': Decimal('50')},
     ]
-    balances = {PLATFORMS.BINANCE: Decimal('200'), PLATFORMS.DERIV: Decimal('0')}
+    balances = {Exchange.BINANCE: Decimal('200'), Exchange.DERIV: Decimal('0')}
 
     result = await manager.update_exposure(positions, balances)
 

@@ -31,7 +31,7 @@ import asyncio
 import numpy as np
 from decimal import Decimal
 
-from common.constants import PLATFORMS, EXPOSURE_LIMITS
+from common.constants import Exchange
 from common.utils import calculate_correlation_matrix
 from common.async_utils import run_in_threadpool
 from data_storage.market_data import MarketDataRepository
@@ -59,8 +59,8 @@ class ExposureManager(BaseExposureManager):
         self.max_single_asset_exposure = self.config.get('max_single_asset_exposure', 0.25)  # 25% of account
         self.max_correlated_exposure = self.config.get('max_correlated_exposure', 0.4)  # 40% of account
         self.max_platform_exposure = self.config.get('max_platform_exposure', {
-            PLATFORMS.BINANCE: 0.8,  # 80% of account
-            PLATFORMS.DERIV: 0.8,  # 80% of account
+            Exchange.BINANCE: 0.8,  # 80% of account
+            Exchange.DERIV: 0.8,  # 80% of account
         })
         
         # Dynamic exposure adjustment
@@ -76,8 +76,8 @@ class ExposureManager(BaseExposureManager):
             'total': Decimal('0'),
             'assets': {},
             'platforms': {
-                PLATFORMS.BINANCE: Decimal('0'),
-                PLATFORMS.DERIV: Decimal('0')
+                Exchange.BINANCE: Decimal('0'),
+                Exchange.DERIV: Decimal('0')
             },
             'groups': {}  # For correlated assets
         }
@@ -115,8 +115,8 @@ class ExposureManager(BaseExposureManager):
             'total': Decimal('0'),
             'assets': {},
             'platforms': {
-                PLATFORMS.BINANCE: Decimal('0'),
-                PLATFORMS.DERIV: Decimal('0')
+                Exchange.BINANCE: Decimal('0'),
+                Exchange.DERIV: Decimal('0')
             },
             'groups': {}
         }
@@ -173,9 +173,9 @@ class ExposureManager(BaseExposureManager):
     async def check_exposure_limits(
         self,
         symbol: str,
-        platform: str,
+        platform: Exchange,
         potential_position_value: Decimal,
-        account_balance: Dict[str, Decimal]
+        account_balance: Dict[Exchange, Decimal]
     ) -> Dict[str, Any]:
         """
         Check if a new position would exceed exposure limits.
@@ -266,8 +266,8 @@ class ExposureManager(BaseExposureManager):
     
     async def get_available_margin(
         self,
-        account_balance: Dict[str, Decimal],
-        platform: Optional[str] = None
+        account_balance: Dict[Exchange, Decimal],
+        platform: Optional[Exchange] = None
     ) -> Dict[str, Any]:
         """
         Calculate available margin for new positions.
@@ -321,8 +321,8 @@ class ExposureManager(BaseExposureManager):
     async def calculate_max_position_size(
         self,
         symbol: str,
-        platform: str,
-        account_balance: Dict[str, Decimal],
+        platform: Exchange,
+        account_balance: Dict[Exchange, Decimal],
         price: Decimal,
         risk_factor: Optional[float] = None
     ) -> Dict[str, Any]:
@@ -387,10 +387,10 @@ class ExposureManager(BaseExposureManager):
             max_position_size = Decimal('0')
         
         # Apply additional platform-specific requirements
-        if platform == PLATFORMS.BINANCE:
+        if platform == Exchange.BINANCE:
             # Add logic for Binance min notional, lot size, etc.
             pass
-        elif platform == PLATFORMS.DERIV:
+        elif platform == Exchange.DERIV:
             # Add logic for Deriv-specific size restrictions
             pass
         
