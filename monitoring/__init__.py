@@ -105,6 +105,9 @@ async def initialize_monitoring(config: Dict[str, Any]) -> None:
                 await init_func(config.get(component_name, {}))
             else:
                 init_func(config.get(component_name, {}))
+            result = component.initialize(config.get(component_name, {}))
+            if asyncio.iscoroutine(result):
+                await result
             
     logger.info("Monitoring system initialization complete")
 

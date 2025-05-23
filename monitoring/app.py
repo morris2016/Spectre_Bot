@@ -114,13 +114,14 @@ class MonitoringService:
                 db=self.config.get("redis", {}).get("db", 0),
                 password=self.config.get("redis", {}).get("password", None)
             )
-            await self.redis_client.connect()
+            await self.redis_client.initialize()
             
             self.db_client = await get_db_client(
                 dsn=self.config.get("database", {}).get("dsn", ""),
                 pool_size=self.config.get("database", {}).get("pool_size", 10),
                 max_overflow=self.config.get("database", {}).get("max_overflow", 20)
             )
+            await self.db_client.initialize()
             
             # Initialize monitoring components
             self.metrics_collector = monitoring.get_component("metrics_collector")
@@ -316,10 +317,10 @@ class MonitoringService:
             
             # Close database connections
             if self.redis_client:
-                await self.redis_client.disconnect()
+                await self.redis_client.close()
             
             if self.db_client:
-                await self.db_client.disconnect()
+                await self.db_client.close()
             
             # Record uptime before shutdown
             if self.start_time:

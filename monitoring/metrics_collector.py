@@ -36,7 +36,7 @@ class MetricsCollector:
     Trading System.
     """
     
-    def __init__(self, config: Dict[str, Any], db_client: DatabaseClient = None, 
+    def __init__(self, config: Dict[str, Any], db_client: DatabaseClient = None,
                  redis_client: RedisClient = None):
         """
         Initialize the MetricsCollector with configuration and database connections.
@@ -49,6 +49,7 @@ class MetricsCollector:
         self.config = config
         self.db_client = db_client
         self._db_params = config
+=======
         self.redis_client = redis_client or RedisClient(config)
         
         # Collection settings
@@ -77,14 +78,25 @@ class MetricsCollector:
         """Asynchronously obtain a database client if needed."""
         if self.db_client is None:
             self.db_client = await get_db_client(**self._db_params)
+=======
+    async def initialize(self, db_connector: Optional[DatabaseClient] = None) -> None:
+        """Initialize database resources for the collector."""
+        if db_connector is not None:
+            self.db_client = db_connector
+        if self.db_client is None:
+            self.db_client = DatabaseClient(self.config)
+        if getattr(self.db_client, "pool", None) is None:
+            await self.db_client.initialize()
+            await self.db_client.create_tables()
     
     async def start(self) -> None:
         """Start the metrics collection system."""
         if self.is_running:
             logger.warning("MetricsCollector is already running")
             return
-        
+
         logger.info("Starting MetricsCollector...")
+        await self.initialize()
         self.is_running = True
         
         # Initialize collection tasks for each service

@@ -98,7 +98,7 @@ class FeatureService:
         
         logger.info("Feature service instance created")
     
-    async def initialize(self):
+    async def initialize(self, db_connector: Optional[DatabaseClient] = None):
         """
         Initialize the service and its components.
         """
@@ -122,6 +122,18 @@ class FeatureService:
                 pool_size=self.config.get("database.pool_size", 10),
                 pool_recycle=self.config.get("database.pool_recycle", 3600)
             )
+
+            if db_connector is not None:
+                self.db_client = db_connector
+            else:
+                self.db_client = DatabaseClient(
+                    connection_string=self.config.get("database.connection_string"),
+                    pool_size=self.config.get("database.pool_size", 10),
+                    pool_recycle=self.config.get("database.pool_recycle", 3600)
+                )
+            await self.db_client.initialize()
+            await self.db_client.create_tables()
+
             
             # Initialize component resources
             max_workers = self.config.get(
