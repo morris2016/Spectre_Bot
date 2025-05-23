@@ -678,7 +678,7 @@ class PerformanceTracker:
         except Exception as e:
             logger.error(f"Error calculating performance score: {str(e)}")
     
-    def record_trade(self, trade_data: Dict[str, Any]):
+    async def record_trade(self, trade_data: Dict[str, Any]):
         """
         Record a completed trade and update performance metrics
         
@@ -717,11 +717,11 @@ class PerformanceTracker:
             self.update_real_time_metrics(trade_data)
             
             # Store trade in database
-            self.db_client.execute(
+            await self.db_client.execute(
                 """
                 INSERT INTO trades (
-                    platform, asset, direction, open_time, close_time, 
-                    open_price, close_price, volume, profit, strategy, 
+                    platform, asset, direction, open_time, close_time,
+                    open_price, close_price, volume, profit, strategy,
                     metadata
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
@@ -822,7 +822,7 @@ class PerformanceTracker:
             current_time = int(time.time())
             
             # Persist overall performance
-            self.db_client.execute(
+            await self.db_client.execute(
                 """
                 INSERT INTO performance_metrics (
                     type, name, timestamp, metrics_json
@@ -834,7 +834,7 @@ class PerformanceTracker:
             # Persist asset-specific performance
             for asset_key, metrics in self.asset_performance.items():
                 if metrics.get('total_trades', 0) > 0:
-                    self.db_client.execute(
+                    await self.db_client.execute(
                         """
                         INSERT INTO performance_metrics (
                             type, name, timestamp, metrics_json
@@ -846,7 +846,7 @@ class PerformanceTracker:
             # Persist strategy-specific performance
             for strategy_key, metrics in self.strategy_performance.items():
                 if metrics.get('total_trades', 0) > 0:
-                    self.db_client.execute(
+                    await self.db_client.execute(
                         """
                         INSERT INTO performance_metrics (
                             type, name, timestamp, metrics_json
