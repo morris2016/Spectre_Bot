@@ -111,6 +111,10 @@ class ModelManager:
         """Asynchronously obtain a database client and ensure tables exist."""
         if db_connector is not None:
             self.db_client = db_connector
+        if self.db_client is None and "db_connection" in self.config:
+            self.db_client = DatabaseClient(self.config["db_connection"])
+        if self.db_client and getattr(self.db_client, "pool", None) is None:
+=======
         if self.db_client is None:
             self.db_client = await get_db_client(**self._db_params)
         if getattr(self.db_client, "pool", None) is None:
