@@ -194,7 +194,7 @@ class RiskManagerService(AsyncService):
             )
         
         # Initialize exposure manager
-        exposure_class = self.exposure_config.get('class', 'CorrelationAwareExposureManager')
+        exposure_class = self.exposure_config.get('class', 'ExposureManager')
         self.exposure_manager = get_exposure_manager(
             exposure_class,
             **self.exposure_config.get('params', {})
