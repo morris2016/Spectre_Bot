@@ -98,7 +98,7 @@ class FeatureService:
         
         logger.info("Feature service instance created")
     
-    async def initialize(self, db_connector: Optional[DatabaseClient] = None):
+    async def initialize(self) -> None:
         """
         Initialize the service and its components.
         """
@@ -114,24 +114,14 @@ class FeatureService:
                 host=self.config.get("redis.host", "localhost"),
                 port=self.config.get("redis.port", 6379),
                 db=self.config.get("redis.feature_service_db", 1),
-                password=self.config.get("redis.password", None)
+                password=self.config.get("redis.password", None),
             )
-            
+
             self.db_client = await get_db_client(
                 connection_string=self.config.get("database.connection_string"),
                 pool_size=self.config.get("database.pool_size", 10),
-                pool_recycle=self.config.get("database.pool_recycle", 3600)
+                pool_recycle=self.config.get("database.pool_recycle", 3600),
             )
-
-            if db_connector is not None:
-                self.db_client = db_connector
-            else:
-                self.db_client = DatabaseClient(
-                    connection_string=self.config.get("database.connection_string"),
-                    pool_size=self.config.get("database.pool_size", 10),
-                    pool_recycle=self.config.get("database.pool_recycle", 3600)
-                )
-            await self.db_client.initialize()
             await self.db_client.create_tables()
 
             
