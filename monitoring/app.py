@@ -25,8 +25,6 @@ from common.exceptions import ServiceStartupError, ServiceShutdownError
 from common.constants import MONITORING_CONFIG, SERVICE_STATUS
 from common.redis_client import RedisClient
 from common.db_client import get_db_client
-=======
-from common.db_client import DatabaseClient, get_db_client
 from common.async_utils import create_task_with_error_handling, run_in_executor
 from common.utils import chunked_iterable, merge_configs
 
@@ -125,15 +123,10 @@ class MonitoringService:
                 username=self.config.get("database", {}).get("username", "postgres"),
                 password=self.config.get("database", {}).get("password", ""),
                 database=self.config.get("database", {}).get("database", "quantumspectre"),
-=======
-            
-            self.db_client = await get_db_client(
-                dsn=self.config.get("database", {}).get("dsn", ""),
                 pool_size=self.config.get("database", {}).get("pool_size", 10),
                 ssl=self.config.get("database", {}).get("ssl", False),
                 timeout=self.config.get("database", {}).get("timeout", 30),
             )
-=======
             await self.db_client.initialize()
             
             # Initialize monitoring components
@@ -332,8 +325,6 @@ class MonitoringService:
             if self.redis_client:
                 await self.redis_client.close()
 
-=======
-            
             if self.db_client:
                 await self.db_client.close()
             
