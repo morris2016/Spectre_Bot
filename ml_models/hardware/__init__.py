@@ -35,11 +35,8 @@ try:
 except ImportError:
     TF_AVAILABLE = False
 
-try:
-    import cupy as cp
-    CUPY_AVAILABLE = True
-except ImportError:
-    CUPY_AVAILABLE = False
+from feature_service.processor_utils import cudf, cp, HAS_GPU
+CUPY_AVAILABLE = HAS_GPU
 
 try:
     from numba import cuda, jit
@@ -410,7 +407,7 @@ def cleanup_gpu_memory() -> None:
                 logger.warning(f"Failed to clear TensorFlow session: {str(e)}")
         
         # CuPy cleanup
-        if CUPY_AVAILABLE:
+        if HAS_GPU:
             try:
                 cp.get_default_memory_pool().free_all_blocks()
                 logger.debug("CuPy memory pool cleared")
@@ -452,7 +449,7 @@ def optimize_tensor_operations(
         
         # Handle NumPy arrays
         elif isinstance(array, np.ndarray):
-            if CUPY_AVAILABLE and _hardware_config["gpu_enabled"]:
+            if HAS_GPU and _hardware_config["gpu_enabled"]:
                 # Convert to CuPy array for GPU acceleration
                 return cp.asarray(array)
             return array
