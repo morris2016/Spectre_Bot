@@ -50,10 +50,11 @@ class PerformanceTracker:
     Comprehensive performance tracking system for strategy brains and councils.
     """
     
-    def __init__(self, 
+    def __init__(self,
                  council_name: str,
                  config: dict = None,
-                 db_connector = None):
+                 db_connector=None,
+                 loop: Optional[asyncio.AbstractEventLoop] = None):
         """
         Initialize the performance tracking system.
         
@@ -66,8 +67,14 @@ class PerformanceTracker:
         self.config = config or {}
         self._initialize_config()
         
-        # Connect to database
-        self.db = db_connector or get_db_client()
+        # Event loop for asynchronous initialization
+        try:
+            self.loop = loop or asyncio.get_running_loop()
+        except RuntimeError:
+            self.loop = loop or asyncio.get_event_loop()
+
+        # Database client initialized asynchronously
+        self.db = None
         
         # Performance cache for fast lookups
         self.strategy_cache = {}
@@ -92,10 +99,17 @@ class PerformanceTracker:
         # Regime performance
         self.regime_performance = defaultdict(lambda: defaultdict(dict))
         
-        # Initialize tables if needed
+        # Initialize tables asynchronously when event loop is available
+        if self.loop and not self.loop.is_closed():
+            self.loop.create_task(self._async_initialize(db_connector))
+        else:
+            logger.warning("No event loop available for PerformanceTracker initialization")
+
+    async def _async_initialize(self, db_connector=None) -> None:
+        """Asynchronously initialize database connection and tables."""
+        self.db = db_connector or await get_db_client()
         self._initialize_database()
-        
-        logger.info(f"Initialized PerformanceTracker for council: {council_name}")
+        logger.info(f"Initialized PerformanceTracker for council: {self.council_name}")
     
     def _initialize_config(self):
         """Initialize configuration with defaults if not provided."""
