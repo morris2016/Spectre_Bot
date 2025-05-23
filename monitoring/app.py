@@ -98,43 +98,33 @@ class MonitoringService:
         
         self.logger.info("Monitoring service initialized with configuration")
     
-    async def initialize(self) -> None:
-        """
-        Initialize the monitoring service and all its components.
-        
-        Raises:
-            ServiceStartupError: If initialization fails
-        """
+    async def initialize(self, db_connector: Optional[DatabaseClient] = None) -> None:
+        """Initialize the monitoring service and all its components."""
         self.logger.info("Initializing monitoring service...")
         try:
             self.event_loop = asyncio.get_running_loop()
-            
+
             # Initialize database connections
             self.redis_client = RedisClient(
                 host=self.config.get("redis", {}).get("host", "localhost"),
                 port=self.config.get("redis", {}).get("port", 6379),
                 db=self.config.get("redis", {}).get("db", 0),
-                password=self.config.get("redis", {}).get("password", None)
+                password=self.config.get("redis", {}).get("password", None),
             )
             await self.redis_client.initialize()
 
-            self.db_client = await get_db_client(
-                db_type=self.config.get("database", {}).get("type", "postgresql"),
-                host=self.config.get("database", {}).get("host", "localhost"),
-                port=self.config.get("database", {}).get("port", 5432),
-                username=self.config.get("database", {}).get("username", "postgres"),
-                password=self.config.get("database", {}).get("password", ""),
-                database=self.config.get("database", {}).get("database", "quantumspectre"),
-=======
-            
-            self.db_client = await get_db_client(
-                dsn=self.config.get("database", {}).get("dsn", ""),
-                pool_size=self.config.get("database", {}).get("pool_size", 10),
-                ssl=self.config.get("database", {}).get("ssl", False),
-                timeout=self.config.get("database", {}).get("timeout", 30),
-            )
-=======
-            await self.db_client.initialize()
+            if db_connector is not None:
+                self.db_client = db_connector
+            if self.db_client is None:
+                self.db_client = await get_db_client(
+                    dsn=self.config.get("database", {}).get("dsn", ""),
+                    pool_size=self.config.get("database", {}).get("pool_size", 10),
+                    ssl=self.config.get("database", {}).get("ssl", False),
+                    timeout=self.config.get("database", {}).get("timeout", 30),
+                )
+            if getattr(self.db_client, "pool", None) is None:
+                await self.db_client.initialize()
+                await self.db_client.create_tables()
             
             # Initialize monitoring components
             self.metrics_collector = monitoring.get_component("metrics_collector")
