@@ -1876,6 +1876,150 @@ def calculate_position_size(
     return risk_amount / stop_loss_percent
 
 
+def calculate_risk_reward(
+    *args: Union[str, float]
+) -> float:
+    """Compute risk-reward ratio for a trade.
+
+    This helper accepts either ``(entry_price, stop_loss, take_profit)`` or
+    ``(action, entry_price, stop_loss, take_profit)``. The ``action`` argument
+    can be ``"buy"`` or ``"sell"`` and is optional.  The ratio is calculated as
+    ``abs(take_profit - entry_price) / abs(entry_price - stop_loss)``.
+
+    Args:
+        *args: Arguments as described above.
+
+    Returns:
+        float: Risk-reward ratio. ``0`` if inputs are invalid or risk is ``0``.
+    """
+
+    if len(args) == 3:
+        entry_price, stop_loss, take_profit = args
+    elif len(args) == 4:
+        _, entry_price, stop_loss, take_profit = args
+    else:
+        raise ValueError("calculate_risk_reward expects 3 or 4 arguments")
+
+    try:
+        risk = abs(entry_price - stop_loss)
+        reward = abs(take_profit - entry_price)
+    except Exception:
+        return 0.0
+
+    if risk == 0:
+        return 0.0
+
+    return reward / risk
+
+
+def calculate_confidence_score(
+    votes: Dict[str, float], reasoning_data: Dict[str, Dict[str, Any]]
+) -> float:
+    """Calculate overall confidence score from council votes.
+
+    Each entry in ``votes`` represents the normalized weight for an action
+    (e.g., ``{"buy": 0.6, "sell": 0.4}``). ``reasoning_data`` contains per
+    council information with the council's chosen action and confidence.  The
+    final score is a weighted average of council confidences using their
+    corresponding vote weights.
+
+    Args:
+        votes: Normalized vote weights per action.
+        reasoning_data: Mapping of council name to action/confidence data.
+
+    Returns:
+        float: Confidence score in the range ``0`` to ``1``.
+    """
+
+    if not votes or not reasoning_data:
+        return 0.0
+
+    weighted_sum = 0.0
+    weight_total = 0.0
+
+    for info in reasoning_data.values():
+        action = info.get("action")
+        confidence = info.get("confidence", 0.0)
+        weight = votes.get(action, 0.0)
+        weighted_sum += weight * confidence
+        weight_total += weight
+
+    if weight_total == 0:
+        return 0.0
+
+    return weighted_sum / weight_total
+
+
+def normalize_probability(value: float) -> float:
+    """Normalize a probability value to the ``0-1`` range."""
+
+    if value is None:
+        return 0.0
+
+    if value < 0:
+        return 0.0
+    if value > 1:
+        if value <= 100:
+            return value / 100.0
+        return 1.0
+    return float(value)
+
+
+def weighted_average(values: List[float], weights: List[float]) -> float:
+    """Return the weighted average of *values* using *weights*."""
+
+    if not values or not weights or len(values) != len(weights):
+        raise ValueError("values and weights must be non-empty and the same length")
+
+    total_weight = sum(weights)
+    if total_weight == 0:
+        return 0.0
+
+    return sum(v * w for v, w in zip(values, weights)) / total_weight
+
+
+def time_weighted_average(values: List[float], timestamps: List[float]) -> float:
+    """Compute a simple time weighted average for a series."""
+
+    if not values or not timestamps or len(values) != len(timestamps):
+        raise ValueError("values and timestamps must be the same length")
+
+    if len(values) == 1:
+        return float(values[0])
+
+    durations = [timestamps[i] - timestamps[i - 1] for i in range(1, len(timestamps))]
+    durations.insert(0, durations[0])
+
+    total_duration = sum(durations)
+    if total_duration == 0:
+        return float(np.mean(values))
+
+    return sum(v * d for v, d in zip(values, durations)) / total_duration
+
+
+def validate_signal(signal: Dict[str, Any]) -> bool:
+    """Basic validation for a trading signal dictionary."""
+
+    required = {"symbol", "action", "entry_price", "stop_loss", "take_profit", "confidence"}
+
+    if not isinstance(signal, dict):
+        return False
+
+    for field in required:
+        if field not in signal:
+            return False
+
+    if not isinstance(signal["confidence"], (int, float)) or not 0 <= signal["confidence"] <= 1:
+        return False
+
+    numeric_fields = ["entry_price", "stop_loss", "take_profit"]
+    for field in numeric_fields:
+        if not isinstance(signal[field], (int, float)):
+            return False
+
+    return True
+
+
 def calculate_win_rate(wins: int, losses: int) -> float:
     """
     Calculate win rate.
@@ -4250,8 +4394,9 @@ __all__ = [
     # Trading-specific
     'calculate_order_size', 'calculate_position_value', 'calculate_pip_value', 'calculate_arbitrage_profit',
     'calculate_position_size', 'calculate_volatility', 'calculate_correlation', 'calculate_drawdown',
-    'calculate_liquidation_price', 'calculate_win_rate',
-    'calculate_risk_reward_ratio', 'calculate_expectancy',
+    'calculate_liquidation_price', 'calculate_risk_reward', 'calculate_win_rate',
+    'calculate_risk_reward_ratio', 'calculate_confidence_score', 'normalize_probability',
+    'weighted_average', 'time_weighted_average', 'validate_signal', 'calculate_expectancy',
     'calculate_kelly_criterion', 'calculate_sharpe_ratio', 'calculate_sortino_ratio',
     'calculate_max_drawdown', 'calculate_calmar_ratio', 'z_score',
     'is_price_consolidating', 'is_breaking_out', 'calculate_pivot_points',
