@@ -40,7 +40,7 @@ from .exceptions import (
 from .metrics import MetricsCollector
 from .security import encrypt_data, decrypt_data, hash_password, verify_password
 from .redis_client import RedisClient, get_redis_pool
-from .db_client import DatabaseClient
+from .db_client import DatabaseClient, get_db_client
 from .async_utils import gather_with_concurrency, cancel_tasks, create_task_group
 
 __all__ = [
@@ -83,6 +83,7 @@ __all__ = [
     'RedisClient',
     'get_redis_pool',
     'DatabaseClient',
+    'get_db_client',
     
     # Async utilities
     'gather_with_concurrency',
