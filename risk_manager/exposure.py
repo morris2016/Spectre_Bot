@@ -34,7 +34,7 @@ from decimal import Decimal
 from common.constants import PLATFORMS, EXPOSURE_LIMITS
 from common.utils import calculate_correlation_matrix
 from common.async_utils import run_in_threadpool
-from data_feeds.base_feed import MarketData
+from data_storage.market_data import MarketDataRepository
 
 logger = logging.getLogger(__name__)
 
@@ -440,16 +440,25 @@ class ExposureManager(BaseExposureManager):
         
         if missing_symbols or (asyncio.get_event_loop().time() - self.correlation_last_updated > 86400):  # Update daily
             # Get historical data for calculation
-            market_data = MarketData()
+            market_data = MarketDataRepository()
             symbol_data = {}
-            
+
             for symbol in symbols:
                 try:
                     # Get daily candles for correlation
-                    candles = await market_data.get_candles(symbol, '1d', self.correlation_lookback)
-                    
+                    candles = await market_data.get_ohlcv_data(
+                        asset_id=symbol,
+                        timeframe='1d',
+                        limit=self.correlation_lookback,
+                    )
+
                     # Extract closing prices
-                    if candles and len(candles) > 0:
+                    if hasattr(candles, 'empty'):
+                        df = candles
+                        if not df.empty:
+                            closes = df['close'].astype(float).values
+                            symbol_data[symbol] = np.array(closes)
+                    elif candles and len(candles) > 0:
                         closes = [float(c['close']) for c in candles]
                         symbol_data[symbol] = np.array(closes)
                 except Exception as e:
