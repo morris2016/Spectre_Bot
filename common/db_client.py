@@ -207,6 +207,42 @@ class DatabaseClient:
             self.logger.error(f"Query fetchval failed: {str(e)}")
             self.logger.debug(f"Query: {query}, Args: {args}")
             raise DatabaseQueryError(f"Query fetchval failed: {str(e)}")
+
+    def query(self, query: str, params: Optional[Union[List[Any], Tuple[Any, ...]]] = None,
+              timeout: Optional[int] = None) -> List[asyncpg.Record]:
+        """Synchronously fetch rows from the database.
+
+        This helper allows code that is not running in an asynchronous
+        context to execute read-only queries using the existing
+        :meth:`fetch` coroutine.
+
+        Args:
+            query: SQL query to execute.
+            params: Optional query parameters.
+            timeout: Optional query timeout in seconds.
+
+        Returns:
+            List of records returned by the query.
+
+        Raises:
+            DatabaseQueryError: If query execution fails
+        """
+        if params is None:
+            params = []
+
+        coro = self.fetch(query, *params, timeout=timeout)
+        try:
+            loop = asyncio.get_event_loop()
+            return loop.run_until_complete(coro)
+        except RuntimeError:
+            # No running event loop
+            loop = asyncio.new_event_loop()
+            try:
+                asyncio.set_event_loop(loop)
+                return loop.run_until_complete(coro)
+            finally:
+                asyncio.set_event_loop(None)
+                loop.close()
             
     async def transaction(self):
         """

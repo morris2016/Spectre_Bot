@@ -11,12 +11,10 @@ over time, and maintains historical records for strategy evaluation and weightin
 import numpy as np
 import pandas as pd
 from typing import Dict, List, Tuple, Any, Optional, Union
-import logging
 import time
 from datetime import datetime, timedelta
 import asyncio
 import json
-import sqlite3
 from collections import defaultdict, deque
 import math
 from enum import Enum
@@ -99,17 +97,17 @@ class PerformanceTracker:
         # Regime performance
         self.regime_performance = defaultdict(lambda: defaultdict(dict))
         
-        # Initialize tables asynchronously when event loop is available
-        if self.loop and not self.loop.is_closed():
-            self.loop.create_task(self._async_initialize(db_connector))
-        else:
-            logger.warning("No event loop available for PerformanceTracker initialization")
+        # Database initialization deferred until ``initialize`` is called
 
-    async def _async_initialize(self, db_connector=None) -> None:
-        """Asynchronously initialize database connection and tables."""
+    async def initialize(self, db_connector=None) -> None:
+        """Obtain a database client and create required tables."""
         self.db = db_connector or await get_db_client()
         await self._initialize_database()
         logger.info(f"Initialized PerformanceTracker for council: {self.council_name}")
+=======
+        logger.info(
+            "Initialized PerformanceTracker for council: %s", self.council_name
+        )
     
     def _initialize_config(self):
         """Initialize configuration with defaults if not provided."""
@@ -137,6 +135,9 @@ class PerformanceTracker:
         
     async def _initialize_database(self):
         """Initialize database tables if they don't exist."""
+=======
+    async def _initialize_database(self) -> None:
+        """Create database tables if they don't exist."""
         if not self.db:
             logger.warning("No database connector available")
             return
@@ -144,6 +145,9 @@ class PerformanceTracker:
         try:
             # Create tables for performance tracking
             await self.db.execute("""
+=======
+            await self.db.execute(
+                """
                 CREATE TABLE IF NOT EXISTS strategy_signals (
                     signal_id TEXT PRIMARY KEY,
                     strategy_id TEXT,
@@ -166,6 +170,12 @@ class PerformanceTracker:
             """)
             
             await self.db.execute("""
+=======
+                """
+            )
+
+            await self.db.execute(
+                """
                 CREATE TABLE IF NOT EXISTS strategy_performance (
                     strategy_id TEXT,
                     council_id TEXT,
@@ -180,6 +190,12 @@ class PerformanceTracker:
             """)
             
             await self.db.execute("""
+=======
+                """
+            )
+
+            await self.db.execute(
+                """
                 CREATE TABLE IF NOT EXISTS council_performance (
                     council_id TEXT,
                     timestamp REAL,
@@ -190,8 +206,9 @@ class PerformanceTracker:
                     metrics TEXT,
                     PRIMARY KEY (council_id, timestamp, timeframe)
                 )
-            """)
-            
+                """
+            )
+
             # Indices for performance query optimization
             await self.db.execute("CREATE INDEX IF NOT EXISTS idx_strategy_signals_strategy_id ON strategy_signals(strategy_id)")
             await self.db.execute("CREATE INDEX IF NOT EXISTS idx_strategy_signals_council_id ON strategy_signals(council_id)")
@@ -202,6 +219,63 @@ class PerformanceTracker:
             await self.db.execute("CREATE INDEX IF NOT EXISTS idx_council_performance_council_id ON council_performance(council_id)")
 
             await self.db.commit()
+=======
+            self.db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_strategy_signals_strategy_id "
+                "ON strategy_signals(strategy_id)"
+            )
+            self.db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_strategy_signals_council_id "
+                "ON strategy_signals(council_id)"
+            )
+            self.db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_strategy_signals_asset "
+                "ON strategy_signals(asset)"
+            )
+            self.db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_strategy_signals_platform "
+                "ON strategy_signals(platform)"
+            )
+            self.db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_strategy_signals_entry_time "
+                "ON strategy_signals(entry_time)"
+            )
+            self.db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_strategy_performance_strategy_id "
+                "ON strategy_performance(strategy_id)"
+            )
+            self.db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_council_performance_council_id "
+                "ON council_performance(council_id)"
+            )
+            
+            self.db.commit()
+=======
+            await self.db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_strategy_signals_strategy_id ON strategy_signals(strategy_id)"
+            )
+            await self.db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_strategy_signals_council_id ON strategy_signals(council_id)"
+            )
+            await self.db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_strategy_signals_asset ON strategy_signals(asset)"
+            )
+            await self.db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_strategy_signals_platform ON strategy_signals(platform)"
+            )
+            await self.db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_strategy_signals_entry_time ON strategy_signals(entry_time)"
+            )
+            await self.db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_strategy_performance_strategy_id ON strategy_performance(strategy_id)"
+            )
+            await self.db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_council_performance_council_id ON council_performance(council_id)"
+            )
+
+            # Commit if supported
+            if hasattr(self.db, "commit"):
+                await self.db.commit()
             logger.info("Database tables initialized")
         except Exception as e:
             logger.error(f"Error initializing database: {str(e)}")

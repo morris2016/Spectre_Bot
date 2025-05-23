@@ -185,10 +185,7 @@ async def lifespan(app: FastAPI):
             password=config_instance.get("REDIS_PASSWORD", None),
             db=int(config_instance.get("REDIS_DB", 0))
         )
-        if hasattr(redis_client, 'initialize') and asyncio.iscoroutinefunction(redis_client.initialize):
-            await redis_client.initialize()
-        elif hasattr(redis_client, 'connect') and asyncio.iscoroutinefunction(redis_client.connect): # common.redis_client uses connect
-             await redis_client.connect()
+        await redis_client.initialize()
 
 
         # Initialize service clients
@@ -229,10 +226,7 @@ async def lifespan(app: FastAPI):
             except asyncio.CancelledError:
                 logger.info("Health check task cancelled.")
         if redis_client:
-            if hasattr(redis_client, 'close') and asyncio.iscoroutinefunction(redis_client.close):
-                 await redis_client.close()
-            elif hasattr(redis_client, 'disconnect') and asyncio.iscoroutinefunction(redis_client.disconnect): # common.redis_client uses disconnect
-                 await redis_client.disconnect()
+            await redis_client.close()
         logger.info("API Gateway shutdown complete")
 
 async def health_check_services(app: FastAPI):
