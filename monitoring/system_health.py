@@ -749,7 +749,7 @@ class SystemHealth:
             
             # Store in database
             try:
-                self.db_client.execute(
+                await self.db_client.execute(
                     """
                     INSERT INTO recovery_actions (
                         timestamp, component, status, failures, message, action
