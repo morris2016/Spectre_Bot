@@ -2052,6 +2052,67 @@ def calculate_calmar_ratio(annual_return: float, max_drawdown: float) -> float:
     return annual_return / max_drawdown
 
 
+def calculate_volatility(prices: Union[pd.Series, List[float]], window: int = 20) -> float:
+    """Calculate historical volatility based on log returns."""
+    if isinstance(prices, list):
+        prices = pd.Series(prices)
+    returns = np.log(prices).diff().dropna()
+    if returns.empty:
+        return 0.0
+    if len(returns) > window:
+        returns = returns[-window:]
+    return float(returns.std() * np.sqrt(len(returns)))
+
+
+def calculate_correlation(
+    series1: Union[pd.Series, List[float]],
+    series2: Union[pd.Series, List[float]],
+) -> float:
+    """Compute the correlation coefficient between two data series."""
+    if isinstance(series1, list):
+        series1 = pd.Series(series1)
+    if isinstance(series2, list):
+        series2 = pd.Series(series2)
+    if series1.empty or series2.empty:
+        return 0.0
+    min_len = min(len(series1), len(series2))
+    if min_len == 0:
+        return 0.0
+    return float(series1[-min_len:].corr(series2[-min_len:]))
+
+
+def calculate_drawdown(
+    equity_curve: Union[pd.Series, List[float]],
+) -> Tuple[float, float]:
+    """Calculate maximum and current drawdown percentages."""
+    if isinstance(equity_curve, list):
+        equity_curve = pd.Series(equity_curve)
+    if equity_curve.empty:
+        return 0.0, 0.0
+    running_max = equity_curve.cummax()
+    drawdowns = (equity_curve - running_max) / running_max * 100
+    max_drawdown = drawdowns.min()
+    current_drawdown = drawdowns.iloc[-1]
+    return abs(float(max_drawdown)), abs(float(current_drawdown))
+
+
+def calculate_liquidation_price(
+    side: Union[str, enum.Enum],
+    entry_price: float,
+    leverage: float,
+    maintenance_margin: float = 0.005,
+) -> float:
+    """Estimate liquidation price for a leveraged position."""
+    if leverage <= 0 or entry_price <= 0:
+        return 0.0
+    if isinstance(side, enum.Enum):
+        side = side.value
+    side = str(side).lower()
+    if side == "long":
+        return entry_price * (1 - 1 / leverage + maintenance_margin)
+    return entry_price * (1 + 1 / leverage - maintenance_margin)
+
+
 def z_score(value: float, mean: float, std_dev: float) -> float:
     """
     Calculate z-score for a value.
@@ -4124,7 +4185,9 @@ __all__ = [
     
     # Trading-specific
     'calculate_order_size', 'calculate_position_value', 'calculate_pip_value',
-    'calculate_win_rate', 'calculate_risk_reward_ratio', 'calculate_expectancy',
+    'calculate_volatility', 'calculate_correlation', 'calculate_drawdown',
+    'calculate_liquidation_price', 'calculate_win_rate',
+    'calculate_risk_reward_ratio', 'calculate_expectancy',
     'calculate_kelly_criterion', 'calculate_sharpe_ratio', 'calculate_sortino_ratio',
     'calculate_max_drawdown', 'calculate_calmar_ratio', 'z_score',
     'is_price_consolidating', 'is_breaking_out', 'calculate_pivot_points',

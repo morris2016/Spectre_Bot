@@ -24,8 +24,9 @@ import logging
 # Internal imports
 from common.logger import get_logger
 from common.utils import (
-    calculate_volatility, calculate_correlation, calculate_drawdown,
-    round_to_tick_size, dict_to_namedtuple, calculate_liquidation_price
+    round_to_tick_size,
+    dict_to_namedtuple,
+    calculate_liquidation_price,
 )
 from common.constants import (
     PositionStatus, OrderType, PositionSide, TimeInForce, 
