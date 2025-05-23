@@ -1233,23 +1233,40 @@ class ExecutionEngineService:
             self.logger.error(f"Error updating signal result: {str(e)}")
 
 
-def create_app(config: Dict[str, Any]) -> ExecutionEngineService:
+async def create_app(config: Dict[str, Any]) -> ExecutionEngineService:
     """
     Create and configure an Execution Engine Service instance.
-    
+
     Args:
         config: Application configuration
-        
+
     Returns:
         Configured ExecutionEngineService instance
     """
     from common.redis_client import RedisClient
-    from common.db_client import DatabaseClient
-    
+    from common.db_client import get_db_client
+
     # Initialize Redis client
     redis_client = RedisClient(
         host=config.get("redis.host", "localhost"),
         port=config.get("redis.port", 6379),
         db=config.get("redis.db", 0),
         password=config.get("redis.password", None)
+    )
+
+    # Initialize database client
+    db_client = await get_db_client(
+        db_type=config.get("database.type", "postgresql"),
+        host=config.get("database.host", "localhost"),
+        port=config.get("database.port", 5432),
+        username=config.get("database.username", "postgres"),
+        password=config.get("database.password", ""),
+        database=config.get("database.database", "quantumspectre")
+    )
+
+    # Create and return service
+    return ExecutionEngineService(
+        config=config,
+        redis_client=redis_client,
+        db_client=db_client
     )

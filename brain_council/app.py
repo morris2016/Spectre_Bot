@@ -1034,7 +1034,7 @@ class BrainCouncilService:
             self.logger.error(f"Error adjusting weights by performance: {str(e)}")
 
 
-def create_app(config: Dict[str, Any]) -> BrainCouncilService:
+async def create_app(config: Dict[str, Any]) -> BrainCouncilService:
     """
     Create and configure a Brain Council Service instance.
     
@@ -1045,7 +1045,7 @@ def create_app(config: Dict[str, Any]) -> BrainCouncilService:
         Configured BrainCouncilService instance
     """
     from common.redis_client import RedisClient
-    from common.db_client import DatabaseClient
+    from common.db_client import get_db_client
     
     # Initialize Redis client
     redis_client = RedisClient(
@@ -1056,7 +1056,7 @@ def create_app(config: Dict[str, Any]) -> BrainCouncilService:
     )
     
     # Initialize database client
-    db_client = DatabaseClient(
+    db_client = await get_db_client(
         db_type=config.get("database.type", "postgresql"),
         host=config.get("database.host", "localhost"),
         port=config.get("database.port", 5432),

@@ -24,7 +24,9 @@ from common.logger import get_logger
 from common.exceptions import ServiceStartupError, ServiceShutdownError
 from common.constants import MONITORING_CONFIG, SERVICE_STATUS
 from common.redis_client import RedisClient
-from common.db_client import DatabaseClient
+from common.db_client import get_db_client
+=======
+from common.db_client import DatabaseClient, get_db_client
 from common.async_utils import create_task_with_error_handling, run_in_executor
 from common.utils import chunked_iterable, merge_configs
 
@@ -114,14 +116,25 @@ class MonitoringService:
                 db=self.config.get("redis", {}).get("db", 0),
                 password=self.config.get("redis", {}).get("password", None)
             )
-            await self.redis_client.connect()
+            await self.redis_client.initialize()
+
+            self.db_client = await get_db_client(
+                db_type=self.config.get("database", {}).get("type", "postgresql"),
+                host=self.config.get("database", {}).get("host", "localhost"),
+                port=self.config.get("database", {}).get("port", 5432),
+                username=self.config.get("database", {}).get("username", "postgres"),
+                password=self.config.get("database", {}).get("password", ""),
+                database=self.config.get("database", {}).get("database", "quantumspectre"),
+=======
             
-            self.db_client = DatabaseClient(
+            self.db_client = await get_db_client(
                 dsn=self.config.get("database", {}).get("dsn", ""),
                 pool_size=self.config.get("database", {}).get("pool_size", 10),
-                max_overflow=self.config.get("database", {}).get("max_overflow", 20)
+                ssl=self.config.get("database", {}).get("ssl", False),
+                timeout=self.config.get("database", {}).get("timeout", 30),
             )
-            await self.db_client.connect()
+=======
+            await self.db_client.initialize()
             
             # Initialize monitoring components
             self.metrics_collector = monitoring.get_component("metrics_collector")
@@ -131,7 +144,7 @@ class MonitoringService:
             self.log_analyzer = monitoring.get_component("log_analyzer")
             
             # Configure components
-            monitoring.initialize_monitoring(self.config)
+            await monitoring.initialize_monitoring(self.config)
             monitoring.register_exporters(self.config)
             monitoring.register_alert_handlers(self.config)
             
@@ -317,10 +330,12 @@ class MonitoringService:
             
             # Close database connections
             if self.redis_client:
-                await self.redis_client.disconnect()
+                await self.redis_client.close()
+
+=======
             
             if self.db_client:
-                await self.db_client.disconnect()
+                await self.db_client.close()
             
             # Record uptime before shutdown
             if self.start_time:

@@ -17,6 +17,8 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from common.logger import get_logger
+from config import Config
+from data_storage.time_series import TimeSeriesStorage
 
 logger = get_logger(__name__)
 
@@ -306,7 +308,7 @@ class LoopholeDetectionManager:
         self.config = config
         
         # Get required dependencies from the service registry
-        from common.db_client import DatabaseClient
+        from common.db_client import get_db_client
         from common.redis_client import RedisClient
         from data_feeds.coordinator import FeedCoordinator
         from feature_service.feature_extraction import FeatureExtractor
@@ -320,31 +322,32 @@ class LoopholeDetectionManager:
         # Create instances of required dependencies
         try:
             # Get database client
-            db_client = DatabaseClient.get_instance()
-            
-            # Get Redis client
-            redis_client = RedisClient.get_instance()
-            
+            db_client = await get_db_client(**self.config.get('database', {}))
+
+            # Initialize Redis client
+            redis_client = RedisClient(**self.config.get('redis', {}))
+            await redis_client.initialize()
+
             # Get feed coordinator
-            feed_coordinator = FeedCoordinator.get_instance()
-            
+            feed_coordinator = FeedCoordinator(Config(self.config), logger, MetricsCollector.get_instance("feed_coordinator"), redis_client)
+
             # Get feature extractor
-            feature_extractor = FeatureExtractor.get_instance()
-            
+            feature_extractor = FeatureExtractor([])
+
             # Get metrics collector
             metrics_collector = MetricsCollector("loophole_detection")
-            
+
             # Get market data repository
-            market_data_repo = MarketDataRepository.get_instance()
-            
+            market_data_repo = MarketDataRepository()
+
             # Get feature services
-            technical_features = TechnicalFeatures.get_instance()
-            volume_features = VolumeFeatures.get_instance()
-            market_structure_features = MarketStructureFeatures.get_instance()
-            
+            technical_features = TechnicalFeatures()
+            volume_features = VolumeFeatures(TimeSeriesStorage.get_instance())
+            market_structure_features = MarketStructureFeatures()
+
             # Get analyzers
-            order_flow_analyzer = OrderFlowAnalyzer.get_instance()
-            volume_analyzer = VolumeProfileAnalyzer.get_instance()
+            order_flow_analyzer = OrderFlowAnalyzer()
+            volume_analyzer = VolumeProfileAnalyzer()
             
             # Now initialize the detectors with proper dependencies
             if 'arbitrage' in self._detector_classes:
