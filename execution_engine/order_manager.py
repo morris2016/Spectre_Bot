@@ -41,7 +41,7 @@ from common.redis_client import RedisClient
 
 from data_feeds.binance_feed import BinanceFeed
 from data_feeds.deriv_feed import DerivFeed
-from data_storage.models.market_data import MarketData
+from data_storage.market_data import MarketDataRepository
 
 logger = get_logger("execution_engine.order_manager")
 
@@ -63,7 +63,7 @@ class OrderManager:
     def __init__(
         self,
         platform_apis: Dict[str, Any],
-        market_data: MarketData,
+        market_data: MarketDataRepository,
         redis_client: RedisClient,
         metrics_collector: MetricsCollector,
         config: Dict[str, Any]
