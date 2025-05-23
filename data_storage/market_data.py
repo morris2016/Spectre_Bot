@@ -252,10 +252,14 @@ class MarketDataStore:
         self.logger.info("Market data store initialized")
 
 
-    async def initialize(self) -> None:
+    async def initialize(self, db_connector: Optional[DatabaseClient] = None) -> None:
         """Initialize database resources for the market data store."""
+        if db_connector is not None:
+            self.db_client = db_connector
         if self.db_client is None:
             self.db_client = await get_db_client()
+        if getattr(self.db_client, "pool", None) is None:
+            await self.db_client.initialize()
         self.db_manager = DatabaseManager(self.db_client)
         self.ts_store = TimeSeriesStore(self.db_client)
         await self.db_client.create_tables()

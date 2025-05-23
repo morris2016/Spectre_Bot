@@ -103,10 +103,15 @@ class RecoveryManager(BaseRecoveryManager):
 
         self.logger.info("Recovery Manager initialized with config: %s", self.config)
 
-    async def initialize(self) -> None:
-        """Asynchronously obtain a database client if needed."""
+    async def initialize(self, db_connector: Optional[DatabaseClient] = None) -> None:
+        """Obtain a database client and create tables."""
+        if db_connector is not None:
+            self.db_client = db_connector
         if self.db_client is None:
             self.db_client = await get_db_client(**self._db_params)
+        if getattr(self.db_client, "pool", None) is None:
+            await self.db_client.initialize()
+            await self.db_client.create_tables()
     
     async def analyze_account_state(self, account_data: Dict[str, Any]) -> str:
         """

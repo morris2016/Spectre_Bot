@@ -127,10 +127,15 @@ class RiskManagerService(AsyncService):
 
         self.logger.info("Risk Manager Service initialized successfully")
 
-    async def initialize(self) -> None:
-        """Asynchronously obtain a database client if needed."""
+    async def initialize(self, db_connector: Optional[DatabaseClient] = None) -> None:
+        """Obtain a database client and create tables."""
+        if db_connector is not None:
+            self.db_client = db_connector
         if self.db_client is None:
             self.db_client = await get_db_client(**self._db_params)
+        if getattr(self.db_client, "pool", None) is None:
+            await self.db_client.initialize()
+            await self.db_client.create_tables()
     
     def _load_configuration(self) -> None:
         """Load risk management configuration from config files."""

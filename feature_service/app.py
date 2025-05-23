@@ -98,10 +98,8 @@ class FeatureService:
         
         logger.info("Feature service instance created")
     
-    async def initialize(self) -> None:
-        """
-        Initialize the service and its components.
-        """
+    async def initialize(self, db_connector: Optional[DatabaseClient] = None) -> None:
+        """Initialize the service and its components."""
         if self.initialized:
             logger.warning("Feature service already initialized")
             return
@@ -117,12 +115,17 @@ class FeatureService:
                 password=self.config.get("redis.password", None),
             )
 
-            self.db_client = await get_db_client(
-                connection_string=self.config.get("database.connection_string"),
-                pool_size=self.config.get("database.pool_size", 10),
-                pool_recycle=self.config.get("database.pool_recycle", 3600),
-            )
-            await self.db_client.create_tables()
+            if db_connector is not None:
+                self.db_client = db_connector
+            if self.db_client is None:
+                self.db_client = await get_db_client(
+                    connection_string=self.config.get("database.connection_string"),
+                    pool_size=self.config.get("database.pool_size", 10),
+                    pool_recycle=self.config.get("database.pool_recycle", 3600),
+                )
+            if getattr(self.db_client, "pool", None) is None:
+                await self.db_client.initialize()
+                await self.db_client.create_tables()
 
             
             # Initialize component resources
