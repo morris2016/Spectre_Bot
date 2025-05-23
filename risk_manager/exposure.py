@@ -206,7 +206,10 @@ class ExposureManager(BaseExposureManager):
         if new_total_exposure_pct > adjusted_limits['max_total_exposure']:
             return {
                 'allowed': False,
-                'reason': f"Total exposure limit exceeded: {new_total_exposure_pct:.2%} > {adjusted_limits['max_total_exposure']:.2%}",
+                'reason': (
+                    f"Total exposure limit exceeded: {new_total_exposure_pct:.2%} "
+                    f"> {adjusted_limits['max_total_exposure']:.2%}"
+                ),
                 'limit_type': 'total_exposure'
             }
         
@@ -575,9 +578,18 @@ class ExposureManager(BaseExposureManager):
                 adjusted_limits['max_platform_exposure'][platform] *= volatility_factor
         
         # Ensure limits don't exceed 1.0 (100%)
-        adjusted_limits['max_total_exposure'] = min(Decimal('1.0'), Decimal(str(adjusted_limits['max_total_exposure'])))
-        adjusted_limits['max_single_asset_exposure'] = min(Decimal('1.0'), Decimal(str(adjusted_limits['max_single_asset_exposure'])))
-        adjusted_limits['max_correlated_exposure'] = min(Decimal('1.0'), Decimal(str(adjusted_limits['max_correlated_exposure'])))
+        adjusted_limits['max_total_exposure'] = min(
+            Decimal('1.0'),
+            Decimal(str(adjusted_limits['max_total_exposure']))
+        )
+        adjusted_limits['max_single_asset_exposure'] = min(
+            Decimal('1.0'),
+            Decimal(str(adjusted_limits['max_single_asset_exposure']))
+        )
+        adjusted_limits['max_correlated_exposure'] = min(
+            Decimal('1.0'),
+            Decimal(str(adjusted_limits['max_correlated_exposure']))
+        )
         
         for platform in adjusted_limits['max_platform_exposure']:
             adjusted_limits['max_platform_exposure'][platform] = min(
