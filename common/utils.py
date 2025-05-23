@@ -2122,6 +2122,29 @@ def calculate_correlation(
     return float(series1[-min_len:].corr(series2[-min_len:]))
 
 
+def calculate_correlation_matrix(
+    symbol_dict: Dict[str, Union[np.ndarray, pd.Series]]
+) -> pd.DataFrame:
+    """Compute a correlation matrix from closing price data.
+
+    Parameters
+    ----------
+    symbol_dict : Dict[str, Union[np.ndarray, pd.Series]]
+        Mapping of symbols to arrays or Series of closing prices.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Correlation matrix indexed and labeled by symbol.
+    """
+
+    if not symbol_dict:
+        return pd.DataFrame()
+
+    df = pd.DataFrame({k: pd.Series(v) for k, v in symbol_dict.items()})
+    return df.corr()
+
+
 def calculate_drawdown(
     equity_curve: Union[pd.Series, List[float]],
 ) -> Tuple[float, float]:
