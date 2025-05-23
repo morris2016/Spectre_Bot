@@ -21,8 +21,7 @@ import pywt
 from sklearn import preprocessing
 import statsmodels.api as sm
 from empyrical import max_drawdown, sharpe_ratio, sortino_ratio, calmar_ratio
-import cudf
-import cupy as cp
+from feature_service.processor_utils import cudf, HAS_GPU
 from numba import cuda, jit, vectorize
 import bottleneck as bn
 
