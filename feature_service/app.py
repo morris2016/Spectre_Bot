@@ -35,7 +35,7 @@ from common.exceptions import (
     InvalidTimeframeError, InvalidParameterError
 )
 from common.redis_client import RedisClient
-from common.db_client import DatabaseClient
+from common.db_client import get_db_client
 from common.async_utils import TaskGroup, PeriodicTask, Throttler
 
 # Feature service imports
@@ -117,7 +117,7 @@ class FeatureService:
                 password=self.config.get("redis.password", None)
             )
             
-            self.db_client = DatabaseClient(
+            self.db_client = await get_db_client(
                 connection_string=self.config.get("database.connection_string"),
                 pool_size=self.config.get("database.pool_size", 10),
                 pool_recycle=self.config.get("database.pool_recycle", 3600)

@@ -504,7 +504,7 @@ class StrategyBrainService:
             self.logger.error(f"Error adjusting active brains: {str(e)}")
 
 
-def create_app(config: Dict[str, Any]) -> StrategyBrainService:
+async def create_app(config: Dict[str, Any]) -> StrategyBrainService:
     """
     Create and configure a Strategy Brains Service instance.
     
@@ -515,7 +515,7 @@ def create_app(config: Dict[str, Any]) -> StrategyBrainService:
         Configured StrategyBrainService instance
     """
     from common.redis_client import RedisClient
-    from common.db_client import DatabaseClient
+    from common.db_client import get_db_client
     
     # Initialize Redis client
     redis_client = RedisClient(
@@ -526,7 +526,7 @@ def create_app(config: Dict[str, Any]) -> StrategyBrainService:
     )
     
     # Initialize database client
-    db_client = DatabaseClient(
+    db_client = await get_db_client(
         db_type=config.get("database.type", "postgresql"),
         host=config.get("database.host", "localhost"),
         port=config.get("database.port", 5432),

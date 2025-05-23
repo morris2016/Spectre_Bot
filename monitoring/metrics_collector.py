@@ -21,7 +21,7 @@ from common.constants import (
     METRIC_TYPES, PERFORMANCE_METRICS, SYSTEM_METRICS, METRIC_PRIORITIES,
     METRIC_COLLECTION_FREQUENCY, SERVICE_NAMES, MAX_METRIC_HISTORY
 )
-from common.db_client import DatabaseClient
+from common.db_client import DatabaseClient, get_db_client
 from common.redis_client import RedisClient
 from common.exceptions import (
     MetricCollectionError, ServiceConnectionError, DataStoreError
@@ -47,7 +47,8 @@ class MetricsCollector:
             redis_client: Redis client for real-time metrics
         """
         self.config = config
-        self.db_client = db_client or DatabaseClient(config)
+        self.db_client = db_client
+        self._db_params = config
         self.redis_client = redis_client or RedisClient(config)
         
         # Collection settings
@@ -69,8 +70,13 @@ class MetricsCollector:
         # State tracking
         self.is_running = False
         self.last_persistence_time = time.time()
-        
+
         logger.info(f"MetricsCollector initialized with frequency: {self.collection_frequency}s")
+
+    async def initialize(self) -> None:
+        """Asynchronously obtain a database client if needed."""
+        if self.db_client is None:
+            self.db_client = await get_db_client(**self._db_params)
     
     async def start(self) -> None:
         """Start the metrics collection system."""

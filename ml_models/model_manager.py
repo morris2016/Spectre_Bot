@@ -36,7 +36,7 @@ from common.exceptions import (
     InvalidModelStateError, ModelSaveError
 )
 from common.metrics import MetricsCollector
-from common.db_client import DatabaseClient
+from common.db_client import DatabaseClient, get_db_client
 
 # Set up module logger
 logger = logging.getLogger(__name__)
@@ -87,9 +87,10 @@ class ModelManager:
         
         # Set up database client if provided
         if 'db_connection' in config:
-            self.db_client = DatabaseClient(config['db_connection'])
+            self._db_params = config['db_connection']
         else:
-            self.db_client = None
+            self._db_params = {}
+        self.db_client = None
         
         # Configure GPU usage if enabled
         if config.get('enable_gpu', True):
@@ -103,8 +104,13 @@ class ModelManager:
         
         # Load existing model registry from disk
         self._load_model_registry()
-        
+
         logger.info(f"Model Manager initialized with {len(self.model_registry)} registered models")
+
+    async def initialize(self) -> None:
+        """Asynchronously obtain a database client if not provided."""
+        if self.db_client is None:
+            self.db_client = await get_db_client(**self._db_params)
     
     def _configure_gpu(self, memory_limit: float = 0.8, use_mixed_precision: bool = True):
         """
