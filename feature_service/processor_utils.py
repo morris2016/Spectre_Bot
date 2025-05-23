@@ -34,8 +34,23 @@ except ImportError:
         def Series(*args, **kwargs):
             """Return pandas Series instead of cuDF Series"""
             return pd.Series(*args, **kwargs)
-        
+
         # Add any other needed compatibility methods
+        @staticmethod
+        def merge(left, right, *args, **kwargs):
+            """Mimic ``cudf.merge`` using pandas."""
+            return pd.merge(left, right, *args, **kwargs)
+
+        @staticmethod
+        def join(left, right, *args, **kwargs):
+            """Mimic ``cudf.join`` using pandas DataFrame.join."""
+            return left.join(right, *args, **kwargs)
+
+        @staticmethod
+        def groupby(df, *args, **kwargs):
+            """Mimic ``cudf.groupby`` returning a pandas ``GroupBy`` object."""
+            return df.groupby(*args, **kwargs)
+
         def __getattr__(self, name):
             """Forward any other attributes to pandas"""
             return getattr(pd, name)
