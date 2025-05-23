@@ -700,4 +700,4 @@ def get_exposure_manager(name: str, *args, **kwargs) -> BaseExposureManager:
         raise ValueError(f"Unknown exposure manager: {name}")
     return cls(*args, **kwargs)
 
-__all__ = ["BaseExposureManager", "get_exposure_manager"]
+__all__ = ["BaseExposureManager", "get_exposure_manager", "ExposureManager"]
