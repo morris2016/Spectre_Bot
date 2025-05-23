@@ -25,11 +25,9 @@ try:
 except ImportError:
     HAS_TORCH = False
     
-try:
-    import cupy as cp
-    HAS_CUPY = True
-except ImportError:
-    HAS_CUPY = False
+# Use unified GPU utility imports
+from feature_service.processor_utils import cudf, cp, HAS_GPU
+HAS_CUPY = HAS_GPU
 
 try:
     import pycuda.driver as drv
@@ -87,7 +85,7 @@ class GPUManager:
         # Initialize available GPU frameworks
         self.frameworks = {
             'torch': HAS_TORCH,
-            'cupy': HAS_CUPY,
+            'cupy': HAS_GPU,
             'pycuda': HAS_PYCUDA
         }
         
@@ -150,7 +148,7 @@ class GPUManager:
                     # Check for FP16 support (Pascal+, cc >= 6.0)
                     self.half_precision_supported = self.compute_capability[0] >= 6
                     
-            elif HAS_CUPY:
+            elif HAS_GPU:
                 self.has_gpu = True
                 self.device_count = cp.cuda.runtime.getDeviceCount()
                 self.devices = list(range(self.device_count))
@@ -217,7 +215,7 @@ class GPUManager:
                 
                 self.vram_available = self.vram_available - memory_allocated - memory_reserved
                 
-            if HAS_CUPY:
+            if HAS_GPU:
                 cp.cuda.Device(self.selected_device).use()
                 # Get memory info
                 free, total = cp.cuda.Device(self.selected_device).mem_info
@@ -280,7 +278,7 @@ class GPUManager:
                 max_memory = int(self.vram_size * (1 - self.reserved_memory))
                 torch.cuda.set_per_process_memory_fraction(max_memory / self.vram_size)
                 
-            if HAS_CUPY:
+            if HAS_GPU:
                 # Create memory pool
                 self.memory_pool = cp.cuda.MemoryPool()
                 cp.cuda.set_allocator(self.memory_pool.malloc)
@@ -309,7 +307,7 @@ class GPUManager:
                 # Create primary stream and worker streams
                 self.stream_pool = [torch.cuda.Stream(device=self.selected_device) for _ in range(4)]
                 
-            if HAS_CUPY:
+            if HAS_GPU:
                 # Create CuPy streams
                 self.stream_pool.extend([cp.cuda.Stream() for _ in range(4)])
                 
@@ -520,7 +518,7 @@ class GPUManager:
             
         if HAS_TORCH:
             return torch.device(f"cuda:{self.selected_device}")
-        elif HAS_CUPY:
+        elif HAS_GPU:
             return cp.cuda.Device(self.selected_device)
         elif HAS_PYCUDA:
             return self.selected_device
@@ -549,7 +547,7 @@ class GPUManager:
                 status["free_mb"] = (self.vram_size - reserved) / (1024**2)
                 status["percent_used"] = (allocated / self.vram_size) * 100
                 
-            elif HAS_CUPY:
+            elif HAS_GPU:
                 free, total = cp.cuda.Device(self.selected_device).mem_info
                 used = total - free
                 status["allocated_mb"] = used / (1024**2)
@@ -574,7 +572,7 @@ class GPUManager:
             if HAS_TORCH:
                 torch.cuda.empty_cache()
                 
-            if HAS_CUPY:
+            if HAS_GPU:
                 cp.get_default_memory_pool().free_all_blocks()
                 
             # Reset tracking
@@ -595,7 +593,7 @@ class GPUManager:
             if HAS_TORCH:
                 torch.cuda.synchronize()
                 
-            if HAS_CUPY:
+            if HAS_GPU:
                 cp.cuda.Stream.null.synchronize()
                 
             for stream in self.stream_pool:
@@ -634,7 +632,7 @@ class GPUManager:
                 available = self.vram_size - torch.cuda.memory_allocated() - torch.cuda.memory_reserved()
                 # Apply safety margin
                 available = available * 0.8  # 80% of available memory
-            elif HAS_CUPY:
+            elif HAS_GPU:
                 free, total = cp.cuda.Device(self.selected_device).mem_info
                 available = free * 0.8
             else:
@@ -838,7 +836,7 @@ class GPUAccelerator(HardwareAccelerator):
             elif HAS_TORCH and isinstance(data, (list, tuple)) and all(isinstance(x, torch.Tensor) for x in data):
                 return [x.cuda(self.gpu.selected_device) for x in data]
                 
-            elif HAS_CUPY and isinstance(data, np.ndarray):
+            elif HAS_GPU and isinstance(data, np.ndarray):
                 return cp.asarray(data)
                 
             elif HAS_TORCH and isinstance(data, np.ndarray):
@@ -865,7 +863,7 @@ class GPUAccelerator(HardwareAccelerator):
             elif HAS_TORCH and isinstance(data, (list, tuple)) and all(isinstance(x, torch.Tensor) for x in data):
                 return [x.detach().cpu().numpy() for x in data]
                 
-            elif HAS_CUPY and isinstance(data, cp.ndarray):
+            elif HAS_GPU and isinstance(data, cp.ndarray):
                 return cp.asnumpy(data)
                 
             # Return as is if already on CPU
@@ -965,7 +963,7 @@ class GPUAccelerator(HardwareAccelerator):
                 torch_dtype = dtype_map.get(dtype, torch.float32)
                 return torch.tensor(data, dtype=torch_dtype, device=f"cuda:{self.gpu.selected_device}")
                 
-            elif HAS_CUPY:
+            elif HAS_GPU:
                 # Map dtype string to numpy dtype
                 dtype_map = {
                     "float32": np.float32,
