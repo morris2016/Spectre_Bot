@@ -45,7 +45,10 @@ import spacy
 # Internal imports
 from config import Config
 from common.logger import get_logger
-from common.utils import retry_with_backoff_decorator, rate_limit, SafeDict, hash_content
+from common.utils import (
+    retry_with_backoff_decorator, rate_limit, SafeDict, hash_content,
+    safe_nltk_download,
+)
 from common.constants import (
     SOCIAL_PLATFORMS, SOCIAL_API_KEYS, SOCIAL_QUERY_PARAMS,
     SOCIAL_UPDATE_INTERVALS, NLP_MODELS, ASSET_KEYWORDS
@@ -232,16 +235,9 @@ class SocialMediaFeed(BaseDataFeed):
     def initialize_nlp_models(self):
         """Initialize NLP models for sentiment analysis and entity recognition"""
         try:
-            # Download required NLTK resources if not already present
-            try:
-                nltk.data.find('tokenizers/punkt')
-            except LookupError:
-                nltk.download('punkt')
-            
-            try:
-                nltk.data.find('vader_lexicon')
-            except LookupError:
-                nltk.download('vader_lexicon')
+            # Ensure required NLTK resources are available without downloading
+            safe_nltk_download('tokenizers/punkt')
+            safe_nltk_download('vader_lexicon')
             
             # Initialize VADER sentiment analyzer (fast but less accurate)
             self.nlp_models['vader'] = SentimentIntensityAnalyzer()

@@ -35,17 +35,18 @@ from dateutil import parser as date_parser
 # Internal imports
 from common.logger import get_logger
 from common.utils import (
-    rate_limited, async_retry_with_backoff, cache_with_ttl, 
-    safe_execute, parse_datetime, calculate_checksum
+    rate_limited, async_retry_with_backoff, cache_with_ttl,
+    safe_execute, parse_datetime, calculate_checksum,
+    safe_nltk_download,
 )
 from common.constants import NEWS_SOURCES, ASSET_KEYWORDS, MARKET_IMPACT_PHRASES
 from common.exceptions import NewsFeedError, NewsParsingError, NewsSourceUnavailableError
 from data_feeds.base_feed import BaseFeed
 
-# Configure NLTK and transformers
-nltk.download('vader_lexicon', quiet=True)
-nltk.download('punkt', quiet=True)
-nltk.download('stopwords', quiet=True)
+# Configure NLTK and transformers without network calls
+safe_nltk_download('vader_lexicon')
+safe_nltk_download('punkt')
+safe_nltk_download('stopwords')
 
 class NewsFeed(BaseFeed):
     """

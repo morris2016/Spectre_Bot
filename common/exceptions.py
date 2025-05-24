@@ -174,6 +174,36 @@ class InsufficientFundsError(OrderError):
     pass
 
 
+class PositionError(ExecutionError):
+    """Base class for position-related errors."""
+    pass
+
+
+class PositionExecutionError(PositionError):
+    """Raised when there is an error executing a position."""
+    pass
+
+
+class InvalidPositionStateError(PositionError):
+    """Raised when a position is in an invalid state."""
+    pass
+
+
+class InsufficientBalanceError(PositionError):
+    """Raised when there is insufficient balance for a position."""
+    pass
+
+
+class MarginCallError(PositionError):
+    """Raised when a margin call occurs on a position."""
+    pass
+
+
+class PositionLiquidationError(PositionError):
+    """Raised when a position is forcibly liquidated."""
+    pass
+
+
 class RiskError(QuantumSpectreError):
     """Base class for risk management errors."""
     pass
@@ -404,6 +434,11 @@ class ArbitrageOpportunityExpiredError(StrategyError):
 
 class DrawdownLimitExceededException(RiskLimitExceededError):
     """Raised when a drawdown limit is exceeded."""
+    pass
+
+
+class MaxDrawdownExceededError(RiskLimitExceededError):
+    """Raised when the maximum allowed drawdown is exceeded."""
     pass
 
 class RiskManagementException(RiskError):
@@ -819,8 +854,11 @@ __all__ = [
     'FeatureNotFoundError', 'FeatureCalculationError', 'FeatureServiceError',
     'InvalidTimeframeError', 'InvalidParameterError', 'AlertDeliveryError',
     'AlertConfigurationError', 'RiskManagerError', 'PositionSizingError', 'StopLossError',
+    'PositionError', 'PositionExecutionError', 'InvalidPositionStateError', 'InsufficientBalanceError',
+    'MarginCallError', 'PositionLiquidationError',
     'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError',
     'ArbitrageOpportunityExpiredError', 'DrawdownLimitExceededException',
+    'MaxDrawdownExceededError',
     'RiskManagementException', 'ModelVersionError', 'LogAnalysisError',
     'InsufficientDataError', 'EncodingError', 'MetricCollectionError',
     'ServiceConnectionError', 'DataStoreError', 'InvalidDataError', 'TrainingError',
