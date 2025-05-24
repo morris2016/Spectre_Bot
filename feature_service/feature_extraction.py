@@ -27,6 +27,22 @@ import bottleneck as bn
 
 from common.logger import get_logger
 from common.metrics import MetricsCollector
+# Exported helper functions
+def atr(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> pd.Series:
+    """Wrapper for ATR calculation."""
+    return ta.atr(high=high, low=low, close=close, length=period)
+
+
+def fibonacci_levels(high: float, low: float) -> Dict[str, float]:
+    """Compute Fibonacci retracement levels."""
+    diff = high - low
+    return {
+        'level_23.6': high - diff * 0.236,
+        'level_38.2': high - diff * 0.382,
+        'level_50.0': high - diff * 0.5,
+        'level_61.8': high - diff * 0.618,
+        'level_78.6': high - diff * 0.786,
+    }
 # from common.utils import profile_execution, chunk_dataframe # Removed unused imports
 from common.constants import DEFAULT_FEATURE_PARAMS
 # Removed unused FEATURE_CACHE_SIZE
@@ -1550,3 +1566,5 @@ class FeatureExtractor:
         vwap = cum_price_volume / (cum_volume + 1e-10)  # Avoid division by zero
         
         return vwap
+
+__all__ = ['atr', 'fibonacci_levels']

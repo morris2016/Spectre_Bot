@@ -31,7 +31,7 @@ _registry = {
     "patterns": set(),
     "indicators": set(),
     "hooks": set(),
-    "plugins": set()
+    "plugins": set(),
 }
 
 

@@ -17,6 +17,70 @@ from concurrent.futures import ThreadPoolExecutor
 import warnings
 
 from common.utils import timeit, numpy_rolling_window
+
+
+def calculate_rsi(prices: pd.Series, period: int = 14) -> pd.Series:
+    """Return RSI values."""
+    return ta.rsi(prices, length=period)
+
+
+def calculate_macd(prices: pd.Series,
+                   fastperiod: int = 12,
+                   slowperiod: int = 26,
+                   signalperiod: int = 9) -> Tuple[pd.Series, pd.Series, pd.Series]:
+    """Return MACD, signal, and histogram."""
+    macd_df = ta.macd(prices, fast=fastperiod, slow=slowperiod, signal=signalperiod)
+    return macd_df.iloc[:, 0], macd_df.iloc[:, 2], macd_df.iloc[:, 1]
+
+
+def calculate_bollinger_bands(prices: pd.Series,
+                              period: int = 20,
+                              std: int = 2) -> Tuple[pd.Series, pd.Series, pd.Series]:
+    """Return Bollinger Band upper, middle, and lower values."""
+    bb = ta.bbands(prices, length=period, std=std)
+    return bb.iloc[:, 0], bb.iloc[:, 1], bb.iloc[:, 2]
+
+
+def calculate_stochastic(high: pd.Series,
+                         low: pd.Series,
+                         close: pd.Series,
+                         k_period: int = 14,
+                         d_period: int = 3) -> Tuple[pd.Series, pd.Series]:
+    """Return stochastic %K and %D."""
+    stoch = ta.stoch(high=high, low=low, close=close, k=k_period, d=d_period)
+    return stoch.iloc[:, 0], stoch.iloc[:, 1]
+
+
+def calculate_adx(high: pd.Series,
+                  low: pd.Series,
+                  close: pd.Series,
+                  period: int = 14) -> pd.Series:
+    """Return ADX values."""
+    return ta.adx(high=high, low=low, close=close, length=period)[f"ADX_{period}"]
+
+
+def calculate_obv(close: pd.Series, volume: pd.Series) -> pd.Series:
+    """Return On-Balance Volume values."""
+    return ta.obv(close=close, volume=volume)
+
+
+def detect_divergence(price: pd.Series, indicator: pd.Series) -> pd.Series:
+    """Basic divergence detection between price and indicator."""
+    diff = price.diff() * indicator.diff()
+    return diff < 0
+
+
+__all__ = [
+    'calculate_rsi',
+    'calculate_macd',
+    'calculate_bollinger_bands',
+    'calculate_stochastic',
+    'calculate_adx',
+    'calculate_obv',
+    'detect_divergence',
+    'TechnicalFeatures',
+    'calculate_technical_features',
+]
 from common.exceptions import FeatureCalculationError
 from common.constants import TECHNICAL_INDICATOR_PARAMS
 from feature_service.features.base_feature import BaseFeature
@@ -24,6 +88,8 @@ from feature_service.features.base_feature import BaseFeature
 
 def calculate_rsi(close: pd.Series, period: int = 14) -> pd.Series:
     """Standalone RSI calculation"""
+=======
+    """Standalone RSI calculation used by strategy modules."""
     return ta.rsi(close, length=period)
 
 
@@ -36,6 +102,18 @@ def calculate_macd(
     """Standalone MACD calculation"""
     macd = ta.macd(close, fast=fast_period, slow=slow_period, signal=signal_period)
     return macd.macd, macd.macd_signal, macd.macd_diff
+=======
+    fastperiod: int = 12,
+    slowperiod: int = 26,
+    signalperiod: int = 9,
+) -> pd.DataFrame:
+    """Return MACD, signal, and histogram as a DataFrame."""
+    macd_df = ta.macd(close, fast=fastperiod, slow=slowperiod, signal=signalperiod)
+    return pd.DataFrame({
+        'macd': macd_df.iloc[:, 0],
+        'signal': macd_df.iloc[:, 2],
+        'hist': macd_df.iloc[:, 1],
+    })
 
 
 def calculate_adx(
@@ -46,6 +124,15 @@ def calculate_adx(
 ) -> pd.Series:
     """Standalone ADX calculation"""
     return ta.adx(high, low, close, length=period)
+=======
+) -> pd.DataFrame:
+    """Return ADX, plus_DI, minus_DI as a DataFrame."""
+    adx_df = ta.adx(high=high, low=low, close=close, length=period)
+    return pd.DataFrame({
+        'adx': adx_df[f'ADX_{period}'],
+        'plus_di': adx_df[f'DMP_{period}'],
+        'minus_di': adx_df[f'DMN_{period}'],
+    })
 
 logger = get_logger(__name__)
 
@@ -799,7 +886,113 @@ class TechnicalFeatures(BaseFeature):
             logger.error(f"Error calculating Keltner Channels: {str(e)}")
             return pd.DataFrame(index=data.index)
     
+
     # Add more indicator calculation methods as needed
+
+
+def calculate_rsi(data: pd.DataFrame | pd.Series, period: int = 14) -> pd.Series:
+    """Module-level helper to calculate RSI."""
+    if isinstance(data, pd.DataFrame):
+        series = data['close']
+    else:
+        series = data
+    return ta.rsi(series, length=period)
+
+
+def calculate_macd(data: pd.DataFrame | pd.Series,
+                   fastperiod: int = 12,
+                   slowperiod: int = 26,
+                   signalperiod: int = 9) -> pd.DataFrame:
+    """Module-level helper to calculate MACD."""
+    if isinstance(data, pd.DataFrame):
+        series = data['close']
+    else:
+        series = data
+    macd_df = ta.macd(series, fast=fastperiod, slow=slowperiod, signal=signalperiod)
+    macd_df.columns = ['macd', 'macdhist', 'macdsignal']
+    return macd_df
+
+
+def calculate_bollinger_bands(data: pd.DataFrame | pd.Series,
+                              period: int = 20,
+                              std: int = 2) -> pd.DataFrame:
+    """Calculate Bollinger Bands."""
+    if isinstance(data, pd.DataFrame):
+        series = data['close']
+    else:
+        series = data
+    bb = ta.bbands(series, length=period, std=std)
+    bb.columns = ['bb_upper', 'bb_middle', 'bb_lower']
+    return bb
+
+
+def calculate_stochastic(high: pd.Series,
+                          low: pd.Series,
+                          close: pd.Series,
+                          k_period: int = 5,
+                          d_period: int = 3) -> pd.DataFrame:
+    """Calculate Stochastic Oscillator."""
+    stoch_df = ta.stoch(high=high, low=low, close=close, k=k_period, d=d_period)
+    stoch_df.columns = ['stoch_k', 'stoch_d']
+    return stoch_df
+
+
+def calculate_adx(high: pd.Series,
+                  low: pd.Series,
+                  close: pd.Series,
+                  period: int = 14) -> pd.DataFrame:
+    """Calculate ADX indicator."""
+    adx_df = ta.adx(high=high, low=low, close=close, length=period)
+    return adx_df
+
+
+def calculate_atr(high: pd.Series,
+                  low: pd.Series,
+                  close: pd.Series,
+                  period: int = 14) -> pd.Series:
+    """Calculate Average True Range."""
+    return ta.atr(high=high, low=low, close=close, length=period)
+
+
+def calculate_ichimoku(high: pd.Series,
+                       low: pd.Series,
+                       close: pd.Series,
+                       tenkan: int = 9,
+                       kijun: int = 26,
+                       senkou_span_b: int = 52,
+                       displacement: int = 26) -> pd.DataFrame:
+    """Calculate Ichimoku Cloud components."""
+    df = pd.DataFrame({'high': high, 'low': low, 'close': close})
+    tf = TechnicalFeatures({'ICHIMOKU': {
+        'tenkan': tenkan,
+        'kijun': kijun,
+        'senkou_span_b': senkou_span_b,
+        'displacement': displacement,
+    }})
+    return tf._calculate_ichimoku(df)
+
+
+def calculate_obv(close: pd.Series, volume: pd.Series) -> pd.Series:
+    """Calculate On-Balance Volume."""
+    obv = pd.Series(index=close.index, dtype=float)
+    obv.iloc[0] = 0.0
+    for i in range(1, len(close)):
+        if close.iloc[i] > close.iloc[i - 1]:
+            obv.iloc[i] = obv.iloc[i - 1] + volume.iloc[i]
+        elif close.iloc[i] < close.iloc[i - 1]:
+            obv.iloc[i] = obv.iloc[i - 1] - volume.iloc[i]
+        else:
+            obv.iloc[i] = obv.iloc[i - 1]
+    return obv
+
+
+def get_indicator_data(data: pd.DataFrame, indicator_name: str, params: Dict[str, Any] | None = None) -> Any:
+    """Fetch indicator data by name using :class:`TechnicalFeatures`."""
+    tf = TechnicalFeatures({indicator_name.upper(): params or {}})
+    method_name = f"_calculate_{indicator_name.lower()}"
+    if hasattr(tf, method_name):
+        return getattr(tf, method_name)(data)
+    raise ValueError(f"Unknown indicator {indicator_name}")
 
 # Helper functions that might be implemented if needed by the technical indicators
 @jit(nopython=True)
