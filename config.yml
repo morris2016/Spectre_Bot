@@ -88,3 +88,6 @@ ui:
   voice_assistant: true
   hotkeys_enabled: false
   confirm_orders: true
+
+feature_service:
+  cross_asset_features: true

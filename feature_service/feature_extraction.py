@@ -24,6 +24,10 @@ from empyrical import max_drawdown, sharpe_ratio, sortino_ratio, calmar_ratio
 from feature_service.processor_utils import cudf, HAS_GPU
 from numba import cuda, jit, vectorize
 import bottleneck as bn
+from feature_service.features.cross_asset import (
+    compute_pair_correlation,
+    cointegration_score,
+)
 
 from common.logger import get_logger
 from common.metrics import MetricsCollector
@@ -1564,7 +1568,27 @@ class FeatureExtractor:
         
         # Calculate VWAP
         vwap = cum_price_volume / (cum_volume + 1e-10)  # Avoid division by zero
-        
+
         return vwap
+
+    @feature_calculation
+    def pair_correlation(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
+        """Correlation between this asset and a paired asset."""
+        pair_data = params.get("pair_data")
+        column = params.get("pair_column", "close")
+        if pair_data is None:
+            raise ValueError("pair_data parameter is required for pair_correlation")
+        corr = compute_pair_correlation(data, pair_data, column=column)
+        return pd.Series(corr, index=data.index, name="pair_correlation")
+
+    @feature_calculation
+    def cointegration_pvalue(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
+        """Engle-Granger cointegration p-value between two assets."""
+        pair_data = params.get("pair_data")
+        column = params.get("pair_column", "close")
+        if pair_data is None:
+            raise ValueError("pair_data parameter is required for cointegration_pvalue")
+        pval = cointegration_score(data, pair_data, column=column)
+        return pd.Series(pval, index=data.index, name="cointegration_pvalue")
 
 __all__ = ['atr', 'fibonacci_levels']
