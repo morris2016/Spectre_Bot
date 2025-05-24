@@ -48,18 +48,19 @@ class PerformanceTracker:
     Comprehensive performance tracking system for strategy brains and councils.
     """
     
-    def __init__(self,
-                 council_name: str,
-                 config: dict = None,
-                 db_connector=None,
-                 loop: Optional[asyncio.AbstractEventLoop] = None):
-        """
-        Initialize the performance tracking system.
-        
+    def __init__(
+        self,
+        council_name: str,
+        config: dict = None,
+        db_connector=None,
+        loop: Optional[asyncio.AbstractEventLoop] = None,
+    ):
+        """Initialize and schedule performance tracking setup.
+
         Args:
             council_name: Name of the brain council this tracker belongs to
             config: Configuration for the performance tracker
-            db_connector: Database connector for storing performance data
+            db_connector: Optional database connector for performance data
         """
         self.council_name = council_name
         self.config = config or {}
@@ -96,11 +97,18 @@ class PerformanceTracker:
         
         # Regime performance
         self.regime_performance = defaultdict(lambda: defaultdict(dict))
-        
-        # Database initialization deferred until ``initialize`` is called
+
+        # Schedule database initialization
+        self.initialization_task = self.loop.create_task(
+            self.initialize(db_connector)
+        )
 
     async def initialize(self, db_connector=None) -> None:
-        """Obtain a database client and create required tables."""
+        """Obtain a database client and create required tables.
+
+        This coroutine is scheduled automatically during object creation, but it
+        can be awaited if explicit synchronization is required.
+        """
         self.db = db_connector or await get_db_client()
         await self._initialize_database()
         logger.info(
