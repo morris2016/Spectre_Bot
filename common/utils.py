@@ -2502,7 +2502,7 @@ def calculate_pivot_points(high: float, low: float, close: float) -> Dict[str, f
     r1 = (2 * pivot) - low
     r2 = pivot + (high - low)
     r3 = high + 2 * (pivot - low)
-    
+
     return {
         'pivot': pivot,
         'r1': r1,
@@ -2514,6 +2514,7 @@ def calculate_pivot_points(high: float, low: float, close: float) -> Dict[str, f
     }
 
 
+# Backward compatibility alias
 # Backwards compatibility alias
 
 
@@ -3393,6 +3394,18 @@ def create_directory_if_not_exists(path: str) -> str:
     return create_directory(path, exist_ok=True)
 
 
+def compress_data(data: bytes) -> bytes:
+    """Compress binary data using gzip."""
+    if not data:
+        return b""
+    return gzip.compress(data)
+
+
+def decompress_data(data: bytes) -> bytes:
+    """Decompress gzip-compressed binary data."""
+    if not data:
+        return b""
+    return gzip.decompress(data)
 def pivot_points(high: float, low: float, close: float) -> Dict[str, float]:
     """Backward-compatible alias for calculate_pivot_points."""
     return calculate_pivot_points(high, low, close)
@@ -4556,6 +4569,7 @@ __all__ = [
     'calculate_distance', 'calculate_distance_percentage', 'memoize',
     'is_higher_timeframe', 'threaded_calculation', 'create_batches',
     'create_directory', 'create_directory_if_not_exists',
+    'compress_data', 'decompress_data',
 
     'create_directory', 'create_directory_if_not_exists', 'compress_data', 'decompress_data',
     'create_directory', 'create_directory_if_not_exists',

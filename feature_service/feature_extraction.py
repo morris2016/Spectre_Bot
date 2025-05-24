@@ -1626,6 +1626,20 @@ def fibonacci_levels(data: pd.DataFrame) -> Dict[str, float]:
 
         return vwap
 
+
+# Convenience wrapper functions
+
+def atr(data: pd.DataFrame, period: int = 14) -> pd.Series:
+    """Calculate ATR directly."""
+    return ta.atr(high=data['high'], low=data['low'], close=data['close'], length=period)
+
+
+def fibonacci_levels(price: float, ratios: Optional[List[float]] = None) -> Dict[str, float]:
+    """Generate basic Fibonacci retracement levels."""
+    if ratios is None:
+        ratios = [0.236, 0.382, 0.5, 0.618, 0.786]
+    return {str(r): price * r for r in ratios}
+
 def atr(data: pd.DataFrame, period: int = 14) -> pd.Series:
     """Convenience wrapper for ATR calculation."""
     return ta.atr(high=data['high'], low=data['low'], close=data['close'], length=period)

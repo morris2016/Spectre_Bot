@@ -40,6 +40,7 @@ class BrainConfig:
     """Base configuration for strategy brains."""
     pass
 
+
     # Arbitrary strategy parameters
     parameters: Dict[str, Any] = field(default_factory=dict)
 

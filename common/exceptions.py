@@ -593,6 +593,28 @@ class ModelNotFoundError(ModelError):
 
 
 class ModelRegistrationError(ModelError):
+    """Raised when model registration fails."""
+    pass
+
+
+class InvalidModelStateError(ModelError):
+    """Raised when a model is in an invalid state."""
+    pass
+
+
+class PositionError(ExecutionError):
+    """Base class for position-related errors."""
+    pass
+
+
+class InsufficientBalanceError(PositionError):
+    """Raised when an account balance is insufficient for a trade."""
+    pass
+
+
+class RiskExceededError(RiskError):
+    """Raised when a calculated risk exceeds configured limits."""
+
     """Raised when a model fails to register with the system."""
     pass
 
@@ -1125,6 +1147,9 @@ __all__ = [
     'InsufficientBalanceError', 'RiskExceededError', 'PositionError', 'PositionExecutionError',
     'ModelRegistrationError', 'InvalidModelStateError',
     'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError',
+    'ModelRegistrationError', 'InvalidModelStateError',
+    'PositionError', 'InsufficientBalanceError', 'RiskExceededError',
+
     'InsufficientBalanceError', 'PositionError', 'RiskExceededError',
     'ModelRegistrationError',
     'ArbitrageOpportunityExpiredError', 'DrawdownLimitExceededException', 'MaxDrawdownExceededError',
