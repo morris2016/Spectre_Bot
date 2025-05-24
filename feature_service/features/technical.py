@@ -17,9 +17,122 @@ from concurrent.futures import ThreadPoolExecutor
 import warnings
 
 from common.utils import timeit, numpy_rolling_window
+
+
+def calculate_rsi(prices: pd.Series, period: int = 14) -> pd.Series:
+    """Return RSI values."""
+    return ta.rsi(prices, length=period)
+
+
+def calculate_macd(prices: pd.Series,
+                   fastperiod: int = 12,
+                   slowperiod: int = 26,
+                   signalperiod: int = 9) -> Tuple[pd.Series, pd.Series, pd.Series]:
+    """Return MACD, signal, and histogram."""
+    macd_df = ta.macd(prices, fast=fastperiod, slow=slowperiod, signal=signalperiod)
+    return macd_df.iloc[:, 0], macd_df.iloc[:, 2], macd_df.iloc[:, 1]
+
+
+def calculate_bollinger_bands(prices: pd.Series,
+                              period: int = 20,
+                              std: int = 2) -> Tuple[pd.Series, pd.Series, pd.Series]:
+    """Return Bollinger Band upper, middle, and lower values."""
+    bb = ta.bbands(prices, length=period, std=std)
+    return bb.iloc[:, 0], bb.iloc[:, 1], bb.iloc[:, 2]
+
+
+def calculate_stochastic(high: pd.Series,
+                         low: pd.Series,
+                         close: pd.Series,
+                         k_period: int = 14,
+                         d_period: int = 3) -> Tuple[pd.Series, pd.Series]:
+    """Return stochastic %K and %D."""
+    stoch = ta.stoch(high=high, low=low, close=close, k=k_period, d=d_period)
+    return stoch.iloc[:, 0], stoch.iloc[:, 1]
+
+
+def calculate_adx(high: pd.Series,
+                  low: pd.Series,
+                  close: pd.Series,
+                  period: int = 14) -> pd.Series:
+    """Return ADX values."""
+    return ta.adx(high=high, low=low, close=close, length=period)[f"ADX_{period}"]
+
+
+def calculate_obv(close: pd.Series, volume: pd.Series) -> pd.Series:
+    """Return On-Balance Volume values."""
+    return ta.obv(close=close, volume=volume)
+
+
+def detect_divergence(price: pd.Series, indicator: pd.Series) -> pd.Series:
+    """Basic divergence detection between price and indicator."""
+    diff = price.diff() * indicator.diff()
+    return diff < 0
+
+
+__all__ = [
+    'calculate_rsi',
+    'calculate_macd',
+    'calculate_bollinger_bands',
+    'calculate_stochastic',
+    'calculate_adx',
+    'calculate_obv',
+    'detect_divergence',
+    'TechnicalFeatures',
+    'calculate_technical_features',
+]
 from common.exceptions import FeatureCalculationError
 from common.constants import TECHNICAL_INDICATOR_PARAMS
 from feature_service.features.base_feature import BaseFeature
+
+
+def calculate_rsi(close: pd.Series, period: int = 14) -> pd.Series:
+    """Standalone RSI calculation"""
+=======
+    """Standalone RSI calculation used by strategy modules."""
+    return ta.rsi(close, length=period)
+
+
+def calculate_macd(
+    close: pd.Series,
+    fast_period: int = 12,
+    slow_period: int = 26,
+    signal_period: int = 9,
+) -> Tuple[pd.Series, pd.Series, pd.Series]:
+    """Standalone MACD calculation"""
+    macd = ta.macd(close, fast=fast_period, slow=slow_period, signal=signal_period)
+    return macd.macd, macd.macd_signal, macd.macd_diff
+=======
+    fastperiod: int = 12,
+    slowperiod: int = 26,
+    signalperiod: int = 9,
+) -> pd.DataFrame:
+    """Return MACD, signal, and histogram as a DataFrame."""
+    macd_df = ta.macd(close, fast=fastperiod, slow=slowperiod, signal=signalperiod)
+    return pd.DataFrame({
+        'macd': macd_df.iloc[:, 0],
+        'signal': macd_df.iloc[:, 2],
+        'hist': macd_df.iloc[:, 1],
+    })
+
+
+def calculate_adx(
+    high: pd.Series,
+    low: pd.Series,
+    close: pd.Series,
+    period: int = 14,
+) -> pd.Series:
+    """Standalone ADX calculation"""
+    return ta.adx(high, low, close, length=period)
+=======
+) -> pd.DataFrame:
+    """Return ADX, plus_DI, minus_DI as a DataFrame."""
+    adx_df = ta.adx(high=high, low=low, close=close, length=period)
+    return pd.DataFrame({
+        'adx': adx_df[f'ADX_{period}'],
+        'plus_di': adx_df[f'DMP_{period}'],
+        'minus_di': adx_df[f'DMN_{period}'],
+    })
 
 logger = get_logger(__name__)
 
@@ -919,6 +1032,15 @@ def calculate_technical_features(data, config=None):
     """
     calculator = TechnicalFeatures(config)
     return calculator.calculate_features(data)
+
+
+__all__ = [
+    'calculate_rsi',
+    'calculate_macd',
+    'calculate_adx',
+    'calculate_technical_features',
+    'TechnicalFeatures',
+]
 
 # Module initialization
 import os
