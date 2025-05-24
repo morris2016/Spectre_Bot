@@ -2,10 +2,13 @@
 """UI Service for QuantumSpectre Elite Trading System."""
 
 import asyncio
+import os
 from typing import Any, Optional
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 from common.logger import get_logger
 from common.metrics import MetricsCollector
@@ -30,6 +33,12 @@ class UIService:
         # FastAPI application instance
         self.app = FastAPI(title="QuantumSpectre UI")
         self.app.add_api_route("/health", self.health_endpoint, methods=["GET"])
+
+        static_dir = os.path.abspath(self.config.ui.get("static_dir", "./ui/dist"))
+        index_file = self.config.ui.get("index_file", "index.html")
+        self.index_path = os.path.join(static_dir, index_file)
+        self.app.mount("/static", StaticFiles(directory=static_dir), name="static")
+        self.app.add_api_route("/{full_path:path}", self.index, methods=["GET"])
 
     async def start(self) -> None:
         """Start the UI service using Uvicorn."""
@@ -65,3 +74,7 @@ class UIService:
     async def health_endpoint(self) -> dict:
         """Simple health check endpoint for FastAPI."""
         return {"status": "ok"}
+
+    async def index(self, full_path: str) -> FileResponse:
+        """Serve the React application's index file for all routes."""
+        return FileResponse(self.index_path)

@@ -117,6 +117,8 @@ DEFAULT_CONFIG = {
         "assets_dir": "./ui/assets",
         "template_dir": "./ui/templates",
         "cache_dir": "./ui/cache",
+        "static_dir": "./ui/dist",
+        "index_file": "index.html",
         "debug": False,
         "ssl": False,
         "ssl_cert": None,
