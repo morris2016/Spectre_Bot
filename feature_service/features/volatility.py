@@ -42,6 +42,26 @@ from common.exceptions import FeatureCalculationError
 from common.constants import VOLATILITY_INDICATOR_PARAMS
 from feature_service.features.base_feature import BaseFeature
 
+
+def calculate_atr(
+    high: pd.Series,
+    low: pd.Series,
+    close: pd.Series,
+    period: int = 14,
+) -> pd.Series:
+    """Simple ATR calculation used by strategies."""
+    return ta.atr(high=high, low=low, close=close, length=period)
+
+
+def calculate_bollinger_bands(
+    close: pd.Series,
+    window: int = 20,
+    num_std_dev: float = 2.0,
+) -> Tuple[pd.Series, pd.Series, pd.Series]:
+    """Return Bollinger Bands (upper, middle, lower)."""
+    bands = ta.volatility.BollingerBands(close=close, window=window, window_dev=num_std_dev)
+    return bands.bollinger_hband(), bands.bollinger_mavg(), bands.bollinger_lband()
+
 logger = get_logger(__name__)
 
 
@@ -974,6 +994,14 @@ def calculate_volatility_features(data, config=None):
     """
     calculator = VolatilityFeatures(config)
     return calculator.calculate_features(data)
+
+
+__all__ = [
+    'calculate_atr',
+    'calculate_bollinger_bands',
+    'calculate_volatility_features',
+    'VolatilityFeatures',
+]
 
 # Module initialization
 import os

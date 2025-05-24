@@ -15,6 +15,8 @@ import uuid
 import hmac
 import hashlib
 import base64
+import gzip
+import pickle
 import random
 import pickle
 import zlib
@@ -2489,6 +2491,10 @@ def calculate_pivot_points(high: float, low: float, close: float) -> Dict[str, f
     }
 
 
+def pivot_points(high: float, low: float, close: float) -> Dict[str, float]:
+    """Alias for :func:`calculate_pivot_points` for backward compatibility."""
+    return calculate_pivot_points(high, low, close)
+=======
 # Backwards compatibility alias
 pivot_points = calculate_pivot_points
 
@@ -3356,6 +3362,14 @@ def create_directory_if_not_exists(path: str) -> str:
     return create_directory(path, exist_ok=True)
 
 
+def compress_data(data: Any) -> bytes:
+    """Serialize and gzip-compress arbitrary Python data."""
+    try:
+        serialized = pickle.dumps(data)
+        return gzip.compress(serialized)
+    except Exception as exc:  # pragma: no cover - best effort
+        logger.error("Failed to compress data: %s", exc)
+=======
 def get_asset_precision(asset: str) -> int:
     """Return decimal precision for a given asset."""
     return POSITION_SIZE_PRECISION
@@ -3386,6 +3400,11 @@ def compress_data(data: Any) -> bytes:
 def decompress_data(data: bytes) -> Any:
     """Decompress and deserialize data produced by :func:`compress_data`."""
     try:
+        decompressed = gzip.decompress(data)
+        return pickle.loads(decompressed)
+    except Exception as exc:  # pragma: no cover - best effort
+        logger.error("Failed to decompress data: %s", exc)
+=======
         return pickle.loads(zlib.decompress(data))
     except Exception as e:
         logger.error(f"Failed to decompress data: {str(e)}")
@@ -4489,6 +4508,8 @@ __all__ = [
     'calculate_distance', 'calculate_distance_percentage', 'memoize',
     'is_higher_timeframe', 'threaded_calculation', 'create_batches',
     'create_directory', 'create_directory_if_not_exists',
+    'compress_data', 'decompress_data', 'pivot_points',
+=======
     'get_asset_precision',
     'compress_data', 'decompress_data',
 =======

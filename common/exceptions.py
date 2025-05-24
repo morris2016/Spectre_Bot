@@ -174,6 +174,14 @@ class InsufficientFundsError(OrderError):
     pass
 
 
+class PositionError(ExecutionError):
+    """Raised for invalid or inconsistent position state."""
+    pass
+
+
+class PositionExecutionError(ExecutionError):
+    """Raised when an error occurs executing a position."""
+=======
 class InsufficientBalanceError(OrderError):
     """Raised when account balance is insufficient for an operation."""
     pass
@@ -194,6 +202,14 @@ class RiskLimitExceededError(RiskError):
     pass
 
 
+class InsufficientBalanceError(RiskError):
+    """Raised when account balance is too low for an operation."""
+    pass
+
+
+class RiskExceededError(RiskError):
+    """Raised when calculated risk exceeds configured threshold."""
+=======
 class RiskExceededError(RiskError):
     """Raised when calculated risk exceeds the allowed threshold."""
     pass
@@ -246,6 +262,8 @@ class InvalidModelStateError(ModelError):
 
 
 class ModelRegistrationError(ModelError):
+    """Raised when registering a model fails."""
+=======
     """Raised when model registration fails."""
     pass
 
@@ -897,6 +915,10 @@ __all__ = [
     'FeatureNotFoundError', 'FeatureCalculationError', 'FeatureServiceError',
     'InvalidTimeframeError', 'InvalidParameterError', 'AlertDeliveryError',
     'AlertConfigurationError', 'RiskManagerError', 'PositionSizingError', 'StopLossError',
+    'InsufficientBalanceError', 'RiskExceededError', 'PositionError', 'PositionExecutionError',
+    'ModelRegistrationError', 'InvalidModelStateError',
+    'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError',
+=======
     'InsufficientBalanceError', 'PositionError', 'RiskExceededError',
     'ModelRegistrationError', 'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError',
     'MarketDataError', 'CalculationError',
