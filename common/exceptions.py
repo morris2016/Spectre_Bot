@@ -181,7 +181,6 @@ class InsufficientFundsError(OrderError):
 
 class InsufficientBalanceError(RiskError):
     """Raised when account balance is insufficient for a trade."""
-=======
 class PositionError(ExecutionError):
     """Raised for invalid or inconsistent position state."""
     pass
@@ -189,7 +188,6 @@ class PositionError(ExecutionError):
 
 class PositionExecutionError(ExecutionError):
     """Raised when an error occurs executing a position."""
-=======
 class InsufficientBalanceError(OrderError):
     """Raised when account balance is insufficient for an operation."""
     pass
@@ -217,7 +215,6 @@ class InsufficientBalanceError(RiskError):
 
 class RiskExceededError(RiskError):
     """Raised when calculated risk exceeds configured threshold."""
-=======
 class RiskExceededError(RiskError):
     """Raised when calculated risk exceeds the allowed threshold."""
     pass
@@ -230,9 +227,6 @@ class PositionExecutionError(PositionError):
 
 
 
-=======
-    """Raised when a risk threshold is exceeded."""
-    pass
 
 
 class BacktestError(QuantumSpectreError):
@@ -266,7 +260,6 @@ class ModelPredictionError(ModelError):
 
 class ModelRegistrationError(ModelError):
     """Raised when a model fails to register."""
-=======
 class InvalidModelStateError(ModelError):
     """Raised when a model is in an invalid state for the requested operation."""
     pass
@@ -274,9 +267,6 @@ class InvalidModelStateError(ModelError):
 
 class ModelRegistrationError(ModelError):
     """Raised when registering a model fails."""
-=======
-    """Raised when model registration fails."""
-    pass
 
 
 class StrategyError(QuantumSpectreError):
@@ -911,12 +901,8 @@ __all__ = [
     'InsufficientBalanceError', 'PositionError', 'PositionExecutionError',
     'InvalidOrderError', 'OrderCancellationError', 'SlippageExceededError', 'NetworkError',
     'PositionError', 'RiskError', 'RiskLimitExceededError', 'BacktestError', 'ModelError',
-=======
     'RiskError', 'RiskLimitExceededError', 'RiskExceededError', 'BacktestError', 'ModelError',
     'ModelTrainingError', 'ModelPredictionError', 'InvalidModelStateError', 'ModelRegistrationError', 'StrategyError', 'SignalGenerationError',
-=======
-    'ModelTrainingError', 'ModelPredictionError', 'ModelRegistrationError',
-    'StrategyError', 'SignalGenerationError',
     'RiskError', 'RiskLimitExceededError', 'BacktestError', 'ModelError',
     'ModelTrainingError', 'ModelPredictionError', 'ModelRegistrationError', 'StrategyError', 'SignalGenerationError',
     'MonitoringError', 'AlertError', 'ResourceError', 'ResourceExhaustionError',
@@ -929,11 +915,9 @@ __all__ = [
     'InvalidTimeframeError', 'InvalidParameterError', 'AlertDeliveryError',
     'AlertConfigurationError', 'RiskManagerError', 'PositionSizingError', 'StopLossError',
     'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError', 'InsufficientBalanceError',
-=======
     'InsufficientBalanceError', 'RiskExceededError', 'PositionError', 'PositionExecutionError',
     'ModelRegistrationError', 'InvalidModelStateError',
     'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError',
-=======
     'InsufficientBalanceError', 'PositionError', 'RiskExceededError',
     'ModelRegistrationError', 'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError',
     'MarketDataError', 'CalculationError',
