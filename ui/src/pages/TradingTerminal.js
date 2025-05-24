@@ -1,8 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  CircularProgress,
+} from '@mui/material';
 import TradingView from '../components/TradingView/TradingView';
 import OrderPanel from '../components/OrderPanel/OrderPanel';
-import api from '../api';
+import { api, socketManager } from '../api';
 
 /**
  * Full trading terminal with chart, positions and order management.
@@ -10,9 +20,13 @@ import api from '../api';
 const TradingTerminal = () => {
   const [openOrders, setOpenOrders] = useState([]);
   const [positions, setPositions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const loadData = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const [ordersRes, positionsRes] = await Promise.all([
           api.trading.getOpenOrders({}),
@@ -20,17 +34,43 @@ const TradingTerminal = () => {
         ]);
         setOpenOrders(ordersRes.data || []);
         setPositions(positionsRes.data || []);
-      } catch (error) {
-        console.error('Failed to load trading terminal data', error);
+      } catch (err) {
+        console.error('Failed to load trading terminal data', err);
+        setError('Failed to load trading terminal data');
+      } finally {
+        setLoading(false);
       }
     };
 
     loadData();
   }, []);
 
+  useEffect(() => {
+    const unsubOrders = socketManager.subscribe('orders:update', (data) => {
+      setOpenOrders(data);
+    });
+    const unsubPositions = socketManager.subscribe('positions:update', (data) => {
+      setPositions(data);
+    });
+    return () => {
+      unsubOrders();
+      unsubPositions();
+    };
+  }, []);
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Typography variant="h4">Trading Terminal</Typography>
+      {loading && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+          <CircularProgress />
+        </Box>
+      )}
+      {error && (
+        <Typography color="error" variant="body2" sx={{ mb: 2 }}>
+          {error}
+        </Typography>
+      )}
       <Box sx={{ height: 500 }}>
         <TradingView />
       </Box>

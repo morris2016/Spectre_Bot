@@ -11,6 +11,8 @@ import os
 import re
 import time
 import json
+import io
+import gzip
 import uuid
 import hmac
 import hashlib
@@ -3398,17 +3400,31 @@ def create_directory_if_not_exists(path: str) -> str:
     """Create directory if it does not already exist."""
     return create_directory(path, exist_ok=True)
 
+def pivot_points(high: float, low: float, close: float) -> Dict[str, float]:
+    """Backward-compatible alias for calculate_pivot_points."""
+    return calculate_pivot_points(high, low, close)
+
+
+def compress_data(data: bytes) -> bytes:
+    """Compress binary data using gzip."""
+    out = io.BytesIO()
+    with gzip.GzipFile(fileobj=out, mode="wb") as f:
 
 def compress_data(data: bytes) -> bytes:
     """Compress binary data using gzip."""
     out = io.BytesIO()
     with gzip.GzipFile(fileobj=out, mode='wb') as f:
+
         f.write(data)
     return out.getvalue()
 
 
 def decompress_data(data: bytes) -> bytes:
     """Decompress gzip-compressed binary data."""
+    with gzip.GzipFile(fileobj=io.BytesIO(data), mode="rb") as f:
+        return f.read()
+
+
     with gzip.GzipFile(fileobj=io.BytesIO(data)) as f:
         return f.read()
 
@@ -4595,6 +4611,12 @@ __all__ = [
     'calculate_kelly_criterion', 'calculate_sharpe_ratio', 'calculate_sortino_ratio',
     'calculate_max_drawdown', 'calculate_calmar_ratio', 'z_score',
     'is_price_consolidating', 'is_breaking_out', 'calculate_pivot_points', 'pivot_points',
+    'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',
+    'calculate_distance', 'calculate_distance_percentage', 'memoize',
+    'is_higher_timeframe', 'threaded_calculation', 'create_batches',
+    'create_directory', 'create_directory_if_not_exists',
+    'compress_data', 'decompress_data',
+
     'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',
     'calculate_distance', 'calculate_distance_percentage', 'memoize',
     'is_higher_timeframe', 'threaded_calculation', 'create_batches',
