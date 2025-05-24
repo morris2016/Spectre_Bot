@@ -41,6 +41,7 @@ class BrainConfig:
     pass
 
 
+
     # Arbitrary strategy parameters
     parameters: Dict[str, Any] = field(default_factory=dict)
 
@@ -49,7 +50,6 @@ class BrainConfig:
     max_position_size: float = 0.05
     stop_loss_atr_multiplier: float = 1.5
     take_profit_atr_multiplier: float = 3.0
-
 
 
 
