@@ -363,6 +363,7 @@ DEFAULT_CONFIG = {
         "batch_size": 1024, # Added default batch size
         "timeframes": ["1m", "5m", "15m", "1h", "4h", "1d"],
         "real_time": True,
+        "cross_asset_features": True,
         "history_length": {
             "1m": 24,    # 24 hours
             "5m": 72,    # 3 days
@@ -378,7 +379,8 @@ DEFAULT_CONFIG = {
             "sentiment": True,
             "market_structure": True,
             "order_flow": True,
-            "pattern": True
+            "pattern": True,
+            "cross_asset": True
         }
     },
     "brain_council": {
