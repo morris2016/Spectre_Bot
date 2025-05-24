@@ -220,6 +220,7 @@ def discover_modules() -> None:
 # Automatically discover modules when package is imported
 discover_modules()
 
+
 # Export version info
 __all__ = [
     "__version__",

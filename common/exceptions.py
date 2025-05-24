@@ -192,6 +192,7 @@ class InsufficientFundsError(OrderError):
 
 
 class InsufficientBalanceError(OrderError):
+    """Raised when an account balance is too low to execute an action."""
     """Raised when account balance is too low for an operation."""
 
 class InsufficientBalanceError(RiskError):
@@ -209,6 +210,8 @@ class InsufficientBalanceError(OrderError):
 
 
 class PositionError(ExecutionError):
+    """Raised when there is an invalid or unknown position state."""
+
     """Raised for invalid operations on a trading position."""
     pass
 
@@ -285,6 +288,11 @@ class ModelTrainingError(ModelError):
 
 class ModelPredictionError(ModelError):
     """Raised when model prediction fails."""
+    pass
+
+
+class ModelRegistrationError(ModelError):
+    """Raised when registering a model fails."""
     pass
 
 
@@ -974,6 +982,8 @@ __all__ = [
     'DatabaseQueryError', 'RedisError', 'RedisConnectionError', 'SecurityError',
     'APIKeyError', 'AuthenticationError', 'AuthorizationError', 'ExecutionError',
     'OrderError', 'OrderRejectedError', 'OrderTimeoutError', 'InsufficientFundsError',
+    'InsufficientBalanceError', 'PositionError',
+
     'InsufficientBalanceError',
     'InvalidOrderError', 'OrderCancellationError', 'SlippageExceededError', 'NetworkError',
     'PositionError', 'PositionExecutionError',

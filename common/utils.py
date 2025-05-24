@@ -38,6 +38,8 @@ import sys
 import asyncio
 import importlib
 import pkgutil
+import io
+import gzip
 import enum
 from typing import Dict, List, Any, Optional, Union, Callable, Tuple, Generator, Set, Type
 from pathlib import Path
@@ -3378,6 +3380,19 @@ def create_directory_if_not_exists(path: str) -> str:
     return create_directory(path, exist_ok=True)
 
 
+def compress_data(data: bytes) -> bytes:
+    """Compress binary data using gzip."""
+    out = io.BytesIO()
+    with gzip.GzipFile(fileobj=out, mode='wb') as f:
+        f.write(data)
+    return out.getvalue()
+
+
+def decompress_data(data: bytes) -> bytes:
+    """Decompress gzip-compressed binary data."""
+    with gzip.GzipFile(fileobj=io.BytesIO(data)) as f:
+        return f.read()
+
 def compress_data(data: Union[str, bytes]) -> bytes:
     """Compress data using gzip."""
     if isinstance(data, str):
@@ -4570,6 +4585,7 @@ __all__ = [
     'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',
     'calculate_distance', 'calculate_distance_percentage', 'memoize',
     'is_higher_timeframe', 'threaded_calculation', 'create_batches',
+    'create_directory', 'create_directory_if_not_exists', 'compress_data', 'decompress_data',
     'create_directory', 'create_directory_if_not_exists',
     'compress_data', 'decompress_data', 'pivot_points',
     'get_asset_precision',
