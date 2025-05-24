@@ -17,6 +17,70 @@ from concurrent.futures import ThreadPoolExecutor
 import warnings
 
 from common.utils import timeit, numpy_rolling_window
+
+
+def calculate_rsi(prices: pd.Series, period: int = 14) -> pd.Series:
+    """Return RSI values."""
+    return ta.rsi(prices, length=period)
+
+
+def calculate_macd(prices: pd.Series,
+                   fastperiod: int = 12,
+                   slowperiod: int = 26,
+                   signalperiod: int = 9) -> Tuple[pd.Series, pd.Series, pd.Series]:
+    """Return MACD, signal, and histogram."""
+    macd_df = ta.macd(prices, fast=fastperiod, slow=slowperiod, signal=signalperiod)
+    return macd_df.iloc[:, 0], macd_df.iloc[:, 2], macd_df.iloc[:, 1]
+
+
+def calculate_bollinger_bands(prices: pd.Series,
+                              period: int = 20,
+                              std: int = 2) -> Tuple[pd.Series, pd.Series, pd.Series]:
+    """Return Bollinger Band upper, middle, and lower values."""
+    bb = ta.bbands(prices, length=period, std=std)
+    return bb.iloc[:, 0], bb.iloc[:, 1], bb.iloc[:, 2]
+
+
+def calculate_stochastic(high: pd.Series,
+                         low: pd.Series,
+                         close: pd.Series,
+                         k_period: int = 14,
+                         d_period: int = 3) -> Tuple[pd.Series, pd.Series]:
+    """Return stochastic %K and %D."""
+    stoch = ta.stoch(high=high, low=low, close=close, k=k_period, d=d_period)
+    return stoch.iloc[:, 0], stoch.iloc[:, 1]
+
+
+def calculate_adx(high: pd.Series,
+                  low: pd.Series,
+                  close: pd.Series,
+                  period: int = 14) -> pd.Series:
+    """Return ADX values."""
+    return ta.adx(high=high, low=low, close=close, length=period)[f"ADX_{period}"]
+
+
+def calculate_obv(close: pd.Series, volume: pd.Series) -> pd.Series:
+    """Return On-Balance Volume values."""
+    return ta.obv(close=close, volume=volume)
+
+
+def detect_divergence(price: pd.Series, indicator: pd.Series) -> pd.Series:
+    """Basic divergence detection between price and indicator."""
+    diff = price.diff() * indicator.diff()
+    return diff < 0
+
+
+__all__ = [
+    'calculate_rsi',
+    'calculate_macd',
+    'calculate_bollinger_bands',
+    'calculate_stochastic',
+    'calculate_adx',
+    'calculate_obv',
+    'detect_divergence',
+    'TechnicalFeatures',
+    'calculate_technical_features',
+]
 from common.exceptions import FeatureCalculationError
 from common.constants import TECHNICAL_INDICATOR_PARAMS
 from feature_service.features.base_feature import BaseFeature

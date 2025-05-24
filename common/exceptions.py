@@ -320,6 +320,11 @@ class FeedAuthenticationError(FeedError):
 class DataSourceError(DataError):
     """Raised when there is an error with a data source."""
     pass
+
+
+class MarketDataError(DataError):
+    """Raised for errors fetching or processing market data."""
+    pass
 class FeedSubscriptionError(FeedError):
     """Raised when there is an error with feed subscription."""
     pass
@@ -395,6 +400,11 @@ class FeatureCalculationError(QuantumSpectreError):
     """Raised when there is an error calculating a feature."""
     pass
 
+
+class CalculationError(QuantumSpectreError):
+    """Raised when a numerical calculation fails."""
+    pass
+
 class FeatureServiceError(QuantumSpectreError):
     """Base class for feature service errors."""
     pass
@@ -422,6 +432,26 @@ class RiskManagerError(RiskError):
 
 class PositionSizingError(RiskError):
     """Raised for errors in position sizing calculations."""
+    pass
+
+
+class InsufficientBalanceError(RiskError):
+    """Raised when an account has insufficient balance for an operation."""
+    pass
+
+
+class PositionError(ExecutionError):
+    """Raised for general position handling errors."""
+    pass
+
+
+class RiskExceededError(RiskError):
+    """Raised when a calculated risk exceeds allowable thresholds."""
+    pass
+
+
+class ModelRegistrationError(ModelError):
+    """Raised when a model cannot be registered properly."""
     pass
 
 class StopLossError(OrderError):
@@ -867,7 +897,9 @@ __all__ = [
     'FeatureNotFoundError', 'FeatureCalculationError', 'FeatureServiceError',
     'InvalidTimeframeError', 'InvalidParameterError', 'AlertDeliveryError',
     'AlertConfigurationError', 'RiskManagerError', 'PositionSizingError', 'StopLossError',
-    'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError',
+    'InsufficientBalanceError', 'PositionError', 'RiskExceededError',
+    'ModelRegistrationError', 'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError',
+    'MarketDataError', 'CalculationError',
     'ArbitrageOpportunityExpiredError', 'DrawdownLimitExceededException',
     'RiskManagementException', 'ModelVersionError', 'LogAnalysisError',
     'InsufficientDataError', 'EncodingError', 'MetricCollectionError',

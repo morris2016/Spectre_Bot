@@ -2488,6 +2488,10 @@ def calculate_pivot_points(high: float, low: float, close: float) -> Dict[str, f
         's3': s3
     }
 
+
+# Backwards compatibility alias
+pivot_points = calculate_pivot_points
+
 def obfuscate_sensitive_data(data: Union[str, Dict, List], level: int = 1) -> Union[str, Dict, List]:
     """
     Obfuscate sensitive data to prevent leakage of confidential information.
@@ -3352,6 +3356,22 @@ def create_directory_if_not_exists(path: str) -> str:
     return create_directory(path, exist_ok=True)
 
 
+def get_asset_precision(asset: str) -> int:
+    """Return decimal precision for a given asset."""
+    return POSITION_SIZE_PRECISION
+
+
+def compress_data(data: bytes) -> bytes:
+    """Compress binary data using gzip."""
+    import gzip
+    return gzip.compress(data)
+
+
+def decompress_data(data: bytes) -> bytes:
+    """Decompress gzip-compressed binary data."""
+    import gzip
+    return gzip.decompress(data)
+=======
 
 def compress_data(data: Any) -> bytes:
     """Serialize and compress data using pickle and zlib."""
@@ -4464,9 +4484,14 @@ __all__ = [
     'calculate_kelly_criterion', 'calculate_sharpe_ratio', 'calculate_sortino_ratio',
     'calculate_max_drawdown', 'calculate_calmar_ratio', 'z_score',
     'is_price_consolidating', 'is_breaking_out', 'calculate_pivot_points',
+    'pivot_points',
     'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',
     'calculate_distance', 'calculate_distance_percentage', 'memoize',
     'is_higher_timeframe', 'threaded_calculation', 'create_batches',
+    'create_directory', 'create_directory_if_not_exists',
+    'get_asset_precision',
+    'compress_data', 'decompress_data',
+=======
     'create_directory', 'create_directory_if_not_exists', 'compress_data', 'decompress_data',
     'UuidUtils', 'HashUtils', 'SecurityUtils',
     'ClassRegistry', 'AsyncService', 'Signal', 'SignalBus'
