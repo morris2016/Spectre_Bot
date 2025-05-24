@@ -15,7 +15,12 @@ import uuid
 import hmac
 import hashlib
 import base64
+import gzip
+
+import pickle
 import random
+import pickle
+import zlib
 import socket
 import string
 import decimal
@@ -28,10 +33,13 @@ import collections
 import urllib.parse
 import numpy as np
 import pandas as pd
+import gzip
 import sys
 import asyncio
 import importlib
 import pkgutil
+import io
+import gzip
 import enum
 from typing import Dict, List, Any, Optional, Union, Callable, Tuple, Generator, Set, Type
 from pathlib import Path
@@ -2505,6 +2513,14 @@ def calculate_pivot_points(high: float, low: float, close: float) -> Dict[str, f
 
 
 # Backwards compatibility alias
+
+# Backward compatibility alias
+def pivot_points(high: float, low: float, close: float) -> Dict[str, float]:
+    """Alias for :func:`calculate_pivot_points` for backward compatibility."""
+    return calculate_pivot_points(high, low, close)
+
+# Backwards compatibility alias
+
 pivot_points = calculate_pivot_points
 
 def obfuscate_sensitive_data(data: Union[str, Dict, List], level: int = 1) -> Union[str, Dict, List]:
@@ -3344,8 +3360,20 @@ def get_submodules(package_name):
         submodules.append(name)
         if is_pkg:
             submodules.extend(get_submodules(name))
-    
+
     return submodules
+
+
+def compress_data(data: Union[str, bytes]) -> bytes:
+    """Compress data using gzip."""
+    if isinstance(data, str):
+        data = data.encode()
+    return gzip.compress(data)
+
+
+def decompress_data(data: bytes) -> str:
+    """Decompress gzip-compressed data."""
+    return gzip.decompress(data).decode()
 
 def create_directory(path, exist_ok=True):
     """
@@ -3369,6 +3397,110 @@ def create_directory(path, exist_ok=True):
 def create_directory_if_not_exists(path: str) -> str:
     """Create directory if it does not already exist."""
     return create_directory(path, exist_ok=True)
+
+
+def compress_data(data: bytes) -> bytes:
+    """Compress binary data using gzip."""
+    out = io.BytesIO()
+    with gzip.GzipFile(fileobj=out, mode='wb') as f:
+        f.write(data)
+    return out.getvalue()
+
+
+def decompress_data(data: bytes) -> bytes:
+    """Decompress gzip-compressed binary data."""
+    with gzip.GzipFile(fileobj=io.BytesIO(data)) as f:
+        return f.read()
+
+def compress_data(data: Union[str, bytes]) -> bytes:
+    """Compress data using gzip."""
+    if isinstance(data, str):
+        data = data.encode("utf-8")
+    return gzip.compress(data)
+
+
+def decompress_data(data: bytes) -> str:
+    """Decompress gzip-compressed data."""
+    return gzip.decompress(data).decode("utf-8")
+
+
+def create_directory_if_not_exists(path: str) -> str:
+    """Create directory if it does not already exist."""
+    return create_directory(path, exist_ok=True)
+    def create_directory_if_not_exists(path: str) -> str:
+        """Create directory if it does not already exist."""
+        return create_directory(path, exist_ok=True)
+
+
+def create_directory_if_not_exists(path: str) -> str:
+    """Create directory if it does not already exist."""
+    return create_directory(path, exist_ok=True)
+
+
+def compress_data(data: Any) -> bytes:
+    """Serialize and gzip-compress arbitrary Python data."""
+    try:
+        serialized = pickle.dumps(data)
+        return gzip.compress(serialized)
+    except Exception as exc:  # pragma: no cover - best effort
+        logger.error("Failed to compress data: %s", exc)
+    def get_asset_precision(asset: str) -> int:
+        """Return decimal precision for a given asset."""
+        return POSITION_SIZE_PRECISION
+def get_asset_precision(asset: str) -> int:
+    """Return decimal precision for a given asset."""
+    return POSITION_SIZE_PRECISION
+
+
+    def compress_data(data: bytes) -> bytes:
+        """Compress binary data using gzip."""
+        import gzip
+        return gzip.compress(data)
+
+
+    def decompress_data(data: bytes) -> bytes:
+        """Decompress gzip-compressed binary data."""
+        import gzip
+        return gzip.decompress(data)
+def decompress_data(data: bytes) -> bytes:
+    """Decompress gzip-compressed binary data."""
+    import gzip
+    return gzip.decompress(data)
+
+
+    def compress_data(data: Any) -> bytes:
+        """Serialize and compress data using pickle and zlib."""
+        try:
+            serialized = pickle.dumps(data)
+            return zlib.compress(serialized)
+        except Exception as e:
+            logger.error(f"Failed to compress data: {str(e)}")
+            raise
+
+
+    def decompress_data(data: bytes) -> Any:
+        """Decompress and deserialize data produced by :func:`compress_data`."""
+        try:
+            decompressed = gzip.decompress(data)
+            return pickle.loads(decompressed)
+        except Exception as exc:  # pragma: no cover - best effort
+            logger.error("Failed to decompress data: %s", exc)
+            return pickle.loads(zlib.decompress(data))
+        except Exception as e:
+            logger.error(f"Failed to decompress data: {str(e)}")
+            raise
+
+def decompress_data(data: bytes) -> Any:
+    """Decompress and deserialize data produced by :func:`compress_data`."""
+    try:
+        decompressed = gzip.decompress(data)
+        return pickle.loads(decompressed)
+    except Exception as exc:  # pragma: no cover - best effort
+        logger.error("Failed to decompress data: %s", exc)
+        return pickle.loads(zlib.decompress(data))
+    except Exception as e:
+        logger.error(f"Failed to decompress data: {str(e)}")
+        raise
 
 class ThreadSafeDict:
     """
@@ -4467,6 +4599,34 @@ __all__ = [
     'calculate_distance', 'calculate_distance_percentage', 'memoize',
     'is_higher_timeframe', 'threaded_calculation', 'create_batches',
     'create_directory', 'create_directory_if_not_exists', 'safe_nltk_download',
+
+    'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',
+    'calculate_distance', 'calculate_distance_percentage', 'memoize',
+    'is_higher_timeframe', 'threaded_calculation', 'create_batches',
+    'create_directory', 'create_directory_if_not_exists', 'compress_data', 'decompress_data',
+    'is_price_consolidating', 'is_breaking_out', 'calculate_pivot_points',
+    'pivot_points',
+    'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',
+    'calculate_distance', 'calculate_distance_percentage', 'memoize',
+    'is_higher_timeframe', 'threaded_calculation', 'create_batches',
+    'create_directory', 'create_directory_if_not_exists', 'compress_data', 'decompress_data',
+    'create_directory', 'create_directory_if_not_exists',
+    'compress_data', 'decompress_data', 'pivot_points',
+    'get_asset_precision',
+    'compress_data', 'decompress_data',
+    'create_directory', 'create_directory_if_not_exists',
+
+    'create_directory', 'create_directory_if_not_exists', 'compress_data', 'decompress_data',
+
+
+    'create_directory', 'create_directory_if_not_exists',
+    'compress_data', 'decompress_data', 'pivot_points',
+
+    'get_asset_precision',
+    'compress_data', 'decompress_data',
+
+    'create_directory', 'create_directory_if_not_exists', 'compress_data', 'decompress_data',
+
     'UuidUtils', 'HashUtils', 'SecurityUtils',
     'ClassRegistry', 'AsyncService', 'Signal', 'SignalBus'
 ]
