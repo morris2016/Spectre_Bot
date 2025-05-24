@@ -114,7 +114,12 @@ export const { dispatch, getState } = store;
 
 // Export store and action creators
 export { store };
-export { actions as authActions } from './slices/authSlice';
+export {
+  actions as authActions,
+  login as loginUser,
+  logout as logoutUser,
+  checkAuthStatus,
+} from './slices/authSlice';
 export { actions as marketDataActions } from './slices/marketDataSlice';
 export { actions as tradingActions } from './slices/tradingSlice';
 export { actions as alertsActions } from './slices/alertsSlice';
@@ -122,15 +127,19 @@ export { actions as portfolioActions } from './slices/portfolioSlice';
 export { actions as settingsActions } from './slices/settingsSlice';
 export { actions as uiStateActions } from './slices/uiStateSlice';
 export { actions as platformActions } from './slices/platformSlice';
-export { actions as assetActions } from './slices/assetSlice';
+export { actions as assetActions, fetchAssets } from './slices/assetSlice';
 export { actions as brainActions } from './slices/brainSlice';
 export { actions as signalActions } from './slices/signalSlice';
-export { actions as dashboardActions } from './slices/dashboardSlice';
+export { actions as dashboardActions, loadDashboard } from './slices/dashboardSlice';
 export { actions as strategyActions } from './slices/strategySlice';
 export { actions as backtesterActions } from './slices/backtesterSlice';
 export { actions as voiceAdvisorActions } from './slices/voiceAdvisorSlice';
-export { actions as systemActions } from './slices/systemSlice';
-export { actions as preferencesActions } from './slices/preferencesSlice';
+export {
+  actions as systemActions,
+  initializeSystem,
+  checkSystemHealth,
+} from './slices/systemSlice';
+export { actions as preferencesActions, initializePreferences } from './slices/preferencesSlice';
 
 // Create typed hooks
 export const useAppSelector = (selector) => selector(getState());
