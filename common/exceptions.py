@@ -174,6 +174,16 @@ class InsufficientFundsError(OrderError):
     pass
 
 
+class InsufficientBalanceError(OrderError):
+    """Raised when account balance is insufficient for an operation."""
+    pass
+
+
+class PositionError(ExecutionError):
+    """Raised for general position management errors."""
+    pass
+
+
 class RiskError(QuantumSpectreError):
     """Base class for risk management errors."""
     pass
@@ -181,6 +191,11 @@ class RiskError(QuantumSpectreError):
 
 class RiskLimitExceededError(RiskError):
     """Raised when a risk limit is exceeded."""
+    pass
+
+
+class RiskExceededError(RiskError):
+    """Raised when a risk threshold is exceeded."""
     pass
 
 
@@ -195,6 +210,11 @@ class IntelligenceError(QuantumSpectreError):
 
 class ModelError(QuantumSpectreError):
     """Base class for ML model errors."""
+    pass
+
+
+class ModelRegistrationError(ModelError):
+    """Raised when registration of an ML model fails."""
     pass
 
 
@@ -807,9 +827,11 @@ __all__ = [
     'DatabaseQueryError', 'RedisError', 'RedisConnectionError', 'SecurityError',
     'APIKeyError', 'AuthenticationError', 'AuthorizationError', 'ExecutionError',
     'OrderError', 'OrderRejectedError', 'OrderTimeoutError', 'InsufficientFundsError',
+    'InsufficientBalanceError', 'PositionError',
     'InvalidOrderError', 'OrderCancellationError', 'SlippageExceededError', 'NetworkError',
-    'RiskError', 'RiskLimitExceededError', 'BacktestError', 'ModelError',
-    'ModelTrainingError', 'ModelPredictionError', 'StrategyError', 'SignalGenerationError',
+    'RiskError', 'RiskLimitExceededError', 'RiskExceededError', 'BacktestError', 'ModelError',
+    'ModelTrainingError', 'ModelPredictionError', 'ModelRegistrationError',
+    'StrategyError', 'SignalGenerationError',
     'MonitoringError', 'AlertError', 'ResourceError', 'ResourceExhaustionError',
     'TimeoutError', 'ExchangeError', 'RateLimitError', 'FeedNotFoundError',
     'FeedInitializationError', 'FeedAuthenticationError', 'DataSourceError',
