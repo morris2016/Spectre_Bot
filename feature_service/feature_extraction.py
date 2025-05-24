@@ -614,6 +614,27 @@ class FeatureExtractor:
         """
         period = params.get('di_period', 14)
         return ta.adx(high=data['high'], low=data['low'], close=data['close'], length=period)['DMN_{}_{}'.format(period, period)]
+
+
+# Standalone helper wrappers
+def atr(data: pd.DataFrame, period: int = 14) -> pd.Series:
+    """Calculate Average True Range from OHLCV data."""
+    return ta.atr(high=data['high'], low=data['low'], close=data['close'], length=period)
+
+
+def fibonacci_levels(data: pd.DataFrame) -> Dict[str, float]:
+    """Compute basic Fibonacci retracement levels."""
+    high = data['high'].max()
+    low = data['low'].min()
+    diff = high - low
+    return {
+        '0.0%': high,
+        '23.6%': high - 0.236 * diff,
+        '38.2%': high - 0.382 * diff,
+        '50.0%': high - 0.5 * diff,
+        '61.8%': high - 0.618 * diff,
+        '100.0%': low,
+    }
     
     @feature_calculation
     def obv(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:

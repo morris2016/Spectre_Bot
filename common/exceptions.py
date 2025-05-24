@@ -184,6 +184,11 @@ class RiskLimitExceededError(RiskError):
     pass
 
 
+class RiskExceededError(RiskError):
+    """Raised when calculated risk exceeds configured maximum."""
+    pass
+
+
 class BacktestError(QuantumSpectreError):
     """Base class for backtesting errors."""
     pass
@@ -290,6 +295,11 @@ class ParsingError(DataError):
     pass
 class DataFeedConnectionError(FeedError):
     """Raised when there is a connection error with a data feed."""
+    pass
+
+
+class MarketDataError(DataError):
+    """Raised when market data retrieval fails."""
     pass
 # Removed duplicate ParsingError definition
 # class ParsingError(DataError):
@@ -410,6 +420,21 @@ class RiskManagementException(RiskError):
     """General exception for risk management issues."""
     pass
 
+
+class PositionError(ExecutionError):
+    """Raised for generic position-related failures."""
+    pass
+
+
+class InsufficientBalanceError(RiskError):
+    """Raised when available balance is insufficient to execute an action."""
+    pass
+
+
+class ModelRegistrationError(ModelError):
+    """Raised when registering a model fails due to a conflict."""
+    pass
+
 class ModelVersionError(ModelError):
     """Raised for issues related to model versioning."""
     pass
@@ -480,6 +505,11 @@ class ArbitrageValidationError(StrategyError):
 
 class PredictionError(ModelPredictionError):
     """General error during a prediction process."""
+    pass
+
+
+class CalculationError(QuantumSpectreError):
+    """Raised when a general calculation fails."""
     pass
 
 class AnalysisError(QuantumSpectreError):
@@ -814,6 +844,7 @@ __all__ = [
     'TimeoutError', 'ExchangeError', 'RateLimitError', 'FeedNotFoundError',
     'FeedInitializationError', 'FeedAuthenticationError', 'DataSourceError',
     'FeedSubscriptionError', 'FeedDataError', 'ParsingError', 'DataFeedConnectionError',
+    'MarketDataError',
     'ModelLoadError', 'DataParsingError', 'CredentialError', 'SecurityViolationError',
     'RegimeDetectionError', 'NewsFeedError', 'NewsParsingError', 'NewsSourceUnavailableError',
     'FeatureNotFoundError', 'FeatureCalculationError', 'FeatureServiceError',
@@ -821,10 +852,12 @@ __all__ = [
     'AlertConfigurationError', 'RiskManagerError', 'PositionSizingError', 'StopLossError',
     'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError',
     'ArbitrageOpportunityExpiredError', 'DrawdownLimitExceededException',
-    'RiskManagementException', 'ModelVersionError', 'LogAnalysisError',
+    'RiskManagementException', 'RiskExceededError', 'PositionError',
+    'InsufficientBalanceError',
+    'ModelRegistrationError', 'ModelVersionError', 'LogAnalysisError',
     'InsufficientDataError', 'EncodingError', 'MetricCollectionError',
     'ServiceConnectionError', 'DataStoreError', 'InvalidDataError', 'TrainingError',
-    'ArbitrageValidationError', 'PredictionError', 'AnalysisError', 'RecoveryStrategyError',
+    'ArbitrageValidationError', 'PredictionError', 'CalculationError', 'AnalysisError', 'RecoveryStrategyError',
     'OptimizationError', 'CorrelationCalculationError', 'SamplingError', 'DataQualityError',
     'HardwareError', 'EnsembleConfigError', 'ServiceUnavailableError', 'ModelNotSupportedError',
     'InvalidFeatureFormatError', 'StrategyExecutionError', 'AdaptationError', 'InferenceError',
