@@ -9,6 +9,8 @@ including time handling, data processing, JSON manipulation, validation, and mor
 
 import os
 import re
+import gzip
+import io
 import time
 import json
 import io
@@ -3371,6 +3373,18 @@ def get_submodules(package_name):
     return submodules
 
 
+def compress_data(data: bytes) -> bytes:
+    """Compress binary data using gzip."""
+    buffer = io.BytesIO()
+    with gzip.GzipFile(fileobj=buffer, mode='wb') as f:
+        f.write(data)
+    return buffer.getvalue()
+
+
+def decompress_data(data: bytes) -> bytes:
+    """Decompress gzip-compressed binary data."""
+    with gzip.GzipFile(fileobj=io.BytesIO(data), mode='rb') as f:
+        return f.read()
 
 def create_directory(path, exist_ok=True):
     """
@@ -4604,6 +4618,7 @@ __all__ = [
     'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',
     'calculate_distance', 'calculate_distance_percentage', 'memoize',
     'is_higher_timeframe', 'threaded_calculation', 'create_batches',
+
     'create_directory', 'create_directory_if_not_exists',
     'create_directory', 'create_directory_if_not_exists', 'safe_nltk_download',
     'create_directory', 'create_directory_if_not_exists',

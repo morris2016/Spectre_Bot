@@ -1045,8 +1045,44 @@ def _numba_rolling_min(arr, window):
     
     for i in range(window - 1, n):
         result[i] = np.min(arr[i - window + 1:i + 1])
-    
+
     return result
+
+
+def calculate_rsi(prices: Union[pd.Series, List[float]], period: int = 14) -> pd.Series:
+    """Standalone RSI calculation."""
+    series = pd.Series(prices)
+    return ta.rsi(series, length=period)
+
+
+def calculate_macd(prices: Union[pd.Series, List[float]], fast_period: int = 12,
+                   slow_period: int = 26, signal_period: int = 9) -> Tuple[pd.Series, pd.Series, pd.Series]:
+    """Standalone MACD calculation."""
+    series = pd.Series(prices)
+    macd_df = ta.macd(series, fast=fast_period, slow=slow_period, signal=signal_period)
+    return macd_df.iloc[:, 0], macd_df.iloc[:, 2], macd_df.iloc[:, 1]
+
+
+def calculate_adx(high: Union[pd.Series, List[float]], low: Union[pd.Series, List[float]],
+                  close: Union[pd.Series, List[float]], period: int = 14) -> pd.Series:
+    """Standalone ADX calculation."""
+    high_s = pd.Series(high)
+    low_s = pd.Series(low)
+    close_s = pd.Series(close)
+    adx_df = ta.adx(high=high_s, low=low_s, close=close_s, length=period)
+    return adx_df[f"ADX_{period}"]
+
+
+def calculate_stochastic(high: Union[pd.Series, List[float]], low: Union[pd.Series, List[float]],
+                         close: Union[pd.Series, List[float]], k_period: int = 14,
+                         d_period: int = 3) -> Tuple[pd.Series, pd.Series]:
+    """Standalone Stochastic Oscillator calculation."""
+    high_s = pd.Series(high)
+    low_s = pd.Series(low)
+    close_s = pd.Series(close)
+    stoch_df = ta.stoch(high=high_s, low=low_s, close=close_s,
+                        k=k_period, d=d_period, smooth_k=d_period)
+    return stoch_df.iloc[:, 0], stoch_df.iloc[:, 1]
 
 def calculate_technical_features(data, config=None):
     """
@@ -1062,6 +1098,14 @@ def calculate_technical_features(data, config=None):
     calculator = TechnicalFeatures(config)
     return calculator.calculate_features(data)
 
+
+__all__ = [
+    "TechnicalFeatures",
+    "calculate_technical_features",
+    "calculate_rsi",
+    "calculate_macd",
+    "calculate_adx",
+    "calculate_stochastic",
 def calculate_rsi(series: pd.Series, period: int = 14) -> pd.Series:
     """Standalone RSI calculation."""
     return ta.rsi(series, length=period)
