@@ -16,7 +16,6 @@ boruta
 pyarrow
 tensorflow
 hmmlearn
-#torch
 flax
 transformers
 ta
