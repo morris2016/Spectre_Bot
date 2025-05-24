@@ -174,6 +174,8 @@ class InsufficientFundsError(OrderError):
     pass
 
 
+
+
 class RiskError(QuantumSpectreError):
     """Base class for risk management errors."""
     pass
@@ -382,6 +384,26 @@ class PositionSizingError(RiskError):
     """Raised for errors in position sizing calculations."""
     pass
 
+
+class InsufficientBalanceError(RiskError):
+    """Raised when an account balance is insufficient for a position."""
+    pass
+
+
+class PositionError(ExecutionError):
+    """Base class for position-related errors."""
+    pass
+
+
+class PositionExecutionError(PositionError):
+    """Raised when a position fails to execute properly."""
+    pass
+
+
+class InvalidPositionStateError(PositionError):
+    """Raised when a position transition is not allowed."""
+    pass
+
 class StopLossError(OrderError):
     """Raised for errors related to stop-loss order management."""
     pass
@@ -410,8 +432,23 @@ class RiskManagementException(RiskError):
     """General exception for risk management issues."""
     pass
 
+
+class RiskExceededError(RiskError):
+    """Raised when a calculated risk exceeds allowed thresholds."""
+    pass
+
 class ModelVersionError(ModelError):
     """Raised for issues related to model versioning."""
+    pass
+
+
+class ModelRegistrationError(ModelError):
+    """Raised when registering an ML model fails."""
+    pass
+
+
+class InvalidModelStateError(ModelError):
+    """Raised when a model is in an invalid state for the requested operation."""
     pass
 
 class LogAnalysisError(MonitoringError):
@@ -807,6 +844,8 @@ __all__ = [
     'DatabaseQueryError', 'RedisError', 'RedisConnectionError', 'SecurityError',
     'APIKeyError', 'AuthenticationError', 'AuthorizationError', 'ExecutionError',
     'OrderError', 'OrderRejectedError', 'OrderTimeoutError', 'InsufficientFundsError',
+    'InsufficientBalanceError', 'PositionError', 'PositionExecutionError',
+    'InvalidPositionStateError', 'ModelRegistrationError', 'InvalidModelStateError',
     'InvalidOrderError', 'OrderCancellationError', 'SlippageExceededError', 'NetworkError',
     'RiskError', 'RiskLimitExceededError', 'BacktestError', 'ModelError',
     'ModelTrainingError', 'ModelPredictionError', 'StrategyError', 'SignalGenerationError',
@@ -821,7 +860,7 @@ __all__ = [
     'AlertConfigurationError', 'RiskManagerError', 'PositionSizingError', 'StopLossError',
     'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError',
     'ArbitrageOpportunityExpiredError', 'DrawdownLimitExceededException',
-    'RiskManagementException', 'ModelVersionError', 'LogAnalysisError',
+    'RiskManagementException', 'RiskExceededError', 'ModelVersionError', 'LogAnalysisError',
     'InsufficientDataError', 'EncodingError', 'MetricCollectionError',
     'ServiceConnectionError', 'DataStoreError', 'InvalidDataError', 'TrainingError',
     'ArbitrageValidationError', 'PredictionError', 'AnalysisError', 'RecoveryStrategyError',

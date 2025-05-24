@@ -41,11 +41,12 @@ from common.utils import (
 from common.constants import NEWS_SOURCES, ASSET_KEYWORDS, MARKET_IMPACT_PHRASES
 from common.exceptions import NewsFeedError, NewsParsingError, NewsSourceUnavailableError
 from data_feeds.base_feed import BaseFeed
+from common.utils import safe_nltk_download
 
 # Configure NLTK and transformers
-nltk.download('vader_lexicon', quiet=True)
-nltk.download('punkt', quiet=True)
-nltk.download('stopwords', quiet=True)
+safe_nltk_download('vader_lexicon')
+safe_nltk_download('punkt')
+safe_nltk_download('stopwords')
 
 class NewsFeed(BaseFeed):
     """

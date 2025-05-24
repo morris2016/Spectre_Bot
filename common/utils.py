@@ -38,6 +38,7 @@ from pathlib import Path
 from functools import wraps
 from contextlib import suppress, asynccontextmanager, contextmanager
 import inspect  # Add this to the imports at the top
+import nltk
 from common.logger import get_logger, performance_log
 
 # Configure module logger
@@ -83,6 +84,22 @@ def merge_deep(source, destination):
     return destination
 MICROSECONDS_IN_SECOND = 1000000
 NANOSECONDS_IN_SECOND = 1000000000
+
+
+def safe_nltk_download(resource: str) -> None:
+    """Attempt to download an NLTK resource gracefully."""
+    try:
+        nltk.data.find(resource)
+    except LookupError:
+        # Try common paths before attempting a download
+        alt_path = f"tokenizers/{resource}"
+        try:
+            nltk.data.find(alt_path)
+        except LookupError:
+            logger.warning(
+                "NLTK resource %s not available and cannot be downloaded in offline mode",
+                resource,
+            )
 
 def import_submodules(package_name):
     """
@@ -2069,8 +2086,8 @@ def calculate_risk_reward_ratio(risk: float, reward: float) -> float:
     return reward / risk
 
 
-def calculate_expectancy(win_rate: float, 
-                        avg_win: float, 
+def calculate_expectancy(win_rate: float,
+                        avg_win: float,
                         avg_loss: float) -> float:
     """
     Calculate system expectancy.
@@ -2085,6 +2102,43 @@ def calculate_expectancy(win_rate: float,
     """
     win_decimal = win_rate / 100
     return (win_decimal * avg_win) - ((1 - win_decimal) * avg_loss)
+
+
+def calculate_expected_value(trades: List[Union[float, Dict[str, float]]]) -> float:
+    """Calculate the expected value from a sequence of trades.
+
+    Each trade can be provided as a numeric profit/loss value or as a dictionary
+    containing a ``pnl`` or ``profit`` key. Positive values indicate winning
+    trades while negative values indicate losses.
+
+    Args:
+        trades: Collection of trade results.
+
+    Returns:
+        Expected value per trade.
+    """
+    if not trades:
+        return 0.0
+
+    pnl_values = []
+    for trade in trades:
+        if isinstance(trade, dict):
+            value = trade.get("pnl", trade.get("profit"))
+        else:
+            value = trade
+        if value is None:
+            continue
+        pnl_values.append(float(value))
+
+    if not pnl_values:
+        return 0.0
+
+    wins = [v for v in pnl_values if v > 0]
+    losses = [abs(v) for v in pnl_values if v <= 0]
+    win_rate = calculate_success_rate(len(wins), len(pnl_values))
+    avg_win = sum(wins) / len(wins) if wins else 0.0
+    avg_loss = sum(losses) / len(losses) if losses else 0.0
+    return calculate_expectancy(win_rate, avg_win, avg_loss)
 
 
 def calculate_kelly_criterion(win_rate: float, 
@@ -2448,6 +2502,10 @@ def calculate_pivot_points(high: float, low: float, close: float) -> Dict[str, f
         's2': s2,
         's3': s3
     }
+
+
+# Backwards compatibility alias
+pivot_points = calculate_pivot_points
 
 def obfuscate_sensitive_data(data: Union[str, Dict, List], level: int = 1) -> Union[str, Dict, List]:
     """
@@ -3306,6 +3364,11 @@ def create_directory(path, exist_ok=True):
     except Exception as e:
         logger.error(f"Failed to create directory {path}: {str(e)}")
         raise
+
+
+def create_directory_if_not_exists(path: str) -> str:
+    """Create directory if it does not already exist."""
+    return create_directory(path, exist_ok=True)
 
 class ThreadSafeDict:
     """
@@ -4399,10 +4462,12 @@ __all__ = [
     'weighted_average', 'time_weighted_average', 'validate_signal', 'calculate_expectancy',
     'calculate_kelly_criterion', 'calculate_sharpe_ratio', 'calculate_sortino_ratio',
     'calculate_max_drawdown', 'calculate_calmar_ratio', 'z_score',
-    'is_price_consolidating', 'is_breaking_out', 'calculate_pivot_points',
+    'is_price_consolidating', 'is_breaking_out', 'calculate_pivot_points', 'pivot_points',
     'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',
     'calculate_distance', 'calculate_distance_percentage', 'memoize',
-    'is_higher_timeframe', 'threaded_calculation', 'create_batches', 'UuidUtils', 'HashUtils', 'SecurityUtils',
+    'is_higher_timeframe', 'threaded_calculation', 'create_batches',
+    'create_directory', 'create_directory_if_not_exists', 'safe_nltk_download',
+    'UuidUtils', 'HashUtils', 'SecurityUtils',
     'ClassRegistry', 'AsyncService', 'Signal', 'SignalBus'
 ]
 
