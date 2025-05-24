@@ -2502,7 +2502,7 @@ def calculate_pivot_points(high: float, low: float, close: float) -> Dict[str, f
     r1 = (2 * pivot) - low
     r2 = pivot + (high - low)
     r3 = high + 2 * (pivot - low)
-    
+
     return {
         'pivot': pivot,
         'r1': r1,
@@ -2514,6 +2514,7 @@ def calculate_pivot_points(high: float, low: float, close: float) -> Dict[str, f
     }
 
 
+# Backward compatibility alias
 # Backwards compatibility alias
 
 
@@ -3368,16 +3369,6 @@ def get_submodules(package_name):
     return submodules
 
 
-def compress_data(data: Union[str, bytes]) -> bytes:
-    """Compress data using gzip."""
-    if isinstance(data, str):
-        data = data.encode()
-    return gzip.compress(data)
-
-
-def decompress_data(data: bytes) -> str:
-    """Decompress gzip-compressed data."""
-    return gzip.decompress(data).decode()
 
 def create_directory(path, exist_ok=True):
     """
@@ -3403,23 +3394,66 @@ def create_directory_if_not_exists(path: str) -> str:
     return create_directory(path, exist_ok=True)
 
 
-def pivot_points(high: float, low: float, close: float) -> Dict[str, float]:
-    """Backward-compatible alias for calculate_pivot_points."""
-    return calculate_pivot_points(high, low, close)
-
-
 def compress_data(data: bytes) -> bytes:
     """Compress binary data using gzip."""
     out = io.BytesIO()
     with gzip.GzipFile(fileobj=out, mode="wb") as f:
         f.write(data)
     return out.getvalue()
+    if not data:
+        return b""
+    return gzip.compress(data)
 
 
 def decompress_data(data: bytes) -> bytes:
     """Decompress gzip-compressed binary data."""
-    with gzip.GzipFile(fileobj=io.BytesIO(data), mode="rb") as f:
-        return f.read()
+    if not data:
+        return b""
+    return gzip.decompress(data)
+def pivot_points(high: float, low: float, close: float) -> Dict[str, float]:
+    """Backward-compatible alias for calculate_pivot_points."""
+    return calculate_pivot_points(high, low, close)
+
+
+
+
+def compress_data(data: Union[str, bytes]) -> bytes:
+    """Compress data using gzip."""
+    if isinstance(data, str):
+        data = data.encode("utf-8")
+    return gzip.compress(data)
+
+
+def decompress_data(data: bytes) -> str:
+    """Decompress gzip-compressed data."""
+    return gzip.decompress(data).decode("utf-8")
+
+
+def create_directory_if_not_exists(path: str) -> str:
+    """Create directory if it does not already exist."""
+    return create_directory(path, exist_ok=True)
+
+def compress_data(data: Any) -> bytes:
+    """Serialize and gzip-compress arbitrary Python data."""
+    try:
+        serialized = pickle.dumps(data)
+        return gzip.compress(serialized)
+    except Exception as exc:  # pragma: no cover - best effort
+        logger.error("Failed to compress data: %s", exc)
+        raise
+
+
+def decompress_data(data: bytes) -> Any:
+    """Decompress and deserialize data produced by :func:`compress_data`."""
+    try:
+        decompressed = gzip.decompress(data)
+        return pickle.loads(decompressed)
+    except Exception as exc:  # pragma: no cover - best effort
+        logger.error("Failed to decompress data: %s", exc)
+        return pickle.loads(zlib.decompress(data))
+    except Exception as e:
+        logger.error(f"Failed to decompress data: {str(e)}")
+        raise
 
 class ThreadSafeDict:
     """
@@ -4540,6 +4574,7 @@ __all__ = [
     'calculate_distance', 'calculate_distance_percentage', 'memoize',
     'is_higher_timeframe', 'threaded_calculation', 'create_batches',
     'create_directory', 'create_directory_if_not_exists',
+    'compress_data', 'decompress_data',
 
     'create_directory', 'create_directory_if_not_exists', 'compress_data', 'decompress_data',
     'create_directory', 'create_directory_if_not_exists',
