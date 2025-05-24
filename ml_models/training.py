@@ -41,7 +41,7 @@ from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegress
 import xgboost as xgb
 import lightgbm as lgb
 import catboost as cb
-from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
+from ml_models.hyperopt import HyperparameterOptimizer
 
 # Internal imports
 from config import Config
@@ -656,147 +656,128 @@ class ModelTrainer:
             return hyperparams or {}
         
         logger.info(f"Starting hyperparameter optimization for {model_type} model")
-        
+
         # Set search space based on model type
         if model_type == 'random_forest':
             search_space = {
-                'n_estimators': hp.quniform('n_estimators', 50, 500, 10),
-                'max_depth': hp.quniform('max_depth', 3, 20, 1),
-                'min_samples_split': hp.quniform('min_samples_split', 2, 20, 1),
-                'min_samples_leaf': hp.quniform('min_samples_leaf', 1, 10, 1),
-                'max_features': hp.choice('max_features', ['sqrt', 'log2', None])
+                'n_estimators': (50, 500),
+                'max_depth': (3, 20),
+                'min_samples_split': (2, 20),
+                'min_samples_leaf': (1, 10),
+                'max_features': ['sqrt', 'log2', None],
             }
         elif model_type == 'gradient_boosting':
             search_space = {
-                'n_estimators': hp.quniform('n_estimators', 50, 500, 10),
-                'learning_rate': hp.loguniform('learning_rate', np.log(0.001), np.log(0.1)),
-                'max_depth': hp.quniform('max_depth', 3, 10, 1),
-                'min_samples_split': hp.quniform('min_samples_split', 2, 20, 1),
-                'min_samples_leaf': hp.quniform('min_samples_leaf', 1, 10, 1),
-                'subsample': hp.uniform('subsample', 0.5, 1.0)
+                'n_estimators': (50, 500),
+                'learning_rate': (0.001, 0.1),
+                'max_depth': (3, 10),
+                'min_samples_split': (2, 20),
+                'min_samples_leaf': (1, 10),
+                'subsample': (0.5, 1.0),
             }
         elif model_type == 'xgboost':
             search_space = {
-                'n_estimators': hp.quniform('n_estimators', 50, 500, 10),
-                'learning_rate': hp.loguniform('learning_rate', np.log(0.001), np.log(0.1)),
-                'max_depth': hp.quniform('max_depth', 3, 10, 1),
-                'min_child_weight': hp.quniform('min_child_weight', 1, 10, 1),
-                'subsample': hp.uniform('subsample', 0.5, 1.0),
-                'colsample_bytree': hp.uniform('colsample_bytree', 0.5, 1.0),
-                'gamma': hp.uniform('gamma', 0, 1)
+                'n_estimators': (50, 500),
+                'learning_rate': (0.001, 0.1),
+                'max_depth': (3, 10),
+                'min_child_weight': (1, 10),
+                'subsample': (0.5, 1.0),
+                'colsample_bytree': (0.5, 1.0),
+                'gamma': (0.0, 1.0),
             }
         elif model_type == 'lightgbm':
             search_space = {
-                'n_estimators': hp.quniform('n_estimators', 50, 500, 10),
-                'learning_rate': hp.loguniform('learning_rate', np.log(0.001), np.log(0.1)),
-                'max_depth': hp.quniform('max_depth', 3, 10, 1),
-                'num_leaves': hp.quniform('num_leaves', 20, 100, 5),
-                'min_child_samples': hp.quniform('min_child_samples', 5, 50, 5),
-                'subsample': hp.uniform('subsample', 0.5, 1.0),
-                'colsample_bytree': hp.uniform('colsample_bytree', 0.5, 1.0)
+                'n_estimators': (50, 500),
+                'learning_rate': (0.001, 0.1),
+                'max_depth': (3, 10),
+                'num_leaves': (20, 100),
+                'min_child_samples': (5, 50),
+                'subsample': (0.5, 1.0),
+                'colsample_bytree': (0.5, 1.0),
             }
         elif model_type in ['lstm', 'gru', 'cnn']:
             search_space = {
-                'units': hp.quniform('units', 32, 256, 32),
-                'layers': hp.quniform('layers', 1, 3, 1),
-                'dropout': hp.uniform('dropout', 0.1, 0.5),
-                'learning_rate': hp.loguniform('learning_rate', np.log(0.0001), np.log(0.01)),
-                'batch_size': hp.choice('batch_size', [16, 32, 64, 128])
+                'units': (32, 256),
+                'layers': (1, 3),
+                'dropout': (0.1, 0.5),
+                'learning_rate': (0.0001, 0.01),
+                'batch_size': [16, 32, 64, 128],
             }
         else:
-            # Default search space
             search_space = {
-                'n_estimators': hp.quniform('n_estimators', 50, 300, 10),
-                'max_depth': hp.quniform('max_depth', 3, 10, 1),
-                'learning_rate': hp.loguniform('learning_rate', np.log(0.001), np.log(0.1))
+                'n_estimators': (50, 300),
+                'max_depth': (3, 10),
+                'learning_rate': (0.001, 0.1),
             }
-        
-        # Run hyperparameter optimization
+
         try:
-            # Create a scoring function for hyperopt
             def objective(params):
-                # Convert float params to int where needed
-                for param in ['n_estimators', 'max_depth', 'min_samples_split', 
-                             'min_samples_leaf', 'layers', 'units', 'batch_size',
-                             'num_leaves', 'min_child_samples']:
+                for param in [
+                    'n_estimators',
+                    'max_depth',
+                    'min_samples_split',
+                    'min_samples_leaf',
+                    'layers',
+                    'units',
+                    'batch_size',
+                    'num_leaves',
+                    'min_child_samples',
+                ]:
                     if param in params:
                         params[param] = int(params[param])
-                
-                # Create and train a model with these parameters
-                try:
-                    model = self._create_model_instance(model_type, params)
-                    model.fit(X_train, y_train)
-                    
-                    # Evaluate on validation set
-                    if model_type in ['random_forest', 'gradient_boosting', 'xgboost', 'lightgbm']:
-                        y_pred = model.predict(X_val)
-                    else:
-                        # For deep learning models
-                        y_pred = model.predict(X_val).flatten()
-                    
-                    # Calculate metric based on problem type
-                    if len(np.unique(y_train)) <= 10:  # Classification
-                        if optimization_metric == 'accuracy':
-                            score = accuracy_score(y_val, y_pred)
-                        elif optimization_metric == 'f1_score':
-                            score = f1_score(y_val, y_pred, average='weighted')
-                        elif optimization_metric == 'precision':
-                            score = precision_score(y_val, y_pred, average='weighted')
-                        elif optimization_metric == 'recall':
-                            score = recall_score(y_val, y_pred, average='weighted')
-                        else:
-                            score = f1_score(y_val, y_pred, average='weighted')
-                    else:  # Regression
-                        if optimization_metric == 'rmse':
-                            score = -mean_squared_error(y_val, y_pred, squared=False)
-                        elif optimization_metric == 'mae':
-                            score = -mean_absolute_error(y_val, y_pred)
-                        elif optimization_metric == 'r2':
-                            score = r2_score(y_val, y_pred)
-                        else:
-                            score = -mean_squared_error(y_val, y_pred, squared=False)
-                    
-                    # For metrics where lower is better, negate for hyperopt
-                    if optimization_metric in ['rmse', 'mae']:
-                        return {'loss': score, 'status': STATUS_OK}
-                    else:
-                        return {'loss': -score, 'status': STATUS_OK}
-                
-                except Exception as e:
-                    logger.warning(f"Error during hyperparameter evaluation: {str(e)}")
-                    return {'loss': float('inf'), 'status': STATUS_OK}
-            
-            # Run the optimization in a separate thread to avoid blocking
-            trials = Trials()
-            best_params = await run_in_thread_pool(
-                fmin,
-                fn=objective,
-                space=search_space,
-                algo=tpe.suggest,
-                max_evals=self.config.get("ml_models.hyperopt_max_evals", 50),
-                trials=trials
-            )
-            
-            # Convert hyperopt format to normal dictionary
-            # Fix int parameters that were converted to float by hyperopt
-            final_params = {}
-            for param, value in best_params.items():
-                if param in ['n_estimators', 'max_depth', 'min_samples_split', 
-                           'min_samples_leaf', 'layers', 'units', 'batch_size',
-                           'num_leaves', 'min_child_samples']:
-                    final_params[param] = int(value)
-                elif param == 'max_features' and isinstance(value, int):
-                    # Handle choice parameters
-                    final_params[param] = ['sqrt', 'log2', None][value]
+
+                model = self._create_model_instance(model_type, params)
+                model.fit(X_train, y_train)
+
+                if model_type in ['random_forest', 'gradient_boosting', 'xgboost', 'lightgbm']:
+                    y_pred = model.predict(X_val)
                 else:
-                    final_params[param] = value
-            
-            logger.info(f"Optimized hyperparameters for {model_type}: {final_params}")
-            return final_params
-            
+                    y_pred = model.predict(X_val).flatten()
+
+                if len(np.unique(y_train)) <= 10:
+                    if optimization_metric == 'accuracy':
+                        score = accuracy_score(y_val, y_pred)
+                    elif optimization_metric == 'f1_score':
+                        score = f1_score(y_val, y_pred, average='weighted')
+                    elif optimization_metric == 'precision':
+                        score = precision_score(y_val, y_pred, average='weighted')
+                    elif optimization_metric == 'recall':
+                        score = recall_score(y_val, y_pred, average='weighted')
+                    else:
+                        score = f1_score(y_val, y_pred, average='weighted')
+                else:
+                    if optimization_metric == 'rmse':
+                        score = mean_squared_error(y_val, y_pred, squared=False)
+                    elif optimization_metric == 'mae':
+                        score = mean_absolute_error(y_val, y_pred)
+                    elif optimization_metric == 'r2':
+                        score = r2_score(y_val, y_pred)
+                    else:
+                        score = mean_squared_error(y_val, y_pred, squared=False)
+
+                return score
+
+            optimizer = HyperparameterOptimizer(
+                metrics=self.metrics_collector,
+                direction='minimize' if optimization_metric in ['rmse', 'mae'] else 'maximize',
+            )
+
+            best_params = await run_in_thread_pool(
+                optimizer.optimize,
+                objective,
+                search_space,
+                self.config.get('ml_models.optimize_method', 'bayesian'),
+                self.config.get('ml_models.optimize_trials', 50),
+            )
+
+            logger.info(f"Optimized hyperparameters for {model_type}: {best_params}")
+            return best_params
+
         except Exception as e:
             logger.error(f"Error during hyperparameter optimization: {str(e)}", exc_info=True)
-            raise HyperparameterOptimizationError(f"Failed to optimize hyperparameters: {str(e)}") from e
+            raise HyperparameterOptimizationError(
+                f"Failed to optimize hyperparameters: {str(e)}"
+            ) from e
     
     def _create_model_instance(self, model_type: str, params: Dict) -> Any:
         """Create a model instance based on model type and parameters."""
