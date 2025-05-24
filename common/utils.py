@@ -3403,6 +3403,17 @@ def safe_nltk_download(resource: str, quiet: bool = True) -> bool:
     instead of attempting a network download. This prevents network timeouts
     when running in restricted environments.
 
+def compress_object(data: Any) -> bytes:
+    """Serialize and gzip-compress arbitrary Python objects."""
+    serialized = pickle.dumps(data)
+    return gzip.compress(serialized)
+
+
+def decompress_object(data: bytes) -> Any:
+    """Decompress and deserialize data produced by :func:`compress_object`."""
+    decompressed = gzip.decompress(data)
+    return pickle.loads(decompressed)
+
     Args:
         resource: Name of the NLTK resource (e.g. ``'vader_lexicon'``).
         quiet: Unused, maintained for API compatibility.
@@ -3436,9 +3447,6 @@ def decompress_data(data: bytes) -> bytes:
 def pivot_points(high: float, low: float, close: float) -> Dict[str, float]:
     """Backward-compatible alias for calculate_pivot_points."""
     return calculate_pivot_points(high, low, close)
-
-
-
 
 def compress_data(data: Union[str, bytes]) -> bytes:
     """Compress data using gzip."""
