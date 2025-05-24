@@ -3369,32 +3369,23 @@ def get_submodules(package_name):
 
 
 def compress_data(data: Union[str, bytes]) -> bytes:
-    """Compress data using gzip."""
+    """Compress a string or bytes object using gzip."""
     if isinstance(data, str):
-        data = data.encode()
+        data = data.encode("utf-8")
     return gzip.compress(data)
 
 
 def decompress_data(data: bytes) -> str:
-    """Decompress gzip-compressed data."""
-    return gzip.decompress(data).decode()
+    """Decompress gzip-compressed data and return a UTF-8 string."""
+    return gzip.decompress(data).decode("utf-8")
 
 def create_directory(path, exist_ok=True):
-    """
-    Create a directory and any necessary parent directories.
-    
-    Args:
-        path: Directory path to create
-        exist_ok: If True, don't raise an error if directory already exists
-        
-    Returns:
-        Path to the created directory
-    """
+    """Create a directory and any parent directories."""
     try:
         os.makedirs(path, exist_ok=exist_ok)
         return path
-    except Exception as e:
-        logger.error(f"Failed to create directory {path}: {str(e)}")
+    except Exception as exc:  # pragma: no cover - best effort
+        logger.error("Failed to create directory %s: %s", path, exc)
         raise
 
 
@@ -3404,122 +3395,33 @@ def create_directory_if_not_exists(path: str) -> str:
 
 
 def pivot_points(high: float, low: float, close: float) -> Dict[str, float]:
-    """Backward-compatible alias for calculate_pivot_points."""
+    """Backward-compatible alias for ``calculate_pivot_points``."""
     return calculate_pivot_points(high, low, close)
 
 
-def compress_data(data: bytes) -> bytes:
-    """Compress binary data using gzip."""
-    out = io.BytesIO()
-    with gzip.GzipFile(fileobj=out, mode="wb") as f:
-
-def compress_data(data: bytes) -> bytes:
-    """Compress binary data using gzip."""
-    out = io.BytesIO()
-    with gzip.GzipFile(fileobj=out, mode='wb') as f:
-
-        f.write(data)
-    return out.getvalue()
-
-
-def decompress_data(data: bytes) -> bytes:
-    """Decompress gzip-compressed binary data."""
-    with gzip.GzipFile(fileobj=io.BytesIO(data), mode="rb") as f:
-        return f.read()
-
-
-    with gzip.GzipFile(fileobj=io.BytesIO(data)) as f:
-        return f.read()
-
-def compress_data(data: Union[str, bytes]) -> bytes:
-    """Compress data using gzip."""
-    if isinstance(data, str):
-        data = data.encode("utf-8")
+def compress_bytes(data: bytes) -> bytes:
+    """Compress raw bytes using gzip."""
     return gzip.compress(data)
 
 
-def decompress_data(data: bytes) -> str:
-    """Decompress gzip-compressed data."""
-    return gzip.decompress(data).decode("utf-8")
-
-
-def create_directory_if_not_exists(path: str) -> str:
-    """Create directory if it does not already exist."""
-    return create_directory(path, exist_ok=True)
-    def create_directory_if_not_exists(path: str) -> str:
-        """Create directory if it does not already exist."""
-        return create_directory(path, exist_ok=True)
-
-
-def create_directory_if_not_exists(path: str) -> str:
-    """Create directory if it does not already exist."""
-    return create_directory(path, exist_ok=True)
-
-
-def compress_data(data: Any) -> bytes:
-    """Serialize and gzip-compress arbitrary Python data."""
-    try:
-        serialized = pickle.dumps(data)
-        return gzip.compress(serialized)
-    except Exception as exc:  # pragma: no cover - best effort
-        logger.error("Failed to compress data: %s", exc)
-    def get_asset_precision(asset: str) -> int:
-        """Return decimal precision for a given asset."""
-        return POSITION_SIZE_PRECISION
-def get_asset_precision(asset: str) -> int:
-    """Return decimal precision for a given asset."""
-    return POSITION_SIZE_PRECISION
-
-
-    def compress_data(data: bytes) -> bytes:
-        """Compress binary data using gzip."""
-        import gzip
-        return gzip.compress(data)
-
-
-    def decompress_data(data: bytes) -> bytes:
-        """Decompress gzip-compressed binary data."""
-        import gzip
-        return gzip.decompress(data)
-def decompress_data(data: bytes) -> bytes:
+def decompress_bytes(data: bytes) -> bytes:
     """Decompress gzip-compressed binary data."""
-    import gzip
     return gzip.decompress(data)
 
 
-    def compress_data(data: Any) -> bytes:
-        """Serialize and compress data using pickle and zlib."""
-        try:
-            serialized = pickle.dumps(data)
-            return zlib.compress(serialized)
-        except Exception as e:
-            logger.error(f"Failed to compress data: {str(e)}")
-            raise
+def compress_object(data: Any) -> bytes:
+    """Serialize and gzip-compress arbitrary Python data."""
+    serialized = pickle.dumps(data)
+    return gzip.compress(serialized)
 
 
-    def decompress_data(data: bytes) -> Any:
-        """Decompress and deserialize data produced by :func:`compress_data`."""
-        try:
-            decompressed = gzip.decompress(data)
-            return pickle.loads(decompressed)
-        except Exception as exc:  # pragma: no cover - best effort
-            logger.error("Failed to decompress data: %s", exc)
-            return pickle.loads(zlib.decompress(data))
-        except Exception as e:
-            logger.error(f"Failed to decompress data: {str(e)}")
-            raise
-
-def decompress_data(data: bytes) -> Any:
-    """Decompress and deserialize data produced by :func:`compress_data`."""
+def decompress_object(data: bytes) -> Any:
+    """Decompress and deserialize data produced by :func:`compress_object`."""
     try:
         decompressed = gzip.decompress(data)
-        return pickle.loads(decompressed)
-    except Exception as exc:  # pragma: no cover - best effort
-        logger.error("Failed to decompress data: %s", exc)
-        return pickle.loads(zlib.decompress(data))
-    except Exception as e:
-        logger.error(f"Failed to decompress data: {str(e)}")
-        raise
+    except OSError:  # Legacy zlib format
+        decompressed = zlib.decompress(data)
+    return pickle.loads(decompressed)
 
 class ThreadSafeDict:
     """
