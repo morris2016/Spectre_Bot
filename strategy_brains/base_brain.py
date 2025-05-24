@@ -38,8 +38,8 @@ class TradeDirection(Enum):
 @dataclass
 class BrainConfig:
     """Base configuration for strategy brains."""
-    
     pass
+
 
 
     # Arbitrary strategy parameters

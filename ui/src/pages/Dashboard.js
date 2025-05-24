@@ -1,8 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  CircularProgress,
+} from '@mui/material';
 import TradingView from '../components/TradingView/TradingView';
 import OrderPanel from '../components/OrderPanel/OrderPanel';
-import api from '../api';
+import { api, socketManager } from '../api';
 
 /**
  * Dashboard page showing market overview and quick trading actions.
@@ -12,9 +22,13 @@ const Dashboard = () => {
   const [openOrders, setOpenOrders] = useState([]);
   const [positions, setPositions] = useState([]);
   const [analytics, setAnalytics] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const loadData = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const [tickerRes, ordersRes, positionsRes, analyticsRes] = await Promise.all([
           api.market.getTicker({ symbol: 'BTCUSDT' }),
@@ -26,17 +40,39 @@ const Dashboard = () => {
         setOpenOrders(ordersRes.data || []);
         setPositions(positionsRes.data || []);
         setAnalytics(analyticsRes.data);
-      } catch (error) {
-        console.error('Failed to load dashboard data', error);
+      } catch (err) {
+        console.error('Failed to load dashboard data', err);
+        setError('Failed to load dashboard data');
+      } finally {
+        setLoading(false);
       }
     };
 
     loadData();
   }, []);
 
+  useEffect(() => {
+    const unsubTicker = socketManager.subscribe('market:ticker', (data) => {
+      setMarketData(data);
+    });
+    return () => {
+      unsubTicker();
+    };
+  }, []);
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Typography variant="h4">Dashboard</Typography>
+      {loading && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+          <CircularProgress />
+        </Box>
+      )}
+      {error && (
+        <Typography color="error" variant="body2" sx={{ mb: 2 }}>
+          {error}
+        </Typography>
+      )}
       <Box sx={{ height: 400 }}>
         <TradingView />
       </Box>

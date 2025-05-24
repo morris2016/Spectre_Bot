@@ -214,6 +214,7 @@ def discover_modules() -> None:
             importlib.import_module(module_name)
         except Exception as e:
             # Log but continue
+
             logging.warning(f"Failed to import module {module_name}: {str(e)}")
 
 

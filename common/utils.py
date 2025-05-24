@@ -11,6 +11,8 @@ import os
 import re
 import time
 import json
+import io
+import gzip
 import uuid
 import hmac
 import hashlib
@@ -2514,12 +2516,14 @@ def calculate_pivot_points(high: float, low: float, close: float) -> Dict[str, f
 
 # Backwards compatibility alias
 
+
 # Backward compatibility alias
 def pivot_points(high: float, low: float, close: float) -> Dict[str, float]:
     """Alias for :func:`calculate_pivot_points` for backward compatibility."""
     return calculate_pivot_points(high, low, close)
 
 # Backwards compatibility alias
+
 
 pivot_points = calculate_pivot_points
 
@@ -3399,16 +3403,31 @@ def create_directory_if_not_exists(path: str) -> str:
     return create_directory(path, exist_ok=True)
 
 
+def pivot_points(high: float, low: float, close: float) -> Dict[str, float]:
+    """Backward-compatible alias for calculate_pivot_points."""
+    return calculate_pivot_points(high, low, close)
+
+
+def compress_data(data: bytes) -> bytes:
+    """Compress binary data using gzip."""
+    out = io.BytesIO()
+    with gzip.GzipFile(fileobj=out, mode="wb") as f:
+
 def compress_data(data: bytes) -> bytes:
     """Compress binary data using gzip."""
     out = io.BytesIO()
     with gzip.GzipFile(fileobj=out, mode='wb') as f:
+
         f.write(data)
     return out.getvalue()
 
 
 def decompress_data(data: bytes) -> bytes:
     """Decompress gzip-compressed binary data."""
+    with gzip.GzipFile(fileobj=io.BytesIO(data), mode="rb") as f:
+        return f.read()
+
+
     with gzip.GzipFile(fileobj=io.BytesIO(data)) as f:
         return f.read()
 
@@ -4388,6 +4407,11 @@ def calculate_quantity_precision(symbol: str, exchange: str = None) -> int:
     return default_precisions.get(base, default_precisions['DEFAULT'])
 
 
+def get_asset_precision(asset: str) -> int:
+    """Return precision for an asset symbol."""
+    return calculate_quantity_precision(asset)
+
+
 def round_to_precision(value: float, precision: int) -> float:
     """
     Round a value to a specific number of decimal places.
@@ -4556,7 +4580,7 @@ __all__ = [
     'get_higher_timeframes', 'TimestampUtils',
     
     # Data handling and trading utilities
-    'calculate_price_precision', 'calculate_quantity_precision',
+    'calculate_price_precision', 'calculate_quantity_precision', 'get_asset_precision',
     'round_to_precision', 'convert_timeframe', 'calculate_order_cost',
     'calculate_order_risk', 'normalize_price', 'normalize_quantity',
     'parse_decimal', 'safe_divide', 'round_to_tick', 'round_to_tick_size', 'calculate_change_percent',
@@ -4598,6 +4622,12 @@ __all__ = [
     'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',
     'calculate_distance', 'calculate_distance_percentage', 'memoize',
     'is_higher_timeframe', 'threaded_calculation', 'create_batches',
+    'create_directory', 'create_directory_if_not_exists',
+    'compress_data', 'decompress_data',
+
+    'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',
+    'calculate_distance', 'calculate_distance_percentage', 'memoize',
+    'is_higher_timeframe', 'threaded_calculation', 'create_batches',
     'create_directory', 'create_directory_if_not_exists', 'safe_nltk_download',
 
     'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',
@@ -4609,6 +4639,8 @@ __all__ = [
     'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',
     'calculate_distance', 'calculate_distance_percentage', 'memoize',
     'is_higher_timeframe', 'threaded_calculation', 'create_batches',
+    'create_directory', 'create_directory_if_not_exists',
+
     'create_directory', 'create_directory_if_not_exists', 'compress_data', 'decompress_data',
     'create_directory', 'create_directory_if_not_exists',
     'compress_data', 'decompress_data', 'pivot_points',
