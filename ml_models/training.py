@@ -222,6 +222,27 @@ class ModelTrainer:
             try:
                 logger.info(f"Starting training for model {model_name} ({model_type}) for {symbol} on {exchange}")
 
+                if model_type in ['reinforcement_learning', 'rl']:
+                    from intelligence.adaptive_learning.reinforcement import MarketEnvironment
+                    market_data = await self.market_data_repo.get_ohlcv_data(
+                        exchange, symbol, timeframe
+                    )
+                    features_df = self.feature_extractor.extract_features(market_data)
+                    env = MarketEnvironment(market_data, features_df)
+                    agent = await self.train_rl_model(env, hyperparams)
+                    result = {
+                        "model_id": model_id,
+                        "model_name": model_name,
+                        "model_type": model_type,
+                        "agent": agent,
+                    }
+                    if save_model:
+                        model_path = self.model_dir / f"{model_id}.pt"
+                        agent.save_model(model_path)
+                        result["model_path"] = str(model_path)
+                    return result
+                
+
                 # Delegate to reinforcement learning pipeline when configured
                 if self.config.get("ml_models.type") == "reinforcement":
                     from ml_models.rl.trainer import _train_rl_agent
@@ -1470,3 +1491,29 @@ class ModelTrainer:
                 tf.keras.backend.clear_session()
             except Exception as e:
                 logger.warning(f"Could not clear TensorFlow session: {str(e)}")
+
+    async def train_rl_model(
+        self,
+        env,
+        agent_config: dict | None = None,
+        episodes: int = 100,
+    ) -> Any:
+        """Train a reinforcement learning agent."""
+        from ml_models.rl import DQNAgent
+
+        state_dim = env.observation_space.shape[0]
+        action_dim = env.action_space.n
+        agent = DQNAgent(state_dim, action_dim, agent_config)
+
+        for _ in range(episodes):
+            state, _ = env.reset()
+            done = False
+            while not done:
+                action = agent.select_action(state)
+                next_state, reward, terminated, truncated, _ = env.step(action)
+                done = terminated or truncated
+                agent.store_transition(state, action, reward, next_state, done)
+                loss = agent.update_model()
+                state = next_state
+
+        return agent

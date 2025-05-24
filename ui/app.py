@@ -2,7 +2,6 @@
 """UI Service for QuantumSpectre Elite Trading System."""
 
 import asyncio
-import logging
 from typing import Any, Optional
 
 import uvicorn
