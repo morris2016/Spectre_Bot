@@ -225,6 +225,15 @@ class PositionExecutionError(PositionError):
     pass
 
 
+class InvalidPositionStateError(PositionError):
+    """Raised when a position state transition is invalid."""
+    pass
+
+
+class MaxDrawdownExceededError(RiskError):
+    """Raised when maximum drawdown is exceeded."""
+    pass
+
 
 
 
@@ -258,6 +267,11 @@ class ModelPredictionError(ModelError):
     pass
 
 
+class InvalidModelStateError(ModelError):
+    """Raised when a model is in an invalid state for the requested operation."""
+    pass
+
+
 class ModelRegistrationError(ModelError):
     """Raised when a model fails to register."""
 class InvalidModelStateError(ModelError):
@@ -265,8 +279,28 @@ class InvalidModelStateError(ModelError):
     pass
 
 
+class ModelSaveError(ModelError):
+    """Raised when saving a model to disk fails."""
+    pass
+
+
+class ModelPersistenceError(ModelError):
+    """Raised when loading or persisting a model fails."""
+    pass
+
+
+class HyperparameterOptimizationError(ModelError):
+    """Raised when hyperparameter optimization fails."""
+    pass
+
+
+class GPUNotAvailableError(ResourceError):
+    """Raised when GPU resources are requested but not available."""
+    pass
+
 class ModelRegistrationError(ModelError):
     """Raised when registering a model fails."""
+
 
 
 class StrategyError(QuantumSpectreError):
@@ -899,6 +933,15 @@ __all__ = [
     'APIKeyError', 'AuthenticationError', 'AuthorizationError', 'ExecutionError',
     'OrderError', 'OrderRejectedError', 'OrderTimeoutError', 'InsufficientFundsError',
     'InsufficientBalanceError', 'PositionError', 'PositionExecutionError',
+    'InvalidPositionStateError',
+    'InvalidOrderError', 'OrderCancellationError', 'SlippageExceededError', 'NetworkError',
+    'RiskError', 'RiskLimitExceededError', 'RiskExceededError', 'MaxDrawdownExceededError',
+    'BacktestError', 'ModelError',
+    'ModelTrainingError', 'ModelPredictionError', 'InvalidModelStateError',
+    'ModelRegistrationError', 'ModelSaveError', 'ModelPersistenceError',
+    'HyperparameterOptimizationError',
+    'StrategyError', 'SignalGenerationError',
+
     'InvalidOrderError', 'OrderCancellationError', 'SlippageExceededError', 'NetworkError',
     'PositionError', 'RiskError', 'RiskLimitExceededError', 'BacktestError', 'ModelError',
     'RiskError', 'RiskLimitExceededError', 'RiskExceededError', 'BacktestError', 'ModelError',
@@ -906,7 +949,7 @@ __all__ = [
     'RiskError', 'RiskLimitExceededError', 'BacktestError', 'ModelError',
     'ModelTrainingError', 'ModelPredictionError', 'ModelRegistrationError', 'StrategyError', 'SignalGenerationError',
     'MonitoringError', 'AlertError', 'ResourceError', 'ResourceExhaustionError',
-    'TimeoutError', 'ExchangeError', 'RateLimitError', 'FeedNotFoundError',
+    'GPUNotAvailableError', 'TimeoutError', 'ExchangeError', 'RateLimitError', 'FeedNotFoundError',
     'FeedInitializationError', 'FeedAuthenticationError', 'DataSourceError',
     'FeedSubscriptionError', 'FeedDataError', 'ParsingError', 'DataFeedConnectionError',
     'ModelLoadError', 'DataParsingError', 'CredentialError', 'SecurityViolationError',

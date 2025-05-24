@@ -64,6 +64,7 @@ __all__ = ['BaseFeature', 'register_feature']
 # Import modules to make them available - do this after defining register_feature
 from . import order_flow
 from . import pattern
+from . import cross_asset
 # We already have pattern.py and order_flow.py, no need to import patterns or order_flows
 # Groups for organizing features
 FEATURE_GROUPS = {
@@ -330,5 +331,6 @@ __all__ = [
     'FEATURE_GROUPS',
     'FEATURE_REGISTRY',
     'order_flow',
-    'pattern'
+    'pattern',
+    'cross_asset'
 ]

@@ -11,6 +11,7 @@ set of specialized ML models optimized for different market patterns and conditi
 import os
 import logging
 from typing import Dict, List, Any, Set, Optional, Union, Tuple
+from .hyperopt import HyperOptService
 
 # Set up module level logger
 logger = logging.getLogger(__name__)

@@ -1571,6 +1571,35 @@ class FeatureExtractor:
 
         return vwap
 
+    #
+    # Cross-Asset Features
+    #
+
+    @feature_calculation
+    def pair_correlation(
+        self,
+        data: pd.DataFrame,
+        params: Dict[str, Any],
+    ) -> pd.Series:
+        """Rolling correlation between two assets."""
+        other = params.get("other_series")
+        window = params.get("corr_window", 30)
+        if other is None:
+            raise ValueError("other_series parameter is required for pair correlation")
+        return compute_pair_correlation(data["close"], other, window=window)
+
+    @feature_calculation
+    def cointegration_pvalue(
+        self,
+        data: pd.DataFrame,
+        params: Dict[str, Any],
+    ) -> pd.Series:
+        """Cointegration test p-value between two assets."""
+        other = params.get("other_series")
+        if other is None:
+            raise ValueError("other_series parameter is required for cointegration")
+        pval = cointegration_score(data["close"], other)
+        return pd.Series([pval] * len(data), index=data.index, name="cointegration_pvalue")
     @feature_calculation
     def pair_correlation(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
         """Correlation between this asset and another."""
