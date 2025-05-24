@@ -104,7 +104,7 @@ class PerformanceTracker:
         self.db = db_connector or await get_db_client()
         await self._initialize_database()
         logger.info(
-            "Initialized PerformanceTracker for council: %s", self.council_name
+            f"Initialized PerformanceTracker for council: {self.council_name}"
         )
     
     def _initialize_config(self):
