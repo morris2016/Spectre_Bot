@@ -46,6 +46,7 @@ from pathlib import Path
 from functools import wraps
 from contextlib import suppress, asynccontextmanager, contextmanager
 import inspect  # Add this to the imports at the top
+import nltk
 from common.logger import get_logger, performance_log
 
 # Configure module logger
@@ -91,6 +92,22 @@ def merge_deep(source, destination):
     return destination
 MICROSECONDS_IN_SECOND = 1000000
 NANOSECONDS_IN_SECOND = 1000000000
+
+
+def safe_nltk_download(resource: str) -> None:
+    """Attempt to download an NLTK resource gracefully."""
+    try:
+        nltk.data.find(resource)
+    except LookupError:
+        # Try common paths before attempting a download
+        alt_path = f"tokenizers/{resource}"
+        try:
+            nltk.data.find(alt_path)
+        except LookupError:
+            logger.warning(
+                "NLTK resource %s not available and cannot be downloaded in offline mode",
+                resource,
+            )
 
 def import_submodules(package_name):
     """
@@ -2495,6 +2512,8 @@ def calculate_pivot_points(high: float, low: float, close: float) -> Dict[str, f
     }
 
 
+# Backwards compatibility alias
+
 # Backward compatibility alias
 def pivot_points(high: float, low: float, close: float) -> Dict[str, float]:
     """Alias for :func:`calculate_pivot_points` for backward compatibility."""
@@ -4576,6 +4595,11 @@ __all__ = [
     'calculate_kelly_criterion', 'calculate_sharpe_ratio', 'calculate_sortino_ratio',
     'calculate_max_drawdown', 'calculate_calmar_ratio', 'z_score',
     'is_price_consolidating', 'is_breaking_out', 'calculate_pivot_points', 'pivot_points',
+    'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',
+    'calculate_distance', 'calculate_distance_percentage', 'memoize',
+    'is_higher_timeframe', 'threaded_calculation', 'create_batches',
+    'create_directory', 'create_directory_if_not_exists', 'safe_nltk_download',
+
     'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',
     'calculate_distance', 'calculate_distance_percentage', 'memoize',
     'is_higher_timeframe', 'threaded_calculation', 'create_batches',

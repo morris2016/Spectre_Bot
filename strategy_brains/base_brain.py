@@ -9,7 +9,6 @@ This module defines the base class for all strategy brains in the system.
 import time
 import asyncio
 from abc import ABC, abstractmethod
-
 from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Any, Optional
@@ -39,8 +38,6 @@ class TradeDirection(Enum):
 @dataclass
 class BrainConfig:
     """Base configuration for strategy brains."""
-    pass
-
     
     pass
 
@@ -53,7 +50,6 @@ class BrainConfig:
     max_position_size: float = 0.05
     stop_loss_atr_multiplier: float = 1.5
     take_profit_atr_multiplier: float = 3.0
-
 
 
 class StrategyBrain(ABC):

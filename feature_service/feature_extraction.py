@@ -55,6 +55,22 @@ from common.exceptions import (
 )
 
 
+def atr(data: pd.DataFrame, period: int = 14) -> pd.Series:
+    """Simple wrapper to calculate Average True Range."""
+    return ta.atr(high=data['high'], low=data['low'], close=data['close'], length=period)
+
+
+def fibonacci_levels(high: float, low: float) -> Dict[str, float]:
+    """Return key Fibonacci retracement levels."""
+    ratios = [0.236, 0.382, 0.5, 0.618, 0.786]
+    diff = high - low
+    levels = {'0': high, '1': low}
+    for r in ratios:
+        levels[str(r)] = high - diff * r
+    return levels
+
+
+__all__ = ['atr', 'fibonacci_levels']
 def atr(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> pd.Series:
     """Simple ATR calculation used by tests."""
     return ta.atr(high=high, low=low, close=close, length=period)

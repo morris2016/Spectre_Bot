@@ -191,6 +191,7 @@ class InsufficientFundsError(OrderError):
     pass
 
 
+
 class InsufficientBalanceError(OrderError):
     """Raised when an account balance is too low to execute an action."""
     """Raised when account balance is too low for an operation."""
@@ -524,11 +525,25 @@ class PositionSizingError(RiskError):
 
 
 class InsufficientBalanceError(RiskError):
+    """Raised when an account balance is insufficient for a position."""
+
     """Raised when an account has insufficient balance for an operation."""
     pass
 
 
 class PositionError(ExecutionError):
+    """Base class for position-related errors."""
+    pass
+
+
+class PositionExecutionError(PositionError):
+    """Raised when a position fails to execute properly."""
+    pass
+
+
+class InvalidPositionStateError(PositionError):
+    """Raised when a position transition is not allowed."""
+
     """Raised for general position handling errors."""
     pass
 
@@ -580,9 +595,20 @@ class RiskManagementException(RiskError):
     """General exception for risk management issues."""
     pass
 
+
+class RiskExceededError(RiskError):
+    """Raised when a calculated risk exceeds allowed thresholds."""
+    pass
+
 class ModelVersionError(ModelError):
     """Raised for issues related to model versioning."""
     pass
+
+
+class ModelRegistrationError(ModelError):
+    """Raised when registering an ML model fails."""
+    pass
+
 
 
 class InvalidModelStateError(ModelError):
@@ -982,6 +1008,8 @@ __all__ = [
     'DatabaseQueryError', 'RedisError', 'RedisConnectionError', 'SecurityError',
     'APIKeyError', 'AuthenticationError', 'AuthorizationError', 'ExecutionError',
     'OrderError', 'OrderRejectedError', 'OrderTimeoutError', 'InsufficientFundsError',
+    'InsufficientBalanceError', 'PositionError', 'PositionExecutionError',
+    'InvalidPositionStateError', 'ModelRegistrationError', 'InvalidModelStateError',
     'InsufficientBalanceError', 'PositionError',
 
     'InsufficientBalanceError',
@@ -1026,7 +1054,7 @@ __all__ = [
     'ModelRegistrationError', 'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError',
     'MarketDataError', 'CalculationError',
     'ArbitrageOpportunityExpiredError', 'DrawdownLimitExceededException',
-    'RiskManagementException', 'ModelVersionError', 'LogAnalysisError',
+    'RiskManagementException', 'RiskExceededError', 'ModelVersionError', 'LogAnalysisError',
     'InsufficientDataError', 'EncodingError', 'MetricCollectionError',
     'ServiceConnectionError', 'DataStoreError', 'InvalidDataError', 'TrainingError',
     'ArbitrageValidationError', 'PredictionError', 'AnalysisError', 'RecoveryStrategyError',
