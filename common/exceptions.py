@@ -219,6 +219,10 @@ class MarginCallError(PositionError):
 class PositionLiquidationError(PositionError):
     """Raised when a position is forcibly liquidated."""
 
+class RiskError(QuantumSpectreError):
+    """Base class for risk management errors."""
+    pass
+
 class InsufficientBalanceError(OrderError):
     """Raised when an account balance is too low to execute an action."""
     """Raised when account balance is too low for an operation."""
@@ -245,9 +249,6 @@ class PositionError(ExecutionError):
     pass
 
 
-class RiskError(QuantumSpectreError):
-    """Base class for risk management errors."""
-    pass
 
 
 class RiskLimitExceededError(RiskError):
