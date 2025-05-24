@@ -10,7 +10,7 @@ used throughout the QuantumSpectre Elite Trading System.
 import os
 import enum
 from pathlib import Path
-from typing import Dict, List, Any, Set, Optional, Union
+
 
 # System information
 VERSION = "1.0.0"
@@ -201,10 +201,10 @@ LOG_LEVELS = {
 # Feature Service specific constants
 FEATURE_PRIORITY_LEVELS = ["high", "normal", "low"]
 
-#======================================
-DEFAULT_FEATURE_PARAMS = {} # Default parameters for feature calculations
+# ======================================
+DEFAULT_FEATURE_PARAMS = {}  # Default parameters for feature calculations
 # Exchange and Trading Constants
-#======================================
+# ======================================
 
 # Supported exchanges
 class Exchange(enum.Enum):
@@ -933,6 +933,9 @@ __all__ = [
     'DEFAULT_TAKE_PROFIT_MULTIPLIER', 'DEFAULT_FIXED_STOP_PERCENTAGE',
     'DEFAULT_MIN_STOP_DISTANCE', 'DEFAULT_TRAILING_ACTIVATION_PERCENTAGE',
     'DEFAULT_TRAILING_CALLBACK_RATE', 'MAX_STOP_LEVELS',
+    'DEFAULT_CHANDELIER_EXIT_MULTIPLIER', 'PARTIAL_CLOSE_LEVELS',
+    'POSITION_SIZE_PRECISION', 'MAX_LEVERAGE_BINANCE', 'MAX_LEVERAGE_DERIV',
+
     'DEFAULT_CHANDELIER_EXIT_MULTIPLIER', 'POSITION_SIZE_PRECISION',
     'MAX_LEVERAGE_BINANCE', 'MAX_LEVERAGE_DERIV', 'PARTIAL_CLOSE_LEVELS',
     
@@ -1493,6 +1496,8 @@ EXPOSURE_LIMITS = {
 
 DEFAULT_MAX_RISK_PER_TRADE = 0.02  # 2% of account per trade
 DEFAULT_BASE_POSITION_SIZE = 0.01  # 1% of account as base position size
+DEFAULT_GROWTH_FACTOR = 1.0  # Growth factor for compounding position sizes
+
 MAX_LEVERAGE_BINANCE = 125
 MAX_LEVERAGE_DERIV = 100
 DEFAULT_STOP_LOSS_MULTIPLIER = 1.5
@@ -1513,6 +1518,14 @@ CORRELATION_LOOKBACK_PERIODS = 100  # Periods to look back for correlation calcu
 
 DEFAULT_ATR_PERIODS = 14  # Default periods for ATR calculation
 DEFAULT_ATR_MULTIPLIER = 2.0  # Default multiplier for ATR-based stops
+DEFAULT_FIXED_STOP_PERCENTAGE = 0.02  # 2% fixed stop loss
+DEFAULT_MIN_STOP_DISTANCE = 0.01      # 1% minimum stop distance
+DEFAULT_TRAILING_ACTIVATION_PERCENTAGE = 0.5  # Activate trailing stop at 50% of target
+DEFAULT_TRAILING_CALLBACK_RATE = 0.2            # 20% callback for trailing stop
+MAX_STOP_LEVELS = 4
+DEFAULT_CHANDELIER_EXIT_MULTIPLIER = 3.0
+PARTIAL_CLOSE_LEVELS = [0.25, 0.5, 0.75]
+
 DEFAULT_FIXED_STOP_PERCENTAGE = 2.0  # Fixed % stop for initial stop-loss
 DEFAULT_MIN_STOP_DISTANCE = 0.01  # Minimum stop distance as fraction of price
 DEFAULT_TRAILING_ACTIVATION_PERCENTAGE = 1.0  # Profit % to activate trailing stop
