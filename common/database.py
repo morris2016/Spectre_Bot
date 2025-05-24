@@ -13,10 +13,11 @@ from typing import Dict, Any, Optional, List, Union
 import logging
 from contextlib import asynccontextmanager
 
-from sqlalchemy import create_engine, inspect, event, text
+from sqlalchemy import create_engine, inspect, event, text, Column, Integer, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.engine import Engine
+from sqlalchemy.sql import func
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngine
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncEngine
 
@@ -29,6 +30,13 @@ logger = get_logger('database')
 
 # Base class for all ORM models
 Base = declarative_base()
+
+
+class BaseMixin:
+    """Reusable columns for all tables."""
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 # Global database engine and session factory
 engine = None

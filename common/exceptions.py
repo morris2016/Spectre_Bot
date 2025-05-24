@@ -398,6 +398,26 @@ class InsufficientLiquidityError(ExecutionError):
     """Raised when there is insufficient liquidity to execute a trade."""
     pass
 
+
+class InsufficientBalanceError(ExecutionError):
+    """Raised when account balance is too low to execute an order."""
+    pass
+
+
+class PositionError(ExecutionError):
+    """Raised for position management failures."""
+    pass
+
+
+class RiskExceededError(RiskError):
+    """Raised when a calculated risk exceeds allowable limits."""
+    pass
+
+
+class ModelRegistrationError(ModelError):
+    """Raised when registering a machine learning model fails."""
+    pass
+
 class ArbitrageOpportunityExpiredError(StrategyError):
     """Raised when an arbitrage opportunity is no longer valid."""
     pass
@@ -820,6 +840,8 @@ __all__ = [
     'InvalidTimeframeError', 'InvalidParameterError', 'AlertDeliveryError',
     'AlertConfigurationError', 'RiskManagerError', 'PositionSizingError', 'StopLossError',
     'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError',
+    'InsufficientBalanceError', 'PositionError', 'RiskExceededError',
+    'ModelRegistrationError',
     'ArbitrageOpportunityExpiredError', 'DrawdownLimitExceededException',
     'RiskManagementException', 'ModelVersionError', 'LogAnalysisError',
     'InsufficientDataError', 'EncodingError', 'MetricCollectionError',
