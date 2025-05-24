@@ -537,15 +537,14 @@ class RiskManagerError(RiskError):
 class PositionSizingError(RiskError):
     """Raised for errors in position sizing calculations."""
     pass
-
 class PositionError(RiskError):
     """Raised for general position management errors."""
-=======
-class InsufficientBalanceError(RiskError):
-    """Raised when an account balance is insufficient for a position."""
+    pass
 
+class InsufficientBalanceError(RiskError):
     """Raised when an account has insufficient balance for an operation."""
     pass
+
 
 
 class PositionError(ExecutionError):
