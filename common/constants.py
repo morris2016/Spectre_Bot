@@ -650,6 +650,11 @@ DEFAULT_WIN_RATE_THRESHOLD = 65.0  # Minimum win percentage
 DEFAULT_TRAILING_STOP_ACTIVATION = 1.0  # % profit to activate trailing stop
 DEFAULT_KELLY_FRACTION = 0.5  # Half Kelly for conservative sizing
 DEFAULT_GROWTH_FACTOR = 1.05  # Growth multiplier for compounding strategies
+=======
+DEFAULT_GROWTH_FACTOR = 1.05  # Growth factor for compounding position sizing
+PARTIAL_CLOSE_LEVELS = [0.25, 0.5, 0.75]
+=======
+DEFAULT_GROWTH_FACTOR = 1.0  # Neutral growth factor for position sizing
 PARTIAL_CLOSE_LEVELS = [0.25, 0.5, 0.75]  # Default partial close percentages
 
 #======================================
@@ -912,7 +917,19 @@ __all__ = [
     'DEFAULT_GROWTH_FACTOR', 'PARTIAL_CLOSE_LEVELS',
     'DEFAULT_STOP_LOSS_MULTIPLIER', 'DEFAULT_TAKE_PROFIT_MULTIPLIER',
     'POSITION_SIZE_PRECISION', 'MAX_LEVERAGE_BINANCE', 'MAX_LEVERAGE_DERIV',
+=======
+    'DEFAULT_GROWTH_FACTOR', 'DEFAULT_STOP_LOSS_MULTIPLIER',
+    'DEFAULT_TAKE_PROFIT_MULTIPLIER', 'DEFAULT_FIXED_STOP_PERCENTAGE',
+    'DEFAULT_MIN_STOP_DISTANCE', 'DEFAULT_TRAILING_ACTIVATION_PERCENTAGE',
+    'DEFAULT_TRAILING_CALLBACK_RATE', 'MAX_STOP_LEVELS',
+    'DEFAULT_CHANDELIER_EXIT_MULTIPLIER', 'POSITION_SIZE_PRECISION',
+    'MAX_LEVERAGE_BINANCE', 'MAX_LEVERAGE_DERIV', 'PARTIAL_CLOSE_LEVELS',
     
+=======
+    'DEFAULT_STOP_LOSS_MULTIPLIER', 'DEFAULT_TAKE_PROFIT_MULTIPLIER',
+    'POSITION_SIZE_PRECISION', 'MAX_LEVERAGE_BINANCE', 'MAX_LEVERAGE_DERIV',
+    'DEFAULT_GROWTH_FACTOR', 'PARTIAL_CLOSE_LEVELS',
+
     # Notification enums
     'NotificationType', 'NotificationPriority', 'NotificationChannel',
     
@@ -1470,12 +1487,25 @@ MAX_LEVERAGE_DERIV = 100
 DEFAULT_STOP_LOSS_MULTIPLIER = 1.5
 DEFAULT_TAKE_PROFIT_MULTIPLIER = 2.0
 POSITION_SIZE_PRECISION = 4
+=======
+=======
+DEFAULT_GROWTH_FACTOR = 1.02  # default account growth factor per period
+DEFAULT_STOP_LOSS_MULTIPLIER = 1.5
+DEFAULT_TAKE_PROFIT_MULTIPLIER = 2.0
+POSITION_SIZE_PRECISION = 4
+PARTIAL_CLOSE_LEVELS = [0.25, 0.5, 0.75]
 
 MAX_POSITION_CORRELATION = 0.7  # Maximum allowed correlation between positions
 CORRELATION_LOOKBACK_PERIODS = 100  # Periods to look back for correlation calculation
 
 DEFAULT_ATR_PERIODS = 14  # Default periods for ATR calculation
 DEFAULT_ATR_MULTIPLIER = 2.0  # Default multiplier for ATR-based stops
+DEFAULT_FIXED_STOP_PERCENTAGE = 2.0  # Fixed % stop for initial stop-loss
+DEFAULT_MIN_STOP_DISTANCE = 0.01  # Minimum stop distance as fraction of price
+DEFAULT_TRAILING_ACTIVATION_PERCENTAGE = 1.0  # Profit % to activate trailing stop
+DEFAULT_TRAILING_CALLBACK_RATE = 0.5  # Callback rate for trailing stop
+MAX_STOP_LEVELS = 3
+DEFAULT_CHANDELIER_EXIT_MULTIPLIER = 3.0
 
 RECOVERY_STRATEGIES = {
     "REDUCE_POSITION_SIZE": "reduce_position_size",

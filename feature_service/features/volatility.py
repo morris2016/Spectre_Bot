@@ -18,6 +18,25 @@ from datetime import datetime, timedelta
 import warnings
 import math
 
+
+def calculate_atr(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> pd.Series:
+    """Compute the Average True Range."""
+    return ta.atr(high=high, low=low, close=close, length=period)
+
+
+def calculate_bollinger_bands(prices: pd.Series,
+                              period: int = 20,
+                              std: int = 2) -> Tuple[pd.Series, pd.Series, pd.Series]:
+    """Return Bollinger Bands."""
+    bb = ta.bbands(prices, length=period, std=std)
+    return bb.iloc[:, 0], bb.iloc[:, 1], bb.iloc[:, 2]
+
+
+__all__ = [
+    'calculate_atr',
+    'calculate_bollinger_bands',
+]
+
 from common.utils import timeit, numpy_rolling_window
 from common.exceptions import FeatureCalculationError
 from common.constants import VOLATILITY_INDICATOR_PARAMS
