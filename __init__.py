@@ -133,57 +133,71 @@ class Registry:
 
         return False
 
+
 def register_utils(name: str = None) -> Callable:
     """Register utility functions."""
     return Registry.register("utils", name)
+
 
 def register_constants(name: str = None) -> Callable:
     """Register constants."""
     return Registry.register("constants", name)
 
+
 def register_exception(name: str = None) -> Callable:
     """Register exceptions."""
     return Registry.register("exceptions", name)
+
 
 def register_metric(name: str = None) -> Callable:
     """Register metrics."""
     return Registry.register("metrics", name)
 
+
 def register_logger(name: str = None) -> Callable:
     """Register loggers."""
     return Registry.register("loggers", name)
+
 
 def register_client(name: str = None) -> Callable:
     """Register clients."""
     return Registry.register("clients", name)
 
+
 def register_model(name: str = None) -> Callable:
     """Register models."""
     return Registry.register("models", name)
+
 
 def register_service(name: str = None) -> Callable:
     """Register services."""
     return Registry.register("services", name)
 
+
 def register_strategy(name: str = None) -> Callable:
     """Register trading strategies."""
     return Registry.register("strategies", name)
+
 
 def register_pattern(name: str = None) -> Callable:
     """Register trading patterns."""
     return Registry.register("patterns", name)
 
+
 def register_indicator(name: str = None) -> Callable:
     """Register technical indicators."""
     return Registry.register("indicators", name)
+
 
 def register_hook(name: str = None) -> Callable:
     """Register system hooks."""
     return Registry.register("hooks", name)
 
+
 def register_plugin(name: str = None) -> Callable:
     """Register plugins."""
     return Registry.register("plugins", name)
+
 
 def discover_modules() -> None:
     """
@@ -201,6 +215,7 @@ def discover_modules() -> None:
         except Exception as e:
             # Log but continue
             logging.warning(f"Failed to import module {module_name}: {str(e)}")
+
 
 # Automatically discover modules when package is imported
 discover_modules()

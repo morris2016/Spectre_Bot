@@ -169,11 +169,19 @@ class OrderExecutionError(OrderError):
     pass
 
 
+class PositionError(ExecutionError):
+    """Raised for position management errors."""
+    pass
+
+
 class InsufficientFundsError(OrderError):
     """Raised when there are insufficient funds for an order."""
     pass
 
 
+class InsufficientBalanceError(RiskError):
+    """Raised when account balance is insufficient for a trade."""
+=======
 class PositionError(ExecutionError):
     """Raised for invalid or inconsistent position state."""
     pass
@@ -256,6 +264,9 @@ class ModelPredictionError(ModelError):
     pass
 
 
+class ModelRegistrationError(ModelError):
+    """Raised when a model fails to register."""
+=======
 class InvalidModelStateError(ModelError):
     """Raised when a model is in an invalid state for the requested operation."""
     pass
@@ -899,6 +910,8 @@ __all__ = [
     'OrderError', 'OrderRejectedError', 'OrderTimeoutError', 'InsufficientFundsError',
     'InsufficientBalanceError', 'PositionError', 'PositionExecutionError',
     'InvalidOrderError', 'OrderCancellationError', 'SlippageExceededError', 'NetworkError',
+    'PositionError', 'RiskError', 'RiskLimitExceededError', 'BacktestError', 'ModelError',
+=======
     'RiskError', 'RiskLimitExceededError', 'RiskExceededError', 'BacktestError', 'ModelError',
     'ModelTrainingError', 'ModelPredictionError', 'InvalidModelStateError', 'ModelRegistrationError', 'StrategyError', 'SignalGenerationError',
 =======
@@ -915,6 +928,8 @@ __all__ = [
     'FeatureNotFoundError', 'FeatureCalculationError', 'FeatureServiceError',
     'InvalidTimeframeError', 'InvalidParameterError', 'AlertDeliveryError',
     'AlertConfigurationError', 'RiskManagerError', 'PositionSizingError', 'StopLossError',
+    'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError', 'InsufficientBalanceError',
+=======
     'InsufficientBalanceError', 'RiskExceededError', 'PositionError', 'PositionExecutionError',
     'ModelRegistrationError', 'InvalidModelStateError',
     'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError',

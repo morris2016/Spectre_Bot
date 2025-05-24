@@ -87,12 +87,22 @@ from feature_service.features.base_feature import BaseFeature
 
 
 def calculate_rsi(close: pd.Series, period: int = 14) -> pd.Series:
+    """Standalone RSI calculation"""
+=======
     """Standalone RSI calculation used by strategy modules."""
     return ta.rsi(close, length=period)
 
 
 def calculate_macd(
     close: pd.Series,
+    fast_period: int = 12,
+    slow_period: int = 26,
+    signal_period: int = 9,
+) -> Tuple[pd.Series, pd.Series, pd.Series]:
+    """Standalone MACD calculation"""
+    macd = ta.macd(close, fast=fast_period, slow=slow_period, signal=signal_period)
+    return macd.macd, macd.macd_signal, macd.macd_diff
+=======
     fastperiod: int = 12,
     slowperiod: int = 26,
     signalperiod: int = 9,
@@ -111,6 +121,10 @@ def calculate_adx(
     low: pd.Series,
     close: pd.Series,
     period: int = 14,
+) -> pd.Series:
+    """Standalone ADX calculation"""
+    return ta.adx(high, low, close, length=period)
+=======
 ) -> pd.DataFrame:
     """Return ADX, plus_DI, minus_DI as a DataFrame."""
     adx_df = ta.adx(high=high, low=low, close=close, length=period)
