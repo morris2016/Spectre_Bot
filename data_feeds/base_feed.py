@@ -16,6 +16,7 @@ from typing import Dict, List, Any, Optional, Set
 from common.logger import get_logger
 from common.exceptions import FeedError, FeedConnectionError, FeedDisconnectedError
 from common.metrics import MetricsCollector
+from common.event_bus import EventBus
 from dataclasses import dataclass, field
 from typing import Dict, List, Any, Optional, Set, Callable, Union
 
@@ -23,7 +24,7 @@ from typing import Dict, List, Any, Optional, Set, Callable, Union
 class BaseFeed(ABC):
     """Base class for all data feeds."""
     
-    def __init__(self, config, loop=None, redis_client=None):
+    def __init__(self, config, loop=None, redis_client=None, event_bus=None):
         """
         Initialize the data feed.
         
@@ -31,10 +32,12 @@ class BaseFeed(ABC):
             config: Feed configuration
             loop: Optional asyncio event loop
             redis_client: Optional Redis client for publishing data
+            event_bus: Optional EventBus instance for real-time event dispatch
         """
         self.config = config
         self.loop = loop or asyncio.get_event_loop()
         self.redis_client = redis_client
+        self.event_bus = event_bus or EventBus.get_instance()
         self.logger = get_logger(self.__class__.__name__)
         
         # Feed state
@@ -168,6 +171,10 @@ class BaseFeed(ABC):
                 await self.redis_client.publish(channel, data)
                 self.metrics.increment("data.published")
                 self.data_stats["published"] += 1
+
+            # Publish to EventBus for internal consumers
+            if self.event_bus:
+                await self.event_bus.publish(channel, data)
             
             # Update metrics
             self.metrics.increment("data.received")

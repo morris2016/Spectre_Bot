@@ -16,6 +16,7 @@ from typing import Dict, List, Any, Optional
 
 from common.logger import get_logger
 from common.metrics import MetricsCollector
+from common.event_bus import EventBus
 from common.exceptions import (
     FeedError, FeedConnectionError, ServiceStartupError, ServiceShutdownError
 )
@@ -28,7 +29,7 @@ from data_feeds.deriv_feed import DerivFeed
 class DataFeedService:
     """Service for managing data feeds from various sources."""
     
-    def __init__(self, config, loop=None, redis_client=None, db_client=None):
+    def __init__(self, config, loop=None, redis_client=None, db_client=None, event_bus=None):
         """
         Initialize the data feed service.
         
@@ -37,11 +38,13 @@ class DataFeedService:
             loop: Optional asyncio event loop
             redis_client: Optional Redis client for data publishing
             db_client: Optional database client
+            event_bus: Optional EventBus instance for inter-module messaging
         """
         self.config = config
         self.loop = loop or asyncio.get_event_loop()
         self.redis_client = redis_client
         self.db_client = db_client
+        self.event_bus = event_bus or EventBus.get_instance()
         self.logger = get_logger("DataFeedService")
         
         # Feed state
@@ -118,7 +121,8 @@ class DataFeedService:
                 binance_feed = BinanceFeed(
                     config=feed_configs.get("binance", {}),
                     loop=self.loop,
-                    redis_client=self.redis_client
+                    redis_client=self.redis_client,
+                    event_bus=self.event_bus
                 )
                 self.feeds["binance"] = binance_feed
             except Exception as e:
@@ -132,7 +136,8 @@ class DataFeedService:
                 deriv_feed = DerivFeed(
                     config=feed_configs.get("deriv", {}),
                     loop=self.loop,
-                    redis_client=self.redis_client
+                    redis_client=self.redis_client,
+                    event_bus=self.event_bus
                 )
                 self.feeds["deriv"] = deriv_feed
             except Exception as e:
@@ -234,8 +239,10 @@ def create_app(config: Dict[str, Any]) -> DataFeedService:
     except RuntimeError:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-    
+
+    event_bus = EventBus.get_instance()
+
     # Initialize service
-    service = DataFeedService(config, loop=loop)
+    service = DataFeedService(config, loop=loop, event_bus=event_bus)
     
     return service
