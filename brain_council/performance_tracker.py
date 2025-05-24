@@ -103,8 +103,6 @@ class PerformanceTracker:
         """Obtain a database client and create required tables."""
         self.db = db_connector or await get_db_client()
         await self._initialize_database()
-        logger.info(f"Initialized PerformanceTracker for council: {self.council_name}")
-=======
         logger.info(
             "Initialized PerformanceTracker for council: %s", self.council_name
         )
@@ -133,9 +131,6 @@ class PerformanceTracker:
             'trade_count': True
         })
         
-    async def _initialize_database(self):
-        """Initialize database tables if they don't exist."""
-=======
     async def _initialize_database(self) -> None:
         """Create database tables if they don't exist."""
         if not self.db:
@@ -144,8 +139,6 @@ class PerformanceTracker:
 
         try:
             # Create tables for performance tracking
-            await self.db.execute("""
-=======
             await self.db.execute(
                 """
                 CREATE TABLE IF NOT EXISTS strategy_signals (
@@ -167,10 +160,6 @@ class PerformanceTracker:
                     outcome TEXT,
                     metadata TEXT
                 )
-            """)
-            
-            await self.db.execute("""
-=======
                 """
             )
 
@@ -187,10 +176,6 @@ class PerformanceTracker:
                     metrics TEXT,
                     PRIMARY KEY (strategy_id, timestamp, timeframe)
                 )
-            """)
-            
-            await self.db.execute("""
-=======
                 """
             )
 
@@ -210,47 +195,6 @@ class PerformanceTracker:
             )
 
             # Indices for performance query optimization
-            await self.db.execute("CREATE INDEX IF NOT EXISTS idx_strategy_signals_strategy_id ON strategy_signals(strategy_id)")
-            await self.db.execute("CREATE INDEX IF NOT EXISTS idx_strategy_signals_council_id ON strategy_signals(council_id)")
-            await self.db.execute("CREATE INDEX IF NOT EXISTS idx_strategy_signals_asset ON strategy_signals(asset)")
-            await self.db.execute("CREATE INDEX IF NOT EXISTS idx_strategy_signals_platform ON strategy_signals(platform)")
-            await self.db.execute("CREATE INDEX IF NOT EXISTS idx_strategy_signals_entry_time ON strategy_signals(entry_time)")
-            await self.db.execute("CREATE INDEX IF NOT EXISTS idx_strategy_performance_strategy_id ON strategy_performance(strategy_id)")
-            await self.db.execute("CREATE INDEX IF NOT EXISTS idx_council_performance_council_id ON council_performance(council_id)")
-
-            await self.db.commit()
-=======
-            self.db.execute(
-                "CREATE INDEX IF NOT EXISTS idx_strategy_signals_strategy_id "
-                "ON strategy_signals(strategy_id)"
-            )
-            self.db.execute(
-                "CREATE INDEX IF NOT EXISTS idx_strategy_signals_council_id "
-                "ON strategy_signals(council_id)"
-            )
-            self.db.execute(
-                "CREATE INDEX IF NOT EXISTS idx_strategy_signals_asset "
-                "ON strategy_signals(asset)"
-            )
-            self.db.execute(
-                "CREATE INDEX IF NOT EXISTS idx_strategy_signals_platform "
-                "ON strategy_signals(platform)"
-            )
-            self.db.execute(
-                "CREATE INDEX IF NOT EXISTS idx_strategy_signals_entry_time "
-                "ON strategy_signals(entry_time)"
-            )
-            self.db.execute(
-                "CREATE INDEX IF NOT EXISTS idx_strategy_performance_strategy_id "
-                "ON strategy_performance(strategy_id)"
-            )
-            self.db.execute(
-                "CREATE INDEX IF NOT EXISTS idx_council_performance_council_id "
-                "ON council_performance(council_id)"
-            )
-            
-            self.db.commit()
-=======
             await self.db.execute(
                 "CREATE INDEX IF NOT EXISTS idx_strategy_signals_strategy_id ON strategy_signals(strategy_id)"
             )
