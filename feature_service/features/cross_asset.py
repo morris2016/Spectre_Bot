@@ -3,6 +3,14 @@
 
 from typing import Optional
 
+"""Cross-Asset Feature Calculations.
+
+Utilities for analyzing relationships between two assets, including rolling
+correlation and cointegration tests.
+"""
+
+from typing import Optional, Tuple
+
 import numpy as np
 import pandas as pd
 from statsmodels.tsa.stattools import coint
@@ -16,6 +24,9 @@ def _align_series(
     column: str,
 ) -> Optional[tuple[pd.Series, pd.Series]]:
     """Align two series on the same length and return them."""
+
+) -> Optional[Tuple[pd.Series, pd.Series]]:
+    """Return aligned series for the specified column."""
     if column not in data1.columns or column not in data2.columns:
         raise ValueError(f"Column '{column}' missing from input data")
 
@@ -35,12 +46,14 @@ def compute_pair_correlation(
     column: str = "close",
 ) -> float:
     """Compute Pearson correlation for two assets."""
+
+    """Compute Pearson correlation for two aligned asset series."""
     series = _align_series(data1, data2, column)
     if series is None:
-        return np.nan
+        return float("nan")
     s1, s2 = series
     if s1.isna().all() or s2.isna().all():
-        return np.nan
+        return float("nan")
     return float(np.corrcoef(s1, s2)[0, 1])
 
 
@@ -50,14 +63,15 @@ def cointegration_score(
     column: str = "close",
 ) -> float:
     """Return Engle-Granger cointegration test p-value."""
+    """Return the Engle-Granger cointegration p-value for two assets."""
     series = _align_series(data1, data2, column)
     if series is None:
-        return np.nan
+        return float("nan")
     s1, s2 = series
     s1 = s1.dropna()
     s2 = s2.dropna()
     min_len = min(len(s1), len(s2))
     if min_len < 2:
-        return np.nan
+        return float("nan")
     result = coint(s1.iloc[-min_len:], s2.iloc[-min_len:])
     return float(result[1])
