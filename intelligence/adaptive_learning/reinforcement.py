@@ -40,6 +40,7 @@ from common.exceptions import (
 from feature_service.features.technical import TechnicalFeatures
 from feature_service.features.market_structure import MarketStructureFeatures
 from data_storage.market_data import MarketDataRepository
+from ml_models.rl import DQNAgent
 
 # Constants
 MAX_MEMORY_SIZE = 100000
@@ -743,7 +744,7 @@ class MarketEnvironment:
         logger.info("=" * 40)
         
 
-class DQNAgent:
+class LegacyDQNAgent:
     """
     Deep Q-Network agent for reinforcement learning-based trading.
     
@@ -2102,3 +2103,7 @@ class ReinforcementLearningService:
             'asset': asset,
             'platform': platform
         }
+
+# Backward compatibility
+ReinforcementLearner = ReinforcementLearningService
+
