@@ -180,8 +180,6 @@ class InsufficientBalanceError(OrderError):
 
 
 class PositionError(ExecutionError):
-    """Raised for general position management errors."""
-=======
     """Raised for invalid operations on a trading position."""
     pass
 
