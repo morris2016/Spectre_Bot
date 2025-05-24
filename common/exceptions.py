@@ -390,6 +390,31 @@ class ModelNotFoundError(ModelError):
     """Raised when a requested ML model is not found."""
     pass
 
+
+class ModelRegistrationError(ModelError):
+    """Raised when model registration fails."""
+    pass
+
+
+class InvalidModelStateError(ModelError):
+    """Raised when a model is in an invalid state."""
+    pass
+
+
+class PositionError(ExecutionError):
+    """Base class for position-related errors."""
+    pass
+
+
+class InsufficientBalanceError(PositionError):
+    """Raised when an account balance is insufficient for a trade."""
+    pass
+
+
+class RiskExceededError(RiskError):
+    """Raised when a calculated risk exceeds configured limits."""
+    pass
+
 class DashboardError(QuantumSpectreError):
     """Raised for errors related to dashboard operations."""
     pass
@@ -820,6 +845,8 @@ __all__ = [
     'InvalidTimeframeError', 'InvalidParameterError', 'AlertDeliveryError',
     'AlertConfigurationError', 'RiskManagerError', 'PositionSizingError', 'StopLossError',
     'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError',
+    'ModelRegistrationError', 'InvalidModelStateError',
+    'PositionError', 'InsufficientBalanceError', 'RiskExceededError',
     'ArbitrageOpportunityExpiredError', 'DrawdownLimitExceededException',
     'RiskManagementException', 'ModelVersionError', 'LogAnalysisError',
     'InsufficientDataError', 'EncodingError', 'MetricCollectionError',
