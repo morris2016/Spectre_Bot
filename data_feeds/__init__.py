@@ -189,6 +189,7 @@ def create_app(config: Dict[str, Any]) -> 'DataFeedService':
     """
     # Import here to avoid circular imports
     from data_feeds.app import DataFeedService
-    
-    return DataFeedService(config)
+    from common.event_bus import EventBus
+
+    return DataFeedService(config, event_bus=EventBus.get_instance())
 
