@@ -649,6 +649,8 @@ DEFAULT_PROFIT_FACTOR_THRESHOLD = 1.5  # Minimum profit:loss ratio
 DEFAULT_WIN_RATE_THRESHOLD = 65.0  # Minimum win percentage
 DEFAULT_TRAILING_STOP_ACTIVATION = 1.0  # % profit to activate trailing stop
 DEFAULT_KELLY_FRACTION = 0.5  # Half Kelly for conservative sizing
+DEFAULT_GROWTH_FACTOR = 1.0  # Neutral growth factor for position sizing
+PARTIAL_CLOSE_LEVELS = [0.25, 0.5, 0.75]  # Default partial close percentages
 
 #======================================
 # Notification Constants
@@ -907,6 +909,9 @@ __all__ = [
     'DEFAULT_MAX_CORRELATED_TRADES', 'DEFAULT_MAX_DRAWDOWN_PERCENT',
     'DEFAULT_PROFIT_FACTOR_THRESHOLD', 'DEFAULT_WIN_RATE_THRESHOLD',
     'DEFAULT_TRAILING_STOP_ACTIVATION', 'DEFAULT_KELLY_FRACTION',
+
+    'DEFAULT_GROWTH_FACTOR', 'PARTIAL_CLOSE_LEVELS',
+
     'DEFAULT_STOP_LOSS_MULTIPLIER', 'DEFAULT_TAKE_PROFIT_MULTIPLIER',
     'POSITION_SIZE_PRECISION', 'MAX_LEVERAGE_BINANCE', 'MAX_LEVERAGE_DERIV',
     

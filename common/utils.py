@@ -16,6 +16,8 @@ import hmac
 import hashlib
 import base64
 import random
+import pickle
+import zlib
 import socket
 import string
 import decimal
@@ -3349,6 +3351,26 @@ def create_directory_if_not_exists(path: str) -> str:
     """Create directory if it does not already exist."""
     return create_directory(path, exist_ok=True)
 
+
+
+def compress_data(data: Any) -> bytes:
+    """Serialize and compress data using pickle and zlib."""
+    try:
+        serialized = pickle.dumps(data)
+        return zlib.compress(serialized)
+    except Exception as e:
+        logger.error(f"Failed to compress data: {str(e)}")
+        raise
+
+
+def decompress_data(data: bytes) -> Any:
+    """Decompress and deserialize data produced by :func:`compress_data`."""
+    try:
+        return pickle.loads(zlib.decompress(data))
+    except Exception as e:
+        logger.error(f"Failed to decompress data: {str(e)}")
+        raise
+
 class ThreadSafeDict:
     """
     Thread-safe dictionary implementation using a lock.
@@ -4445,7 +4467,11 @@ __all__ = [
     'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',
     'calculate_distance', 'calculate_distance_percentage', 'memoize',
     'is_higher_timeframe', 'threaded_calculation', 'create_batches',
+
+    'create_directory', 'create_directory_if_not_exists', 'compress_data', 'decompress_data',
+=======
     'create_directory', 'create_directory_if_not_exists',
+
     'UuidUtils', 'HashUtils', 'SecurityUtils',
     'ClassRegistry', 'AsyncService', 'Signal', 'SignalBus'
 ]
