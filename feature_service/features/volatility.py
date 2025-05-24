@@ -942,6 +942,23 @@ class VolatilityFeatures(BaseFeature):
     
     # Add more volatility indicator calculation methods as needed
 
+
+def calculate_atr(high: Union[pd.Series, List[float]], low: Union[pd.Series, List[float]],
+                  close: Union[pd.Series, List[float]], period: int = 14) -> pd.Series:
+    """Standalone Average True Range calculation."""
+    return ta.atr(high=pd.Series(high), low=pd.Series(low), close=pd.Series(close), length=period)
+
+
+def calculate_bollinger_bands(close: Union[pd.Series, List[float]], period: int = 20,
+                              std_dev: int = 2) -> Tuple[pd.Series, pd.Series, pd.Series]:
+    """Standalone Bollinger Bands calculation."""
+    series = pd.Series(close)
+    ma = series.rolling(window=period).mean()
+    std = series.rolling(window=period).std()
+    upper = ma + std_dev * std
+    lower = ma - std_dev * std
+    return upper, ma, lower
+
 def calculate_volatility_features(data, config=None):
     """
     Convenience function to calculate volatility features from OHLCV data.
@@ -955,6 +972,14 @@ def calculate_volatility_features(data, config=None):
     """
     calculator = VolatilityFeatures(config)
     return calculator.calculate_features(data)
+
+
+__all__ = [
+    "VolatilityFeatures",
+    "calculate_volatility_features",
+    "calculate_atr",
+    "calculate_bollinger_bands",
+]
 
 # Module initialization
 import os

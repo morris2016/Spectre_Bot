@@ -386,6 +386,30 @@ class StopLossError(OrderError):
     """Raised for errors related to stop-loss order management."""
     pass
 
+class PositionError(OrderError):
+    """Raised for generic position-related errors."""
+    pass
+
+class InsufficientBalanceError(PositionError):
+    """Raised when account balance is insufficient."""
+    pass
+
+class ModelRegistrationError(ModelError):
+    """Raised when a model cannot be registered."""
+    pass
+
+class RiskExceededError(RiskError):
+    """Raised when a trade exceeds configured risk limits."""
+    pass
+
+class PositionExecutionError(PositionError):
+    """Raised when a position cannot be executed."""
+    pass
+
+class InvalidModelStateError(ModelError):
+    """Raised when an ML model is in an invalid state."""
+    pass
+
 class ModelNotFoundError(ModelError):
     """Raised when a requested ML model is not found."""
     pass
@@ -819,6 +843,8 @@ __all__ = [
     'FeatureNotFoundError', 'FeatureCalculationError', 'FeatureServiceError',
     'InvalidTimeframeError', 'InvalidParameterError', 'AlertDeliveryError',
     'AlertConfigurationError', 'RiskManagerError', 'PositionSizingError', 'StopLossError',
+    'PositionError', 'InsufficientBalanceError', 'RiskExceededError', 'PositionExecutionError',
+    'ModelRegistrationError', 'InvalidModelStateError',
     'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError',
     'ArbitrageOpportunityExpiredError', 'DrawdownLimitExceededException',
     'RiskManagementException', 'ModelVersionError', 'LogAnalysisError',
