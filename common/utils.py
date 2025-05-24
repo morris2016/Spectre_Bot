@@ -3396,6 +3396,10 @@ def create_directory_if_not_exists(path: str) -> str:
 
 def compress_data(data: bytes) -> bytes:
     """Compress binary data using gzip."""
+    out = io.BytesIO()
+    with gzip.GzipFile(fileobj=out, mode="wb") as f:
+        f.write(data)
+    return out.getvalue()
     if not data:
         return b""
     return gzip.compress(data)
@@ -3409,6 +3413,7 @@ def decompress_data(data: bytes) -> bytes:
 def pivot_points(high: float, low: float, close: float) -> Dict[str, float]:
     """Backward-compatible alias for calculate_pivot_points."""
     return calculate_pivot_points(high, low, close)
+
 
 
 
