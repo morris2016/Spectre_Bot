@@ -650,12 +650,7 @@ DEFAULT_WIN_RATE_THRESHOLD = 65.0  # Minimum win percentage
 DEFAULT_TRAILING_STOP_ACTIVATION = 1.0  # % profit to activate trailing stop
 DEFAULT_KELLY_FRACTION = 0.5  # Half Kelly for conservative sizing
 DEFAULT_GROWTH_FACTOR = 1.05  # Growth multiplier for compounding strategies
-=======
-DEFAULT_GROWTH_FACTOR = 1.05  # Growth factor for compounding position sizing
 PARTIAL_CLOSE_LEVELS = [0.25, 0.5, 0.75]
-=======
-DEFAULT_GROWTH_FACTOR = 1.0  # Neutral growth factor for position sizing
-PARTIAL_CLOSE_LEVELS = [0.25, 0.5, 0.75]  # Default partial close percentages
 
 #======================================
 # Notification Constants
