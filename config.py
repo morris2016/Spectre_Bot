@@ -249,6 +249,12 @@ DEFAULT_CONFIG = {
             "performance_threshold": 0.05  # Retrain if performance drops by 5%
         }
     },
+    "ml_models": {
+        "type": "supervised",
+        "rl_algorithm": "dqn",
+        "rl_episodes": 10,
+        "rl_features": []
+    },
     "intelligence": {
         "loophole_detection": {
             "enabled": True,

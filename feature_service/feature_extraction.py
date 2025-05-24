@@ -1578,6 +1578,11 @@ class FeatureExtractor:
         column = params.get("cross_column", "close")
         if pair_data is None:
             raise ValueError("pair_data parameter required for pair_correlation")
+        """Correlation between this asset and a paired asset."""
+        pair_data = params.get("pair_data")
+        column = params.get("pair_column", "close")
+        if pair_data is None:
+            raise ValueError("pair_data parameter is required for pair_correlation")
         corr = compute_pair_correlation(data, pair_data, column=column)
         return pd.Series(corr, index=data.index, name="pair_correlation")
 
@@ -1590,5 +1595,13 @@ class FeatureExtractor:
             raise ValueError("pair_data parameter required for cointegration_pvalue")
         pvalue = cointegration_score(data, pair_data, column=column)
         return pd.Series(pvalue, index=data.index, name="cointegration_pvalue")
+
+        """Engle-Granger cointegration p-value between two assets."""
+        pair_data = params.get("pair_data")
+        column = params.get("pair_column", "close")
+        if pair_data is None:
+            raise ValueError("pair_data parameter is required for cointegration_pvalue")
+        pval = cointegration_score(data, pair_data, column=column)
+        return pd.Series(pval, index=data.index, name="cointegration_pvalue")
 
 __all__ = ['atr', 'fibonacci_levels']
