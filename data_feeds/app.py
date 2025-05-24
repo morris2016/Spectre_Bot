@@ -28,8 +28,11 @@ from data_feeds.deriv_feed import DerivFeed
 
 class DataFeedService:
     """Service for managing data feeds from various sources."""
+    
+    def __init__(self, config, loop=None, redis_client=None, db_client=None, event_bus=None):
 
     def __init__(self, config, loop=None, redis_client=None, db_client=None, event_bus: Optional[EventBus] = None):
+
         """
         Initialize the data feed service.
         
@@ -38,6 +41,7 @@ class DataFeedService:
             loop: Optional asyncio event loop
             redis_client: Optional Redis client for data publishing
             db_client: Optional database client
+            event_bus: Optional EventBus instance for inter-module messaging
         """
         self.config = config
         self.loop = loop or asyncio.get_event_loop()
@@ -238,8 +242,11 @@ def create_app(config: Dict[str, Any]) -> DataFeedService:
     except RuntimeError:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-    
+
+    event_bus = EventBus.get_instance()
+
     # Initialize service
+    service = DataFeedService(config, loop=loop, event_bus=event_bus)
     service = DataFeedService(config, loop=loop, event_bus=EventBus.get_instance())
     
     return service
