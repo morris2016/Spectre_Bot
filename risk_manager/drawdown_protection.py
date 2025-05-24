@@ -256,8 +256,19 @@ class DrawdownProtection(BaseDrawdownProtector):
                 self._exit_recovery_mode()
         elif self.drawdown_state != DrawdownState.NORMAL and not self.in_recovery_mode:
             if self.drawdown_state == DrawdownState.CRITICAL:
-                # Don't enter recovery mode in CRITICAL state (trading is paused)
-                pass
+                # Pause all trading activity and restrict assets/strategies
+                self.restricted_assets.update(self.asset_performance.keys())
+                self.restricted_strategies.update(self.strategy_performance.keys())
+                logger.critical(
+                    f"Critical drawdown reached ({self.current_drawdown:.2%}). Trading paused."
+                )
+                self.metrics_collector.record_event(
+                    "critical_drawdown",
+                    {
+                        "drawdown": float_round(self.current_drawdown, 4),
+                        "equity": float_round(self.current_equity, 2),
+                    },
+                )
             elif self.current_drawdown >= self.config.mild_threshold:
                 # Enter recovery mode
                 self._enter_recovery_mode()

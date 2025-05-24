@@ -18,10 +18,62 @@ from datetime import datetime, timedelta
 import warnings
 import math
 
+
+def calculate_atr(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> pd.Series:
+    """Compute the Average True Range."""
+    return ta.atr(high=high, low=low, close=close, length=period)
+
+
+def calculate_bollinger_bands(prices: pd.Series,
+                              period: int = 20,
+                              std: int = 2) -> Tuple[pd.Series, pd.Series, pd.Series]:
+    """Return Bollinger Bands."""
+    bb = ta.bbands(prices, length=period, std=std)
+    return bb.iloc[:, 0], bb.iloc[:, 1], bb.iloc[:, 2]
+
+
+__all__ = [
+    'calculate_atr',
+    'calculate_bollinger_bands',
+]
+
 from common.utils import timeit, numpy_rolling_window
 from common.exceptions import FeatureCalculationError
 from common.constants import VOLATILITY_INDICATOR_PARAMS
 from feature_service.features.base_feature import BaseFeature
+
+
+def calculate_atr(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> pd.Series:
+    """Simple Average True Range calculation."""
+    return ta.atr(high=high, low=low, close=close, length=period)
+
+
+def calculate_bollinger_bands(close: pd.Series, period: int = 20, std: float = 2.0) -> pd.DataFrame:
+    """Calculate Bollinger Bands."""
+    bb = ta.bbands(close, length=period, std=std)
+    return pd.DataFrame({
+        'bb_lower': bb.iloc[:, 0],
+        'bb_middle': bb.iloc[:, 1],
+        'bb_upper': bb.iloc[:, 2],
+    })
+def calculate_atr(
+    high: pd.Series,
+    low: pd.Series,
+    close: pd.Series,
+    period: int = 14,
+) -> pd.Series:
+    """Simple ATR calculation used by strategies."""
+    return ta.atr(high=high, low=low, close=close, length=period)
+
+
+def calculate_bollinger_bands(
+    close: pd.Series,
+    window: int = 20,
+    num_std_dev: float = 2.0,
+) -> Tuple[pd.Series, pd.Series, pd.Series]:
+    """Return Bollinger Bands (upper, middle, lower)."""
+    bands = ta.volatility.BollingerBands(close=close, window=window, window_dev=num_std_dev)
+    return bands.bollinger_hband(), bands.bollinger_mavg(), bands.bollinger_lband()
 
 logger = get_logger(__name__)
 
@@ -979,6 +1031,12 @@ __all__ = [
     "calculate_volatility_features",
     "calculate_atr",
     "calculate_bollinger_bands",
+
+    'calculate_atr',
+    'calculate_bollinger_bands',
+    'calculate_volatility_features',
+    'VolatilityFeatures',
+
 ]
 
 # Module initialization

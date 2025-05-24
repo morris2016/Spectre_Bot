@@ -27,6 +27,9 @@ import xgboost as xgb
 import lightgbm as lgb
 from joblib import Parallel, delayed
 
+# Import mixin for historical learning
+from .historical_memory import HistoricalMemoryMixin
+
 # Internal imports
 from common.utils import calculate_sharpe_ratio, calculate_sortino_ratio
 from common.constants import (
@@ -53,7 +56,7 @@ from strategy_brains.base_brain import BaseBrain
 logger = logging.getLogger(__name__)
 
 
-class MLBrain(BaseBrain):
+class MLBrain(HistoricalMemoryMixin, BaseBrain):
     """
     Advanced Machine Learning Trading Brain implementing various ML-based strategies
     with model selection, ensemble techniques, and continuous learning.
@@ -81,6 +84,12 @@ class MLBrain(BaseBrain):
             market_data_repo: Repository for market data access
             model_manager: Manager for ML models
         """
+        HistoricalMemoryMixin.__init__(
+            self,
+            short_window=(parameters or {}).get("short_memory", 50),
+            long_window=(parameters or {}).get("long_memory", 500),
+        )
+
         super().__init__(
             asset_id=asset_id,
             timeframe=timeframe,
@@ -1130,6 +1139,10 @@ class MLBrain(BaseBrain):
             for trade in trades:
                 feature_vector = trade.get("feature_vector", {})
                 outcome = 1 if trade.get("profitable", False) else 0
+                pnl = trade.get("pnl_percent", 0.0)
+
+                # Record trade outcome for historical memory
+                self.record_trade_result(pnl)
                 
                 if feature_vector:
                     train_features.append(feature_vector)
@@ -1163,6 +1176,9 @@ class MLBrain(BaseBrain):
                 self.confidence_level = max(0.55, self.confidence_level - 0.03)
             
             logger.info(f"ML Brain learned from {len(trades)} trades, adjusted confidence threshold to {self.confidence_level:.2f}")
+
+            # Mutate parameters based on historical success rates
+            self.mutate_parameters()
         
         except Exception as e:
             logger.error(f"Learning process failed: {str(e)}")
