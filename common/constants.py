@@ -11,7 +11,6 @@ import os
 import enum
 from pathlib import Path
 
-
 # System information
 VERSION = "1.0.0"
 CONFIG_SCHEMA_VERSION = 1
@@ -202,7 +201,9 @@ LOG_LEVELS = {
 FEATURE_PRIORITY_LEVELS = ["high", "normal", "low"]
 
 # ======================================
+DEFAULT_FEATURE_PARAMS = {}
 DEFAULT_FEATURE_PARAMS = {}  # Default parameters for feature calculations
+
 # Exchange and Trading Constants
 # ======================================
 
@@ -649,6 +650,8 @@ DEFAULT_PROFIT_FACTOR_THRESHOLD = 1.5  # Minimum profit:loss ratio
 DEFAULT_WIN_RATE_THRESHOLD = 65.0  # Minimum win percentage
 DEFAULT_TRAILING_STOP_ACTIVATION = 1.0  # % profit to activate trailing stop
 DEFAULT_KELLY_FRACTION = 0.5  # Half Kelly for conservative sizing
+DEFAULT_GROWTH_FACTOR = 1.05  # Growth factor for compounding calculations
+PARTIAL_CLOSE_LEVELS = [0.25, 0.5, 0.75]  # Portion of position to close at milestones
 DEFAULT_GROWTH_FACTOR = 1.0  # Base account growth multiplier
 
 DEFAULT_GROWTH_FACTOR = 1.05  # Growth multiplier for compounding strategies
@@ -911,6 +914,14 @@ __all__ = [
     'DEFAULT_MAX_CORRELATED_TRADES', 'DEFAULT_MAX_DRAWDOWN_PERCENT',
     'DEFAULT_PROFIT_FACTOR_THRESHOLD', 'DEFAULT_WIN_RATE_THRESHOLD',
     'DEFAULT_TRAILING_STOP_ACTIVATION', 'DEFAULT_KELLY_FRACTION',
+    'DEFAULT_STOP_LOSS_MULTIPLIER', 'DEFAULT_TAKE_PROFIT_MULTIPLIER',
+    'DEFAULT_GROWTH_FACTOR', 'PARTIAL_CLOSE_LEVELS',
+    'DEFAULT_STOP_LOSS_MULTIPLIER', 'DEFAULT_TAKE_PROFIT_MULTIPLIER',
+
+    'DEFAULT_STOP_LOSS_MULTIPLIER', 'DEFAULT_TAKE_PROFIT_MULTIPLIER',
+    'DEFAULT_GROWTH_FACTOR', 'PARTIAL_CLOSE_LEVELS',
+    'POSITION_SIZE_PRECISION', 'MAX_LEVERAGE_BINANCE', 'MAX_LEVERAGE_DERIV',
+    
     'DEFAULT_GROWTH_FACTOR', 'PARTIAL_CLOSE_LEVELS', 'DEFAULT_FIXED_STOP_PERCENTAGE',
     'DEFAULT_MIN_STOP_DISTANCE', 'DEFAULT_TRAILING_ACTIVATION_PERCENTAGE',
     'DEFAULT_TRAILING_CALLBACK_RATE', 'MAX_STOP_LEVELS',
@@ -1502,6 +1513,14 @@ EXPOSURE_LIMITS = {
 
 DEFAULT_MAX_RISK_PER_TRADE = 0.02  # 2% of account per trade
 DEFAULT_BASE_POSITION_SIZE = 0.01  # 1% of account as base position size
+MAX_LEVERAGE_BINANCE = 125
+MAX_LEVERAGE_DERIV = 100
+DEFAULT_STOP_LOSS_MULTIPLIER = 1.5
+DEFAULT_TAKE_PROFIT_MULTIPLIER = 2.0
+POSITION_SIZE_PRECISION = 4
+
+DEFAULT_GROWTH_FACTOR = 1.1  # Growth multiplier for compounding gains
+PARTIAL_CLOSE_LEVELS = [0.5, 0.75, 0.9]  # Percentage levels for scaling out
 DEFAULT_GROWTH_FACTOR = 1.0
 PARTIAL_CLOSE_LEVELS = [0.25, 0.5, 0.75]
 DEFAULT_FIXED_STOP_PERCENTAGE = 0.02
@@ -1513,6 +1532,9 @@ MAX_LEVERAGE_BINANCE = 125
 MAX_LEVERAGE_DERIV = 100
 DEFAULT_STOP_LOSS_MULTIPLIER = 1.5
 DEFAULT_TAKE_PROFIT_MULTIPLIER = 2.0
+POSITION_SIZE_PRECISION = 4
+
+
 DEFAULT_TRAILING_ACTIVATION_PERCENTAGE = 0.01
 DEFAULT_TRAILING_CALLBACK_RATE = 0.005
 MAX_STOP_LEVELS = 5
@@ -2034,19 +2056,6 @@ SignalType = {
     "TAKE_PROFIT": "take_profit"
 }
 
-# Order type enum
-OrderType = {
-    "MARKET": "market",
-    "LIMIT": "limit",
-    "STOP": "stop",
-    "STOP_LIMIT": "stop_limit"
-}
-
-# Order side enum
-OrderSide = {
-    "BUY": "buy",
-    "SELL": "sell"
-}
 
 # Asset classes
 ASSET_CLASSES = {

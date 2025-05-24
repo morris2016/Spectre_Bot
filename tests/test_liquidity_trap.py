@@ -12,6 +12,9 @@ def _getattr(name):
 fake_exceptions.__getattr__ = _getattr
 sys.modules.setdefault("common.exceptions", fake_exceptions)
 
+from intelligence.loophole_detection.microstructure import MicrostructureAnalyzer  # noqa: E402
+
+
 fake_cross_asset = types.ModuleType("feature_service.features.cross_asset")
 fake_cross_asset.compute_pair_correlation = lambda *args, **kwargs: 0.0
 fake_cross_asset.cointegration_score = lambda *args, **kwargs: 0.0
@@ -37,7 +40,6 @@ sys.modules.setdefault("common.exceptions", fake_exceptions)
 
 from intelligence.loophole_detection.microstructure import MicrostructureAnalyzer
 
-
 class DummyRepo:
     pass
 
@@ -61,6 +63,9 @@ def _build_analyzer():
 
 def _generate_trades(prices, volumes):
     trades = []
+    for price, volume in zip(prices, volumes):
+        trades.append({"price": price, "amount": volume, "side": "buy"})
+
     for p, v in zip(prices, volumes):
         trades.append({"price": p, "amount": v, "side": "buy"})
     return trades

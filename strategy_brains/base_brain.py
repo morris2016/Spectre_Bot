@@ -52,6 +52,7 @@ class BrainConfig:
     take_profit_atr_multiplier: float = 3.0
 
 
+
 class StrategyBrain(ABC):
     """
     Base class for all trading strategy brains.
