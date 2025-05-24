@@ -24,6 +24,10 @@ from empyrical import max_drawdown, sharpe_ratio, sortino_ratio, calmar_ratio
 from feature_service.processor_utils import cudf, HAS_GPU
 from numba import cuda, jit, vectorize
 import bottleneck as bn
+from feature_service.features.cross_asset import (
+    compute_pair_correlation,
+    cointegration_score,
+)
 
 from common.logger import get_logger
 from common.metrics import MetricsCollector
@@ -1548,5 +1552,35 @@ class FeatureExtractor:
         
         # Calculate VWAP
         vwap = cum_price_volume / (cum_volume + 1e-10)  # Avoid division by zero
-        
+
         return vwap
+
+    #
+    # Cross-Asset Features
+    #
+
+    @feature_calculation
+    def pair_correlation(
+        self,
+        data: pd.DataFrame,
+        params: Dict[str, Any],
+    ) -> pd.Series:
+        """Rolling correlation between two assets."""
+        other = params.get("other_series")
+        window = params.get("corr_window", 30)
+        if other is None:
+            raise ValueError("other_series parameter is required for pair correlation")
+        return compute_pair_correlation(data["close"], other, window=window)
+
+    @feature_calculation
+    def cointegration_pvalue(
+        self,
+        data: pd.DataFrame,
+        params: Dict[str, Any],
+    ) -> pd.Series:
+        """Cointegration test p-value between two assets."""
+        other = params.get("other_series")
+        if other is None:
+            raise ValueError("other_series parameter is required for cointegration")
+        pval = cointegration_score(data["close"], other)
+        return pd.Series([pval] * len(data), index=data.index, name="cointegration_pvalue")
