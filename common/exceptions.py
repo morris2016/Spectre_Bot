@@ -195,6 +195,18 @@ class RiskLimitExceededError(RiskError):
 
 
 class RiskExceededError(RiskError):
+    """Raised when calculated risk exceeds the allowed threshold."""
+    pass
+
+
+class PositionExecutionError(PositionError):
+    """Raised when a position cannot be executed properly."""
+    pass
+
+
+
+
+=======
     """Raised when a risk threshold is exceeded."""
     pass
 
@@ -225,6 +237,11 @@ class ModelTrainingError(ModelError):
 
 class ModelPredictionError(ModelError):
     """Raised when model prediction fails."""
+    pass
+
+
+class InvalidModelStateError(ModelError):
+    """Raised when a model is in an invalid state for the requested operation."""
     pass
 
 
@@ -832,9 +849,11 @@ __all__ = [
     'DatabaseQueryError', 'RedisError', 'RedisConnectionError', 'SecurityError',
     'APIKeyError', 'AuthenticationError', 'AuthorizationError', 'ExecutionError',
     'OrderError', 'OrderRejectedError', 'OrderTimeoutError', 'InsufficientFundsError',
-    'InsufficientBalanceError', 'PositionError',
+    'InsufficientBalanceError', 'PositionError', 'PositionExecutionError',
     'InvalidOrderError', 'OrderCancellationError', 'SlippageExceededError', 'NetworkError',
     'RiskError', 'RiskLimitExceededError', 'RiskExceededError', 'BacktestError', 'ModelError',
+    'ModelTrainingError', 'ModelPredictionError', 'InvalidModelStateError', 'ModelRegistrationError', 'StrategyError', 'SignalGenerationError',
+=======
     'ModelTrainingError', 'ModelPredictionError', 'ModelRegistrationError',
     'StrategyError', 'SignalGenerationError',
     'RiskError', 'RiskLimitExceededError', 'BacktestError', 'ModelError',
