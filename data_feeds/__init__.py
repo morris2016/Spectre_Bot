@@ -193,4 +193,5 @@ def create_app(config: Dict[str, Any]) -> 'DataFeedService':
 
     event_bus = EventBus.get_instance()
     return DataFeedService(config, event_bus=event_bus)
+    return DataFeedService(config, event_bus=EventBus.get_instance())
 

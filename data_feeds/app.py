@@ -30,6 +30,9 @@ class DataFeedService:
     """Service for managing data feeds from various sources."""
     
     def __init__(self, config, loop=None, redis_client=None, db_client=None, event_bus=None):
+
+    def __init__(self, config, loop=None, redis_client=None, db_client=None, event_bus: Optional[EventBus] = None):
+
         """
         Initialize the data feed service.
         
@@ -244,5 +247,6 @@ def create_app(config: Dict[str, Any]) -> DataFeedService:
 
     # Initialize service
     service = DataFeedService(config, loop=loop, event_bus=event_bus)
+    service = DataFeedService(config, loop=loop, event_bus=EventBus.get_instance())
     
     return service
