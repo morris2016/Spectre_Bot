@@ -3352,6 +3352,7 @@ def create_directory_if_not_exists(path: str) -> str:
     return create_directory(path, exist_ok=True)
 
 
+
 def compress_data(data: Any) -> bytes:
     """Serialize and compress data using pickle and zlib."""
     try:
@@ -4466,7 +4467,11 @@ __all__ = [
     'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',
     'calculate_distance', 'calculate_distance_percentage', 'memoize',
     'is_higher_timeframe', 'threaded_calculation', 'create_batches',
+
     'create_directory', 'create_directory_if_not_exists', 'compress_data', 'decompress_data',
+=======
+    'create_directory', 'create_directory_if_not_exists',
+
     'UuidUtils', 'HashUtils', 'SecurityUtils',
     'ClassRegistry', 'AsyncService', 'Signal', 'SignalBus'
 ]
