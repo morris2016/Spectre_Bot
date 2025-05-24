@@ -3412,12 +3412,6 @@ def compress_data(data: bytes) -> bytes:
     """Compress binary data using gzip."""
     out = io.BytesIO()
     with gzip.GzipFile(fileobj=out, mode="wb") as f:
-
-def compress_data(data: bytes) -> bytes:
-    """Compress binary data using gzip."""
-    out = io.BytesIO()
-    with gzip.GzipFile(fileobj=out, mode='wb') as f:
-
         f.write(data)
     return out.getvalue()
 
@@ -3426,100 +3420,6 @@ def decompress_data(data: bytes) -> bytes:
     """Decompress gzip-compressed binary data."""
     with gzip.GzipFile(fileobj=io.BytesIO(data), mode="rb") as f:
         return f.read()
-
-
-    with gzip.GzipFile(fileobj=io.BytesIO(data)) as f:
-        return f.read()
-
-def compress_data(data: Union[str, bytes]) -> bytes:
-    """Compress data using gzip."""
-    if isinstance(data, str):
-        data = data.encode("utf-8")
-    return gzip.compress(data)
-
-
-def decompress_data(data: bytes) -> str:
-    """Decompress gzip-compressed data."""
-    return gzip.decompress(data).decode("utf-8")
-
-
-def create_directory_if_not_exists(path: str) -> str:
-    """Create directory if it does not already exist."""
-    return create_directory(path, exist_ok=True)
-    def create_directory_if_not_exists(path: str) -> str:
-        """Create directory if it does not already exist."""
-        return create_directory(path, exist_ok=True)
-
-
-def create_directory_if_not_exists(path: str) -> str:
-    """Create directory if it does not already exist."""
-    return create_directory(path, exist_ok=True)
-
-
-def compress_data(data: Any) -> bytes:
-    """Serialize and gzip-compress arbitrary Python data."""
-    try:
-        serialized = pickle.dumps(data)
-        return gzip.compress(serialized)
-    except Exception as exc:  # pragma: no cover - best effort
-        logger.error("Failed to compress data: %s", exc)
-    def get_asset_precision(asset: str) -> int:
-        """Return decimal precision for a given asset."""
-        return POSITION_SIZE_PRECISION
-def get_asset_precision(asset: str) -> int:
-    """Return decimal precision for a given asset."""
-    return POSITION_SIZE_PRECISION
-
-
-    def compress_data(data: bytes) -> bytes:
-        """Compress binary data using gzip."""
-        import gzip
-        return gzip.compress(data)
-
-
-    def decompress_data(data: bytes) -> bytes:
-        """Decompress gzip-compressed binary data."""
-        import gzip
-        return gzip.decompress(data)
-def decompress_data(data: bytes) -> bytes:
-    """Decompress gzip-compressed binary data."""
-    import gzip
-    return gzip.decompress(data)
-
-
-    def compress_data(data: Any) -> bytes:
-        """Serialize and compress data using pickle and zlib."""
-        try:
-            serialized = pickle.dumps(data)
-            return zlib.compress(serialized)
-        except Exception as e:
-            logger.error(f"Failed to compress data: {str(e)}")
-            raise
-
-
-    def decompress_data(data: bytes) -> Any:
-        """Decompress and deserialize data produced by :func:`compress_data`."""
-        try:
-            decompressed = gzip.decompress(data)
-            return pickle.loads(decompressed)
-        except Exception as exc:  # pragma: no cover - best effort
-            logger.error("Failed to decompress data: %s", exc)
-            return pickle.loads(zlib.decompress(data))
-        except Exception as e:
-            logger.error(f"Failed to decompress data: {str(e)}")
-            raise
-
-def decompress_data(data: bytes) -> Any:
-    """Decompress and deserialize data produced by :func:`compress_data`."""
-    try:
-        decompressed = gzip.decompress(data)
-        return pickle.loads(decompressed)
-    except Exception as exc:  # pragma: no cover - best effort
-        logger.error("Failed to decompress data: %s", exc)
-        return pickle.loads(zlib.decompress(data))
-    except Exception as e:
-        logger.error(f"Failed to decompress data: {str(e)}")
-        raise
 
 class ThreadSafeDict:
     """

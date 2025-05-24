@@ -50,7 +50,9 @@ The QuantumSpectre Elite Trading System is built with a modular, microservice-ba
    ```bash
    pip install -r requirements-core.txt
    ```
-   Optional packages can be added later with `pip install -r requirements.txt`.
+   These include `numpy`, `pandas`, `PyYAML`, and `python-dateutil`, which are
+   required for running the test suite. Optional packages can be added later
+   with `pip install -r requirements.txt`.
 
    The optional ML stack now requires `scikit-learn>=1.3,<2.0`. Ensure
    your environment includes compatible versions of `shap`, `boruta`, and
