@@ -180,6 +180,8 @@ class InsufficientBalanceError(OrderError):
 
 
 class PositionError(ExecutionError):
+    """Raised for general position management errors."""
+=======
     """Raised for invalid operations on a trading position."""
     pass
 
@@ -194,6 +196,11 @@ class RiskLimitExceededError(RiskError):
     pass
 
 
+class RiskExceededError(RiskError):
+    """Raised when a risk threshold is exceeded."""
+    pass
+
+
 class BacktestError(QuantumSpectreError):
     """Base class for backtesting errors."""
     pass
@@ -205,6 +212,11 @@ class IntelligenceError(QuantumSpectreError):
 
 class ModelError(QuantumSpectreError):
     """Base class for ML model errors."""
+    pass
+
+
+class ModelRegistrationError(ModelError):
+    """Raised when registration of an ML model fails."""
     pass
 
 
@@ -824,6 +836,9 @@ __all__ = [
     'OrderError', 'OrderRejectedError', 'OrderTimeoutError', 'InsufficientFundsError',
     'InsufficientBalanceError', 'PositionError',
     'InvalidOrderError', 'OrderCancellationError', 'SlippageExceededError', 'NetworkError',
+    'RiskError', 'RiskLimitExceededError', 'RiskExceededError', 'BacktestError', 'ModelError',
+    'ModelTrainingError', 'ModelPredictionError', 'ModelRegistrationError',
+    'StrategyError', 'SignalGenerationError',
     'RiskError', 'RiskLimitExceededError', 'BacktestError', 'ModelError',
     'ModelTrainingError', 'ModelPredictionError', 'ModelRegistrationError', 'StrategyError', 'SignalGenerationError',
     'MonitoringError', 'AlertError', 'ResourceError', 'ResourceExhaustionError',
