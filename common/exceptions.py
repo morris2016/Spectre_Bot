@@ -169,8 +169,18 @@ class OrderExecutionError(OrderError):
     pass
 
 
+class PositionError(ExecutionError):
+    """Raised for position management errors."""
+    pass
+
+
 class InsufficientFundsError(OrderError):
     """Raised when there are insufficient funds for an order."""
+    pass
+
+
+class InsufficientBalanceError(RiskError):
+    """Raised when account balance is insufficient for a trade."""
     pass
 
 
@@ -205,6 +215,11 @@ class ModelTrainingError(ModelError):
 
 class ModelPredictionError(ModelError):
     """Raised when model prediction fails."""
+    pass
+
+
+class ModelRegistrationError(ModelError):
+    """Raised when a model fails to register."""
     pass
 
 
@@ -808,8 +823,8 @@ __all__ = [
     'APIKeyError', 'AuthenticationError', 'AuthorizationError', 'ExecutionError',
     'OrderError', 'OrderRejectedError', 'OrderTimeoutError', 'InsufficientFundsError',
     'InvalidOrderError', 'OrderCancellationError', 'SlippageExceededError', 'NetworkError',
-    'RiskError', 'RiskLimitExceededError', 'BacktestError', 'ModelError',
-    'ModelTrainingError', 'ModelPredictionError', 'StrategyError', 'SignalGenerationError',
+    'PositionError', 'RiskError', 'RiskLimitExceededError', 'BacktestError', 'ModelError',
+    'ModelTrainingError', 'ModelPredictionError', 'ModelRegistrationError', 'StrategyError', 'SignalGenerationError',
     'MonitoringError', 'AlertError', 'ResourceError', 'ResourceExhaustionError',
     'TimeoutError', 'ExchangeError', 'RateLimitError', 'FeedNotFoundError',
     'FeedInitializationError', 'FeedAuthenticationError', 'DataSourceError',
@@ -819,7 +834,7 @@ __all__ = [
     'FeatureNotFoundError', 'FeatureCalculationError', 'FeatureServiceError',
     'InvalidTimeframeError', 'InvalidParameterError', 'AlertDeliveryError',
     'AlertConfigurationError', 'RiskManagerError', 'PositionSizingError', 'StopLossError',
-    'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError',
+    'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError', 'InsufficientBalanceError',
     'ArbitrageOpportunityExpiredError', 'DrawdownLimitExceededException',
     'RiskManagementException', 'ModelVersionError', 'LogAnalysisError',
     'InsufficientDataError', 'EncodingError', 'MetricCollectionError',

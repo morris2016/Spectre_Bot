@@ -28,6 +28,7 @@ import collections
 import urllib.parse
 import numpy as np
 import pandas as pd
+import gzip
 import sys
 import asyncio
 import importlib
@@ -2069,8 +2070,8 @@ def calculate_risk_reward_ratio(risk: float, reward: float) -> float:
     return reward / risk
 
 
-def calculate_expectancy(win_rate: float, 
-                        avg_win: float, 
+def calculate_expectancy(win_rate: float,
+                        avg_win: float,
                         avg_loss: float) -> float:
     """
     Calculate system expectancy.
@@ -2085,6 +2086,43 @@ def calculate_expectancy(win_rate: float,
     """
     win_decimal = win_rate / 100
     return (win_decimal * avg_win) - ((1 - win_decimal) * avg_loss)
+
+
+def calculate_expected_value(trades: List[Union[float, Dict[str, float]]]) -> float:
+    """Calculate the expected value from a sequence of trades.
+
+    Each trade can be provided as a numeric profit/loss value or as a dictionary
+    containing a ``pnl`` or ``profit`` key. Positive values indicate winning
+    trades while negative values indicate losses.
+
+    Args:
+        trades: Collection of trade results.
+
+    Returns:
+        Expected value per trade.
+    """
+    if not trades:
+        return 0.0
+
+    pnl_values = []
+    for trade in trades:
+        if isinstance(trade, dict):
+            value = trade.get("pnl", trade.get("profit"))
+        else:
+            value = trade
+        if value is None:
+            continue
+        pnl_values.append(float(value))
+
+    if not pnl_values:
+        return 0.0
+
+    wins = [v for v in pnl_values if v > 0]
+    losses = [abs(v) for v in pnl_values if v <= 0]
+    win_rate = calculate_success_rate(len(wins), len(pnl_values))
+    avg_win = sum(wins) / len(wins) if wins else 0.0
+    avg_loss = sum(losses) / len(losses) if losses else 0.0
+    return calculate_expectancy(win_rate, avg_win, avg_loss)
 
 
 def calculate_kelly_criterion(win_rate: float, 
@@ -3307,6 +3345,23 @@ def create_directory(path, exist_ok=True):
         logger.error(f"Failed to create directory {path}: {str(e)}")
         raise
 
+
+def compress_data(data: Union[str, bytes]) -> bytes:
+    """Compress data using gzip."""
+    if isinstance(data, str):
+        data = data.encode("utf-8")
+    return gzip.compress(data)
+
+
+def decompress_data(data: bytes) -> str:
+    """Decompress gzip-compressed data."""
+    return gzip.decompress(data).decode("utf-8")
+
+
+def create_directory_if_not_exists(path: str) -> str:
+    """Create directory if it does not already exist."""
+    return create_directory(path, exist_ok=True)
+
 class ThreadSafeDict:
     """
     Thread-safe dictionary implementation using a lock.
@@ -4402,7 +4457,9 @@ __all__ = [
     'is_price_consolidating', 'is_breaking_out', 'calculate_pivot_points',
     'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',
     'calculate_distance', 'calculate_distance_percentage', 'memoize',
-    'is_higher_timeframe', 'threaded_calculation', 'create_batches', 'UuidUtils', 'HashUtils', 'SecurityUtils',
+    'is_higher_timeframe', 'threaded_calculation', 'create_batches',
+    'create_directory', 'create_directory_if_not_exists', 'compress_data', 'decompress_data',
+    'UuidUtils', 'HashUtils', 'SecurityUtils',
     'ClassRegistry', 'AsyncService', 'Signal', 'SignalBus'
 ]
 

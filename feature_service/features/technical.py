@@ -21,6 +21,32 @@ from common.exceptions import FeatureCalculationError
 from common.constants import TECHNICAL_INDICATOR_PARAMS
 from feature_service.features.base_feature import BaseFeature
 
+
+def calculate_rsi(close: pd.Series, period: int = 14) -> pd.Series:
+    """Standalone RSI calculation"""
+    return ta.rsi(close, length=period)
+
+
+def calculate_macd(
+    close: pd.Series,
+    fast_period: int = 12,
+    slow_period: int = 26,
+    signal_period: int = 9,
+) -> Tuple[pd.Series, pd.Series, pd.Series]:
+    """Standalone MACD calculation"""
+    macd = ta.macd(close, fast=fast_period, slow=slow_period, signal=signal_period)
+    return macd.macd, macd.macd_signal, macd.macd_diff
+
+
+def calculate_adx(
+    high: pd.Series,
+    low: pd.Series,
+    close: pd.Series,
+    period: int = 14,
+) -> pd.Series:
+    """Standalone ADX calculation"""
+    return ta.adx(high, low, close, length=period)
+
 logger = get_logger(__name__)
 
 
@@ -813,6 +839,15 @@ def calculate_technical_features(data, config=None):
     """
     calculator = TechnicalFeatures(config)
     return calculator.calculate_features(data)
+
+
+__all__ = [
+    'calculate_rsi',
+    'calculate_macd',
+    'calculate_adx',
+    'calculate_technical_features',
+    'TechnicalFeatures',
+]
 
 # Module initialization
 import os
