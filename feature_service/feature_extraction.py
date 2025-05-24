@@ -1573,6 +1573,11 @@ class FeatureExtractor:
 
     @feature_calculation
     def pair_correlation(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
+        """Correlation between this asset and another."""
+        pair_data = params.get("pair_data")
+        column = params.get("cross_column", "close")
+        if pair_data is None:
+            raise ValueError("pair_data parameter required for pair_correlation")
         """Correlation between this asset and a paired asset."""
         pair_data = params.get("pair_data")
         column = params.get("pair_column", "close")
@@ -1583,6 +1588,14 @@ class FeatureExtractor:
 
     @feature_calculation
     def cointegration_pvalue(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
+        """Cointegration test p-value with another asset."""
+        pair_data = params.get("pair_data")
+        column = params.get("cross_column", "close")
+        if pair_data is None:
+            raise ValueError("pair_data parameter required for cointegration_pvalue")
+        pvalue = cointegration_score(data, pair_data, column=column)
+        return pd.Series(pvalue, index=data.index, name="cointegration_pvalue")
+
         """Engle-Granger cointegration p-value between two assets."""
         pair_data = params.get("pair_data")
         column = params.get("pair_column", "close")
