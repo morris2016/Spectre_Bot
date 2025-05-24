@@ -16,6 +16,8 @@ import hmac
 import hashlib
 import base64
 import random
+import pickle
+import zlib
 import socket
 import string
 import decimal
@@ -3369,6 +3371,25 @@ def decompress_data(data: bytes) -> bytes:
     """Decompress gzip-compressed binary data."""
     import gzip
     return gzip.decompress(data)
+=======
+
+def compress_data(data: Any) -> bytes:
+    """Serialize and compress data using pickle and zlib."""
+    try:
+        serialized = pickle.dumps(data)
+        return zlib.compress(serialized)
+    except Exception as e:
+        logger.error(f"Failed to compress data: {str(e)}")
+        raise
+
+
+def decompress_data(data: bytes) -> Any:
+    """Decompress and deserialize data produced by :func:`compress_data`."""
+    try:
+        return pickle.loads(zlib.decompress(data))
+    except Exception as e:
+        logger.error(f"Failed to decompress data: {str(e)}")
+        raise
 
 class ThreadSafeDict:
     """
@@ -4470,6 +4491,8 @@ __all__ = [
     'create_directory', 'create_directory_if_not_exists',
     'get_asset_precision',
     'compress_data', 'decompress_data',
+=======
+    'create_directory', 'create_directory_if_not_exists', 'compress_data', 'decompress_data',
     'UuidUtils', 'HashUtils', 'SecurityUtils',
     'ClassRegistry', 'AsyncService', 'Signal', 'SignalBus'
 ]
