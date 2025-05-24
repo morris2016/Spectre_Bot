@@ -12,6 +12,8 @@ def _getattr(name):
 fake_exceptions.__getattr__ = _getattr
 sys.modules.setdefault("common.exceptions", fake_exceptions)
 
+from intelligence.loophole_detection.microstructure import MicrostructureAnalyzer  # noqa: E402
+
 # Patch problematic cross_asset module used during MicrostructureAnalyzer import
 fake_cross_asset = types.ModuleType("feature_service.features.cross_asset")
 sys.modules.setdefault("feature_service.features.cross_asset", fake_cross_asset)
