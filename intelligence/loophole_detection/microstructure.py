@@ -10,19 +10,12 @@ that can be leveraged for high-probability trades.
 """
 
 import numpy as np
-import pandas as pd
-from typing import Dict, List, Optional, Tuple, Union, Any
+from typing import Any, Dict, List, Optional
 from dataclasses import dataclass
-import logging
-import asyncio
 from datetime import datetime, timedelta
-import time
-from scipy import stats
 from collections import deque, defaultdict
 
 from common.logger import get_logger
-from common.utils import calculate_vwap, exponential_smooth, calculate_imbalance
-from common.exceptions import DataQualityError, AnalysisError
 from data_storage.market_data import MarketDataRepository
 from feature_service.features.order_flow import OrderFlowAnalyzer
 from feature_service.features.volume import VolumeProfileAnalyzer
@@ -94,6 +87,9 @@ class MicrostructureAnalyzer:
         self.order_flow_momentum_window = config.get("order_flow_momentum_window", 20)
         self.tape_reading_window = config.get("tape_reading_window", 50)
         self.exhaust_volume_ratio = config.get("exhaust_volume_ratio", 2.5)
+        self.liquidity_trap_threshold = config.get("liquidity_trap_threshold", 0.002)
+        self.liquidity_trap_window = config.get("liquidity_trap_window", 20)
+        self.trap_volume_ratio = config.get("trap_volume_ratio", 0.5)
         
         # State tracking
         self.order_book_snapshots = defaultdict(lambda: deque(maxlen=1000))
@@ -352,7 +348,11 @@ class MicrostructureAnalyzer:
         # Detect abnormal bid-ask spread behavior
         spread_signals = await self._detect_abnormal_spreads(symbol)
         signals.extend(spread_signals)
-        
+
+        # Detect liquidity traps
+        trap_signals = await self._detect_liquidity_traps(symbol)
+        signals.extend(trap_signals)
+
         return signals
     
     async def _create_imbalance_signal(
@@ -1732,6 +1732,55 @@ class MicrostructureAnalyzer:
             )
             signals.append(signal)
         
+        return signals
+
+    async def _detect_liquidity_traps(self, symbol: str) -> List[MicrostructureSignal]:
+        """Detect potential liquidity trap patterns."""
+        signals = []
+
+        window = self.liquidity_trap_window
+
+        if len(self.trade_history[symbol]) < window * 2:
+            return signals
+
+        recent_trades = list(self.trade_history[symbol])[-window * 2:]
+        pre_trades = recent_trades[:window]
+        trap_trades = recent_trades[window:]
+
+        pre_prices = [float(t["data"]["price"]) for t in pre_trades]
+        trap_prices = [float(t["data"]["price"]) for t in trap_trades]
+        pre_vol = sum(float(t["data"].get("amount", 0)) for t in pre_trades)
+        trap_vol = sum(float(t["data"].get("amount", 0)) for t in trap_trades)
+
+        if not pre_prices or not trap_prices or pre_vol == 0:
+            return signals
+
+        pre_avg = np.mean(pre_prices)
+        spike_range = max(trap_prices) - min(trap_prices)
+
+        price_reverted = abs(trap_prices[-1] - pre_avg) / pre_avg < self.liquidity_trap_threshold
+        spike_enough = spike_range / pre_avg > self.liquidity_trap_threshold * 2
+        low_volume = trap_vol / pre_vol < self.trap_volume_ratio
+
+        if price_reverted and spike_enough and low_volume:
+            direction = "sell" if trap_prices[0] > pre_avg else "buy"
+            signal = MicrostructureSignal(
+                timestamp=datetime.utcnow(),
+                symbol=symbol,
+                direction=direction,
+                signal_type="liquidity_trap",
+                confidence=0.7,
+                price_level=trap_prices[-1],
+                expected_move=pre_avg * 0.0005,
+                time_validity=60,
+                metadata={
+                    "pre_avg_price": pre_avg,
+                    "spike_range": spike_range,
+                    "volume_ratio": trap_vol / pre_vol,
+                },
+            )
+            signals.append(signal)
+
         return signals
             
     async def evaluate_signal_performance(self, symbol: str, signal: MicrostructureSignal, result: Dict[str, Any]) -> None:
