@@ -174,6 +174,16 @@ class InsufficientFundsError(OrderError):
     pass
 
 
+class InsufficientBalanceError(OrderError):
+    """Raised when an account balance is too low to execute an action."""
+    pass
+
+
+class PositionError(ExecutionError):
+    """Raised when there is an invalid or unknown position state."""
+    pass
+
+
 class RiskError(QuantumSpectreError):
     """Base class for risk management errors."""
     pass
@@ -205,6 +215,11 @@ class ModelTrainingError(ModelError):
 
 class ModelPredictionError(ModelError):
     """Raised when model prediction fails."""
+    pass
+
+
+class ModelRegistrationError(ModelError):
+    """Raised when registering a model fails."""
     pass
 
 
@@ -807,9 +822,10 @@ __all__ = [
     'DatabaseQueryError', 'RedisError', 'RedisConnectionError', 'SecurityError',
     'APIKeyError', 'AuthenticationError', 'AuthorizationError', 'ExecutionError',
     'OrderError', 'OrderRejectedError', 'OrderTimeoutError', 'InsufficientFundsError',
+    'InsufficientBalanceError', 'PositionError',
     'InvalidOrderError', 'OrderCancellationError', 'SlippageExceededError', 'NetworkError',
     'RiskError', 'RiskLimitExceededError', 'BacktestError', 'ModelError',
-    'ModelTrainingError', 'ModelPredictionError', 'StrategyError', 'SignalGenerationError',
+    'ModelTrainingError', 'ModelPredictionError', 'ModelRegistrationError', 'StrategyError', 'SignalGenerationError',
     'MonitoringError', 'AlertError', 'ResourceError', 'ResourceExhaustionError',
     'TimeoutError', 'ExchangeError', 'RateLimitError', 'FeedNotFoundError',
     'FeedInitializationError', 'FeedAuthenticationError', 'DataSourceError',
