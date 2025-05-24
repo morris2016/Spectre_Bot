@@ -161,7 +161,7 @@ class ModelTrainer:
             self.use_gpu = False
     
     async def train_model(
-        self, 
+        self,
         model_name: str,
         model_type: str,
         symbol: str,
@@ -218,10 +218,21 @@ class ModelTrainer:
         async with self._training_semaphore:
             start_time = time.time()
             model_id = f"{model_name}_{str(uuid.uuid4())[:8]}"
-            
+
             try:
                 logger.info(f"Starting training for model {model_name} ({model_type}) for {symbol} on {exchange}")
-                
+
+                # Delegate to reinforcement learning pipeline when configured
+                if self.config.get("ml_models.type") == "reinforcement":
+                    from ml_models.rl.trainer import _train_rl_agent
+                    return await _train_rl_agent(
+                        self.config,
+                        symbol,
+                        exchange,
+                        timeframe,
+                        training_period,
+                    )
+
                 # Track GPU memory usage if available
                 if self.use_gpu and (self.cuda_available or self.tf_gpu_available):
                     initial_gpu_memory = await run_in_thread_pool(get_gpu_memory_usage)
