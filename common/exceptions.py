@@ -181,6 +181,8 @@ class InsufficientBalanceError(OrderError):
 
 class PositionError(ExecutionError):
     """Raised for general position management errors."""
+=======
+    """Raised for invalid operations on a trading position."""
     pass
 
 
@@ -225,6 +227,11 @@ class ModelTrainingError(ModelError):
 
 class ModelPredictionError(ModelError):
     """Raised when model prediction fails."""
+    pass
+
+
+class ModelRegistrationError(ModelError):
+    """Raised when model registration fails."""
     pass
 
 
@@ -832,6 +839,8 @@ __all__ = [
     'RiskError', 'RiskLimitExceededError', 'RiskExceededError', 'BacktestError', 'ModelError',
     'ModelTrainingError', 'ModelPredictionError', 'ModelRegistrationError',
     'StrategyError', 'SignalGenerationError',
+    'RiskError', 'RiskLimitExceededError', 'BacktestError', 'ModelError',
+    'ModelTrainingError', 'ModelPredictionError', 'ModelRegistrationError', 'StrategyError', 'SignalGenerationError',
     'MonitoringError', 'AlertError', 'ResourceError', 'ResourceExhaustionError',
     'TimeoutError', 'ExchangeError', 'RateLimitError', 'FeedNotFoundError',
     'FeedInitializationError', 'FeedAuthenticationError', 'DataSourceError',

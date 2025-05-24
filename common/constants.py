@@ -649,6 +649,8 @@ DEFAULT_PROFIT_FACTOR_THRESHOLD = 1.5  # Minimum profit:loss ratio
 DEFAULT_WIN_RATE_THRESHOLD = 65.0  # Minimum win percentage
 DEFAULT_TRAILING_STOP_ACTIVATION = 1.0  # % profit to activate trailing stop
 DEFAULT_KELLY_FRACTION = 0.5  # Half Kelly for conservative sizing
+DEFAULT_GROWTH_FACTOR = 1.0  # Neutral growth factor for position sizing
+PARTIAL_CLOSE_LEVELS = [0.25, 0.5, 0.75]  # Default partial close percentages
 
 #======================================
 # Notification Constants
@@ -910,6 +912,12 @@ __all__ = [
     'DEFAULT_STOP_LOSS_MULTIPLIER', 'DEFAULT_TAKE_PROFIT_MULTIPLIER',
     'POSITION_SIZE_PRECISION', 'MAX_LEVERAGE_BINANCE', 'MAX_LEVERAGE_DERIV',
     'DEFAULT_GROWTH_FACTOR', 'PARTIAL_CLOSE_LEVELS',
+=======
+
+    'DEFAULT_GROWTH_FACTOR', 'PARTIAL_CLOSE_LEVELS',
+
+    'DEFAULT_STOP_LOSS_MULTIPLIER', 'DEFAULT_TAKE_PROFIT_MULTIPLIER',
+    'POSITION_SIZE_PRECISION', 'MAX_LEVERAGE_BINANCE', 'MAX_LEVERAGE_DERIV',
     
     # Notification enums
     'NotificationType', 'NotificationPriority', 'NotificationChannel',
@@ -1470,6 +1478,10 @@ DEFAULT_STOP_LOSS_MULTIPLIER = 1.5
 DEFAULT_TAKE_PROFIT_MULTIPLIER = 2.0
 POSITION_SIZE_PRECISION = 4
 PARTIAL_CLOSE_LEVELS = [0.25, 0.5, 0.75]
+=======
+DEFAULT_STOP_LOSS_MULTIPLIER = 1.5
+DEFAULT_TAKE_PROFIT_MULTIPLIER = 2.0
+POSITION_SIZE_PRECISION = 4
 
 MAX_POSITION_CORRELATION = 0.7  # Maximum allowed correlation between positions
 CORRELATION_LOOKBACK_PERIODS = 100  # Periods to look back for correlation calculation
