@@ -15,6 +15,8 @@ import uuid
 import hmac
 import hashlib
 import base64
+import gzip
+import pickle
 import random
 import socket
 import string
@@ -2069,8 +2071,8 @@ def calculate_risk_reward_ratio(risk: float, reward: float) -> float:
     return reward / risk
 
 
-def calculate_expectancy(win_rate: float, 
-                        avg_win: float, 
+def calculate_expectancy(win_rate: float,
+                        avg_win: float,
                         avg_loss: float) -> float:
     """
     Calculate system expectancy.
@@ -2085,6 +2087,43 @@ def calculate_expectancy(win_rate: float,
     """
     win_decimal = win_rate / 100
     return (win_decimal * avg_win) - ((1 - win_decimal) * avg_loss)
+
+
+def calculate_expected_value(trades: List[Union[float, Dict[str, float]]]) -> float:
+    """Calculate the expected value from a sequence of trades.
+
+    Each trade can be provided as a numeric profit/loss value or as a dictionary
+    containing a ``pnl`` or ``profit`` key. Positive values indicate winning
+    trades while negative values indicate losses.
+
+    Args:
+        trades: Collection of trade results.
+
+    Returns:
+        Expected value per trade.
+    """
+    if not trades:
+        return 0.0
+
+    pnl_values = []
+    for trade in trades:
+        if isinstance(trade, dict):
+            value = trade.get("pnl", trade.get("profit"))
+        else:
+            value = trade
+        if value is None:
+            continue
+        pnl_values.append(float(value))
+
+    if not pnl_values:
+        return 0.0
+
+    wins = [v for v in pnl_values if v > 0]
+    losses = [abs(v) for v in pnl_values if v <= 0]
+    win_rate = calculate_success_rate(len(wins), len(pnl_values))
+    avg_win = sum(wins) / len(wins) if wins else 0.0
+    avg_loss = sum(losses) / len(losses) if losses else 0.0
+    return calculate_expectancy(win_rate, avg_win, avg_loss)
 
 
 def calculate_kelly_criterion(win_rate: float, 
@@ -2448,6 +2487,11 @@ def calculate_pivot_points(high: float, low: float, close: float) -> Dict[str, f
         's2': s2,
         's3': s3
     }
+
+
+def pivot_points(high: float, low: float, close: float) -> Dict[str, float]:
+    """Alias for :func:`calculate_pivot_points` for backward compatibility."""
+    return calculate_pivot_points(high, low, close)
 
 def obfuscate_sensitive_data(data: Union[str, Dict, List], level: int = 1) -> Union[str, Dict, List]:
     """
@@ -3305,6 +3349,31 @@ def create_directory(path, exist_ok=True):
         return path
     except Exception as e:
         logger.error(f"Failed to create directory {path}: {str(e)}")
+        raise
+
+
+def create_directory_if_not_exists(path: str) -> str:
+    """Create directory if it does not already exist."""
+    return create_directory(path, exist_ok=True)
+
+
+def compress_data(data: Any) -> bytes:
+    """Serialize and gzip-compress arbitrary Python data."""
+    try:
+        serialized = pickle.dumps(data)
+        return gzip.compress(serialized)
+    except Exception as exc:  # pragma: no cover - best effort
+        logger.error("Failed to compress data: %s", exc)
+        raise
+
+
+def decompress_data(data: bytes) -> Any:
+    """Decompress and deserialize data produced by :func:`compress_data`."""
+    try:
+        decompressed = gzip.decompress(data)
+        return pickle.loads(decompressed)
+    except Exception as exc:  # pragma: no cover - best effort
+        logger.error("Failed to decompress data: %s", exc)
         raise
 
 class ThreadSafeDict:
@@ -4402,7 +4471,10 @@ __all__ = [
     'is_price_consolidating', 'is_breaking_out', 'calculate_pivot_points',
     'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',
     'calculate_distance', 'calculate_distance_percentage', 'memoize',
-    'is_higher_timeframe', 'threaded_calculation', 'create_batches', 'UuidUtils', 'HashUtils', 'SecurityUtils',
+    'is_higher_timeframe', 'threaded_calculation', 'create_batches',
+    'create_directory', 'create_directory_if_not_exists',
+    'compress_data', 'decompress_data', 'pivot_points',
+    'UuidUtils', 'HashUtils', 'SecurityUtils',
     'ClassRegistry', 'AsyncService', 'Signal', 'SignalBus'
 ]
 

@@ -174,6 +174,16 @@ class InsufficientFundsError(OrderError):
     pass
 
 
+class PositionError(ExecutionError):
+    """Raised for invalid or inconsistent position state."""
+    pass
+
+
+class PositionExecutionError(ExecutionError):
+    """Raised when an error occurs executing a position."""
+    pass
+
+
 class RiskError(QuantumSpectreError):
     """Base class for risk management errors."""
     pass
@@ -181,6 +191,16 @@ class RiskError(QuantumSpectreError):
 
 class RiskLimitExceededError(RiskError):
     """Raised when a risk limit is exceeded."""
+    pass
+
+
+class InsufficientBalanceError(RiskError):
+    """Raised when account balance is too low for an operation."""
+    pass
+
+
+class RiskExceededError(RiskError):
+    """Raised when calculated risk exceeds configured threshold."""
     pass
 
 
@@ -205,6 +225,16 @@ class ModelTrainingError(ModelError):
 
 class ModelPredictionError(ModelError):
     """Raised when model prediction fails."""
+    pass
+
+
+class InvalidModelStateError(ModelError):
+    """Raised when a model is in an invalid state for the requested operation."""
+    pass
+
+
+class ModelRegistrationError(ModelError):
+    """Raised when registering a model fails."""
     pass
 
 
@@ -819,6 +849,8 @@ __all__ = [
     'FeatureNotFoundError', 'FeatureCalculationError', 'FeatureServiceError',
     'InvalidTimeframeError', 'InvalidParameterError', 'AlertDeliveryError',
     'AlertConfigurationError', 'RiskManagerError', 'PositionSizingError', 'StopLossError',
+    'InsufficientBalanceError', 'RiskExceededError', 'PositionError', 'PositionExecutionError',
+    'ModelRegistrationError', 'InvalidModelStateError',
     'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError',
     'ArbitrageOpportunityExpiredError', 'DrawdownLimitExceededException',
     'RiskManagementException', 'ModelVersionError', 'LogAnalysisError',

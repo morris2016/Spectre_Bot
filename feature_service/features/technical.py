@@ -21,6 +21,41 @@ from common.exceptions import FeatureCalculationError
 from common.constants import TECHNICAL_INDICATOR_PARAMS
 from feature_service.features.base_feature import BaseFeature
 
+
+def calculate_rsi(close: pd.Series, period: int = 14) -> pd.Series:
+    """Standalone RSI calculation used by strategy modules."""
+    return ta.rsi(close, length=period)
+
+
+def calculate_macd(
+    close: pd.Series,
+    fastperiod: int = 12,
+    slowperiod: int = 26,
+    signalperiod: int = 9,
+) -> pd.DataFrame:
+    """Return MACD, signal, and histogram as a DataFrame."""
+    macd_df = ta.macd(close, fast=fastperiod, slow=slowperiod, signal=signalperiod)
+    return pd.DataFrame({
+        'macd': macd_df.iloc[:, 0],
+        'signal': macd_df.iloc[:, 2],
+        'hist': macd_df.iloc[:, 1],
+    })
+
+
+def calculate_adx(
+    high: pd.Series,
+    low: pd.Series,
+    close: pd.Series,
+    period: int = 14,
+) -> pd.DataFrame:
+    """Return ADX, plus_DI, minus_DI as a DataFrame."""
+    adx_df = ta.adx(high=high, low=low, close=close, length=period)
+    return pd.DataFrame({
+        'adx': adx_df[f'ADX_{period}'],
+        'plus_di': adx_df[f'DMP_{period}'],
+        'minus_di': adx_df[f'DMN_{period}'],
+    })
+
 logger = get_logger(__name__)
 
 
@@ -813,6 +848,15 @@ def calculate_technical_features(data, config=None):
     """
     calculator = TechnicalFeatures(config)
     return calculator.calculate_features(data)
+
+
+__all__ = [
+    'calculate_rsi',
+    'calculate_macd',
+    'calculate_adx',
+    'calculate_technical_features',
+    'TechnicalFeatures',
+]
 
 # Module initialization
 import os
