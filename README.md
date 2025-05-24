@@ -84,13 +84,18 @@ The QuantumSpectre Elite Trading System is built with a modular, microservice-ba
    python main.py
    ```
 
-7. In a separate terminal, start the ui:
+7. In a separate terminal, start the ui for development:
    ```
    cd ui
    npm start
    ```
 
-8. Access the dashboard at http://localhost:8000
+8. To create a production build of the ui:
+   ```
+   npm run build
+   ```
+
+9. Access the dashboard at http://localhost:8000
 
 ## Usage
 
@@ -121,6 +126,11 @@ DERIV_API_SECRET=your_deriv_api_secret
 ### Trading Settings
 
 Adjust risk parameters, strategy settings, and execution preferences in the dashboard UI or directly in the configuration.
+
+### ML Model Types
+
+Use `ml_models.type` to switch between supervised and reinforcement learning. Set it to `reinforcement` to
+train a reinforcement learning agent.
 
 ## Advanced Features
 
