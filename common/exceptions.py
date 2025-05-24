@@ -305,6 +305,11 @@ class ModelLoadError(QuantumSpectreError):
     """Raised when there is an error loading a machine learning model."""
     pass
 
+
+class ModelSaveError(ModelError):
+    """Raised when saving a model fails."""
+    pass
+
 class DataParsingError(DataError):
     """Raised when there is an error parsing data."""
     pass
@@ -380,6 +385,26 @@ class RiskManagerError(RiskError):
 
 class PositionSizingError(RiskError):
     """Raised for errors in position sizing calculations."""
+    pass
+
+
+class PositionError(RiskError):
+    """Raised for general position management errors."""
+    pass
+
+
+class PositionExecutionError(PositionError):
+    """Raised when executing a position fails."""
+    pass
+
+
+class InsufficientBalanceError(RiskError):
+    """Raised when account balance is insufficient."""
+    pass
+
+
+class RiskExceededError(RiskError):
+    """Raised when an action exceeds configured risk limits."""
     pass
 
 class StopLossError(OrderError):
@@ -588,6 +613,16 @@ class MigrationError(DatabaseError):
 
 class ModelValidationError(ModelError):
     """Raised for validation errors related to models."""
+    pass
+
+
+class InvalidModelStateError(ModelError):
+    """Raised when a model is in an invalid state."""
+    pass
+
+
+class ModelRegistrationError(ModelError):
+    """Raised when registering a model fails."""
     pass
 
 class WebSocketError(FeedConnectionError):
@@ -814,7 +849,7 @@ __all__ = [
     'TimeoutError', 'ExchangeError', 'RateLimitError', 'FeedNotFoundError',
     'FeedInitializationError', 'FeedAuthenticationError', 'DataSourceError',
     'FeedSubscriptionError', 'FeedDataError', 'ParsingError', 'DataFeedConnectionError',
-    'ModelLoadError', 'DataParsingError', 'CredentialError', 'SecurityViolationError',
+    'ModelLoadError', 'ModelSaveError', 'DataParsingError', 'CredentialError', 'SecurityViolationError',
     'RegimeDetectionError', 'NewsFeedError', 'NewsParsingError', 'NewsSourceUnavailableError',
     'FeatureNotFoundError', 'FeatureCalculationError', 'FeatureServiceError',
     'InvalidTimeframeError', 'InvalidParameterError', 'AlertDeliveryError',
@@ -831,7 +866,8 @@ __all__ = [
     'CircuitBreakerTrippedException', 'PatternRecognitionError', 'PatternNotFoundError',
     'DataAlignmentError', 'RESTClientError', 'RequestError', 'DataTransformationError',
     'CapitalManagementError', 'MicrostructureAnalysisError', 'MigrationError',
-    'ModelValidationError', 'WebSocketError', 'SubscriptionError', 'DataFetchError',
+    'ModelValidationError', 'ModelRegistrationError', 'InvalidModelStateError',
+    'WebSocketError', 'SubscriptionError', 'DataFetchError',
     'BacktestConfigError', 'BacktestDataError', 'BacktestStrategyError', 'AssetCouncilError',
     'BrainNotFoundError', 'CouncilError', 'DecisionError', 'PerformanceTrackerError',
     'InvalidStrategyError', 'SimulationError', 'SentimentAnalysisError', 'RegimeCouncilError',
@@ -841,5 +877,6 @@ __all__ = [
     'DataInsufficientError', 'InvalidAssetError', 'InvalidTimeRangeError',
     'InvalidFeatureDefinitionError', 'FeatureTimeoutError',
     'TimeSeriesConnectionError', 'TimeSeriesQueryError', 'TimeSeriesDataError',
-    'TimeSeriesConfigError'
+    'TimeSeriesConfigError', 'PositionError', 'PositionExecutionError',
+    'InsufficientBalanceError', 'RiskExceededError'
 ]

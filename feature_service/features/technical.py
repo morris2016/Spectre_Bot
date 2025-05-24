@@ -814,6 +814,27 @@ def calculate_technical_features(data, config=None):
     calculator = TechnicalFeatures(config)
     return calculator.calculate_features(data)
 
+
+def calculate_rsi(series: pd.Series, period: int = 14) -> pd.Series:
+    """Standalone RSI calculation."""
+    return ta.rsi(series, length=period)
+
+
+def calculate_macd(series: pd.Series,
+                   fastperiod: int = 12,
+                   slowperiod: int = 26,
+                   signalperiod: int = 9) -> pd.DataFrame:
+    """Standalone MACD calculation."""
+    df = ta.macd(series, fast=fastperiod, slow=slowperiod, signal=signalperiod)
+    df.columns = ['macd', 'macdhist', 'macdsignal']
+    return df
+
+
+__all__ = [
+    'TechnicalFeatures', 'calculate_technical_features',
+    'calculate_rsi', 'calculate_macd'
+]
+
 # Module initialization
 import os
 if __name__ == "__main__":

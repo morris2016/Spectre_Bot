@@ -7,10 +7,9 @@ the QuantumSpectre Elite Trading System. It serves as a foundation for all other
 system components.
 """
 
-import sys
 import logging
 import importlib
-from typing import Dict, List, Set, Any, Optional, Type, Callable
+from typing import Dict, List, Any, Callable
 from pathlib import Path
 
 # Version information
@@ -35,18 +34,19 @@ _registry = {
     "plugins": set()
 }
 
+
 class Registry:
     """Registry for system components with automatic registration."""
-    
+
     @classmethod
     def register(cls, category: str, name: str = None) -> Callable:
         """
         Decorator for registering components.
-        
+
         Args:
             category: Component category
             name: Optional component name
-            
+
         Returns:
             Decorator function
         """
@@ -54,83 +54,83 @@ class Registry:
             nonlocal name
             if name is None:
                 name = obj.__name__
-                
+
             if category in _registry:
                 _registry[category].add((name, obj))
             else:
                 _registry[category] = {(name, obj)}
-                
+
             return obj
         return decorator
-    
+
     @classmethod
     def get(cls, category: str, name: str = None) -> Any:
         """
         Get a registered component.
-        
+
         Args:
             category: Component category
             name: Component name (optional - returns all if None)
-            
+
         Returns:
             Component or dictionary of components
         """
         if category not in _registry:
             return None
-            
+
         if name is None:
             # Return dictionary of all components in this category
             return {name: obj for name, obj in _registry[category]}
-            
+
         # Find specific component
         for comp_name, obj in _registry[category]:
             if comp_name == name:
                 return obj
-                
+
         return None
-    
+
     @classmethod
     def list(cls, category: str = None) -> Dict[str, List[str]]:
         """
         List registered components.
-        
+
         Args:
             category: Component category (optional - lists all if None)
-            
+
         Returns:
             Dictionary of component names by category
         """
         result = {}
-        
+
         if category is not None:
             if category in _registry:
                 result[category] = [name for name, _ in _registry[category]]
         else:
             for cat, components in _registry.items():
                 result[cat] = [name for name, _ in components]
-                
+
         return result
-    
+
     @classmethod
     def unregister(cls, category: str, name: str) -> bool:
         """
         Unregister a component.
-        
+
         Args:
             category: Component category
             name: Component name
-            
+
         Returns:
             True if component was unregistered, False if not found
         """
         if category not in _registry:
             return False
-            
+
         for comp_name, obj in list(_registry[category]):
             if comp_name == name:
                 _registry[category].remove((comp_name, obj))
                 return True
-                
+
         return False
 
 def register_utils(name: str = None) -> Callable:
@@ -194,7 +194,7 @@ def discover_modules() -> None:
     for py_file in common_dir.glob("*.py"):
         if py_file.stem == "__init__":
             continue
-            
+
         module_name = f"common.{py_file.stem}"
         try:
             importlib.import_module(module_name)
@@ -207,8 +207,8 @@ discover_modules()
 
 # Export version info
 __all__ = [
-    "__version__", 
-    "__author__", 
+    "__version__",
+    "__author__",
     "__license__",
     "Registry",
     "register_utils",
