@@ -195,7 +195,9 @@ class PerformanceTracker:
         try:
             # Load overall performance
             overall_metrics = self.db_client.query(
-                "SELECT * FROM performance_metrics WHERE type = 'overall' ORDER BY timestamp DESC LIMIT 1"
+                "SELECT * FROM performance_metrics "
+                "WHERE type = 'overall' "
+                "ORDER BY timestamp DESC LIMIT 1"
             )
             
             if overall_metrics and len(overall_metrics) > 0:
@@ -206,9 +208,11 @@ class PerformanceTracker:
             # Load asset-specific performance
             for asset_key in self.asset_performance:
                 asset_metrics = self.db_client.query(
-                    "SELECT * FROM performance_metrics WHERE type = 'asset' "
-                    "AND name = ? ORDER BY timestamp DESC LIMIT 1",
-                    (asset_key,)
+                    "SELECT * FROM performance_metrics "
+                    "WHERE type = 'asset' "
+                    "AND name = ? "
+                    "ORDER BY timestamp DESC LIMIT 1",
+                    (asset_key,),
                 )
                 
                 if asset_metrics and len(asset_metrics) > 0:
@@ -219,9 +223,11 @@ class PerformanceTracker:
             # Load strategy-specific performance
             for strategy_key in self.strategy_performance:
                 strategy_metrics = self.db_client.query(
-                    "SELECT * FROM performance_metrics WHERE type = 'strategy' "
-                    "AND name = ? ORDER BY timestamp DESC LIMIT 1",
-                    (strategy_key,)
+                    "SELECT * FROM performance_metrics "
+                    "WHERE type = 'strategy' "
+                    "AND name = ? "
+                    "ORDER BY timestamp DESC LIMIT 1",
+                    (strategy_key,),
                 )
                 
                 if strategy_metrics and len(strategy_metrics) > 0:
