@@ -46,6 +46,7 @@ import spacy
 from config import Config
 from common.logger import get_logger
 from common.utils import (
+    retry_with_backoff_decorator, rate_limit, SafeDict, hash_content,
     retry_with_backoff_decorator,
     rate_limit,
     SafeDict,
@@ -238,6 +239,9 @@ class SocialMediaFeed(BaseDataFeed):
     def initialize_nlp_models(self):
         """Initialize NLP models for sentiment analysis and entity recognition"""
         try:
+            # Ensure required NLTK resources are available without downloading
+            safe_nltk_download('tokenizers/punkt')
+            safe_nltk_download('vader_lexicon')
             # Download required NLTK resources if not already present
             try:
                 nltk.data.find('tokenizers/punkt')

@@ -33,9 +33,6 @@ class HyperOptService:
                 final_params[k] = v
         return final_params
 
-"""Hyperparameter optimization utilities using Optuna or grid search."""
-
-from __future__ import annotations
 
 import itertools
 import logging
