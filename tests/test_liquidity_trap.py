@@ -19,6 +19,14 @@ sys.modules.setdefault("feature_service.features.cross_asset", fake_cross_asset)
 
 from intelligence.loophole_detection.microstructure import MicrostructureAnalyzer  # noqa: E402
 
+def _getattr(name):
+    return Exception
+
+fake_exceptions.__getattr__ = _getattr
+sys.modules.setdefault("common.exceptions", fake_exceptions)
+
+from intelligence.loophole_detection.microstructure import MicrostructureAnalyzer
+
 
 class DummyRepo:
     pass
