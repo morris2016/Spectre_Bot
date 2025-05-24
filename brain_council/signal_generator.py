@@ -78,8 +78,9 @@ class SignalGenerator:
                         self.min_confidence)
 
     async def initialize(self) -> None:
-        """Initialize dependent components."""
-        await self.performance_tracker.initialize()
+        """Await initialization of dependent components."""
+        if self.performance_tracker.initialization_task is not None:
+            await self.performance_tracker.initialization_task
     
     async def generate_signal(self, voting_results: Dict[str, VotingResult], 
                        market_data: Dict[str, Any], 
