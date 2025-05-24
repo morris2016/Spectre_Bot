@@ -11,7 +11,14 @@ const slice = createSlice({
         state.list.push(action.payload);
       },
       prepare(alert) {
-        return { payload: { id: Date.now(), ...alert } };
+        return {
+          payload: {
+            id: Date.now(),
+            timestamp: Date.now(),
+            severity: 'info',
+            ...alert,
+          },
+        };
       }
     },
     removeAlert(state, action) {
