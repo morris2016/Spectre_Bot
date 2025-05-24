@@ -122,6 +122,11 @@ DERIV_API_SECRET=your_deriv_api_secret
 
 Adjust risk parameters, strategy settings, and execution preferences in the dashboard UI or directly in the configuration.
 
+### ML Model Types
+
+Use `ml_models.type` to switch between supervised and reinforcement learning. Set it to `reinforcement` to
+train a reinforcement learning agent.
+
 ## Advanced Features
 
 ### Custom Strategies

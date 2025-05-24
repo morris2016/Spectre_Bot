@@ -11,6 +11,7 @@ set of specialized ML models optimized for different market patterns and conditi
 import os
 import logging
 from typing import Dict, List, Any, Set, Optional, Union, Tuple
+from .hyperopt import HyperOptService
 
 # Set up module level logger
 logger = logging.getLogger(__name__)
@@ -23,6 +24,7 @@ from ml_models.model_manager import ModelManager
 from ml_models.training import ModelTrainer
 from ml_models.prediction import PredictionEngine
 from ml_models.feature_importance import FeatureImportanceAnalyzer
+from ml_models.rl import RLAgent, DQNAgent, PPOAgent
 
 # Model type constants
 MODEL_TYPE_REGRESSION = 'regression'
