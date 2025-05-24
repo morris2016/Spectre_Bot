@@ -52,6 +52,7 @@ class BrainConfig:
 
 
 
+
 class StrategyBrain(ABC):
     """
     Base class for all trading strategy brains.

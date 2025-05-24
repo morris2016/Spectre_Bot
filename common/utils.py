@@ -35,6 +35,8 @@ import collections
 import urllib.parse
 import numpy as np
 import pandas as pd
+import logging
+import nltk
 import gzip
 import sys
 import asyncio
@@ -3394,6 +3396,27 @@ def create_directory_if_not_exists(path: str) -> str:
     return create_directory(path, exist_ok=True)
 
 
+def safe_nltk_download(resource: str, quiet: bool = True) -> bool:
+    """Check for an NLTK resource without downloading.
+
+    If the resource is not found locally, log a warning and return ``False``
+    instead of attempting a network download. This prevents network timeouts
+    when running in restricted environments.
+
+    Args:
+        resource: Name of the NLTK resource (e.g. ``'vader_lexicon'``).
+        quiet: Unused, maintained for API compatibility.
+
+    Returns:
+        ``True`` if the resource is available locally, otherwise ``False``.
+    """
+    try:
+        nltk.data.find(resource)
+        return True
+    except LookupError:
+        logger = logging.getLogger(__name__)
+        logger.warning("NLTK resource '%s' not available; skipping download", resource)
+        return False
 def compress_data(data: bytes) -> bytes:
     """Compress binary data using gzip."""
     out = io.BytesIO()
@@ -4573,6 +4596,7 @@ __all__ = [
     'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',
     'calculate_distance', 'calculate_distance_percentage', 'memoize',
     'is_higher_timeframe', 'threaded_calculation', 'create_batches',
+    'create_directory', 'create_directory_if_not_exists', 'safe_nltk_download',
     'create_directory', 'create_directory_if_not_exists',
     'compress_data', 'decompress_data',
 
