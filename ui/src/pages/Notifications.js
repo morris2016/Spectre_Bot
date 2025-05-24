@@ -1,7 +1,76 @@
 import React from 'react';
+import {
+  Box,
+  Typography,
+  Paper,
+  IconButton,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Button,
+} from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import { useDispatch, useSelector } from 'react-redux';
+import { actions as alertsActions } from '../store/slices/alertsSlice';
 
+/**
+ * Notifications history page with dismiss and clear options.
+ */
 const Notifications = () => {
-  return <div>Notifications Page</div>;
+  const dispatch = useDispatch();
+  const alerts = useSelector((state) => state.alerts.list);
+
+  const handleDismiss = (id) => {
+    dispatch(alertsActions.removeAlert(id));
+  };
+
+  const handleClear = () => {
+    dispatch(alertsActions.clearAlerts());
+  };
+
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Typography variant="h4">Notifications</Typography>
+      <Paper sx={{ p: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+          <Button onClick={handleClear} disabled={alerts.length === 0}>
+            Clear All
+          </Button>
+        </Box>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell>Type</TableCell>
+              <TableCell>Message</TableCell>
+              <TableCell align="right">Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {alerts.map((alert) => (
+              <TableRow key={alert.id}>
+                <TableCell>{alert.type}</TableCell>
+                <TableCell>{alert.message}</TableCell>
+                <TableCell align="right">
+                  <IconButton size="small" onClick={() => handleDismiss(alert.id)}>
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            ))}
+            {alerts.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={3} align="center">
+                  No notifications
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </Paper>
+    </Box>
+  );
 };
 
 export default Notifications;
