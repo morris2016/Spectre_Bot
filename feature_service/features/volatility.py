@@ -23,6 +23,21 @@ from common.exceptions import FeatureCalculationError
 from common.constants import VOLATILITY_INDICATOR_PARAMS
 from feature_service.features.base_feature import BaseFeature
 
+
+def calculate_atr(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> pd.Series:
+    """Simple Average True Range calculation."""
+    return ta.atr(high=high, low=low, close=close, length=period)
+
+
+def calculate_bollinger_bands(close: pd.Series, period: int = 20, std: float = 2.0) -> pd.DataFrame:
+    """Calculate Bollinger Bands."""
+    bb = ta.bbands(close, length=period, std=std)
+    return pd.DataFrame({
+        'bb_lower': bb.iloc[:, 0],
+        'bb_middle': bb.iloc[:, 1],
+        'bb_upper': bb.iloc[:, 2],
+    })
+
 logger = get_logger(__name__)
 
 
@@ -955,6 +970,13 @@ def calculate_volatility_features(data, config=None):
     """
     calculator = VolatilityFeatures(config)
     return calculator.calculate_features(data)
+
+
+__all__ = [
+    'calculate_atr',
+    'calculate_bollinger_bands',
+    'calculate_volatility_features',
+]
 
 # Module initialization
 import os

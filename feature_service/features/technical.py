@@ -19,6 +19,35 @@ import warnings
 from common.utils import timeit, numpy_rolling_window
 from common.exceptions import FeatureCalculationError
 from common.constants import TECHNICAL_INDICATOR_PARAMS
+
+
+def calculate_rsi(close: pd.Series, period: int = 14) -> pd.Series:
+    """Standalone RSI calculation."""
+    return ta.rsi(close, length=period)
+
+
+def calculate_macd(close: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9) -> pd.DataFrame:
+    """Standalone MACD calculation returning macd, signal and histogram."""
+    macd_df = ta.macd(close, fast=fast, slow=slow, signal=signal)
+    return pd.DataFrame({
+        'macd': macd_df.iloc[:, 0],
+        'signal': macd_df.iloc[:, 2],
+        'hist': macd_df.iloc[:, 1],
+    })
+
+
+def calculate_adx(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> pd.Series:
+    """Standalone ADX calculation."""
+    return ta.adx(high=high, low=low, close=close, length=period).iloc[:, 0]
+
+
+def calculate_stochastic(high: pd.Series, low: pd.Series, close: pd.Series, k: int = 14, d: int = 3) -> pd.DataFrame:
+    """Standalone Stochastic Oscillator calculation."""
+    stoch = ta.stoch(high, low, close, k, d)
+    return pd.DataFrame({
+        'stoch_k': stoch.iloc[:, 0],
+        'stoch_d': stoch.iloc[:, 1],
+    })
 from feature_service.features.base_feature import BaseFeature
 
 logger = get_logger(__name__)
@@ -813,6 +842,15 @@ def calculate_technical_features(data, config=None):
     """
     calculator = TechnicalFeatures(config)
     return calculator.calculate_features(data)
+
+
+__all__ = [
+    'calculate_rsi',
+    'calculate_macd',
+    'calculate_adx',
+    'calculate_stochastic',
+    'calculate_technical_features',
+]
 
 # Module initialization
 import os
