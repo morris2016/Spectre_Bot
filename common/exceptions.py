@@ -170,6 +170,18 @@ class OrderExecutionError(OrderError):
 
 
 class PositionError(ExecutionError):
+    """Raised for errors related to position management."""
+    pass
+
+
+class PositionExecutionError(PositionError):
+    """Raised when a position operation fails during execution."""
+    pass
+
+
+class InvalidPositionStateError(PositionError):
+    """Raised when a position is in an unexpected state."""
+
     """Raised for position management errors."""
     pass
 
@@ -178,6 +190,9 @@ class InsufficientFundsError(OrderError):
     """Raised when there are insufficient funds for an order."""
     pass
 
+
+class InsufficientBalanceError(OrderError):
+    """Raised when account balance is too low for an operation."""
 
 class InsufficientBalanceError(RiskError):
     """Raised when account balance is insufficient for a trade."""
@@ -206,6 +221,12 @@ class RiskError(QuantumSpectreError):
 class RiskLimitExceededError(RiskError):
     """Raised when a risk limit is exceeded."""
     pass
+
+
+class RiskExceededError(RiskError):
+    """Raised when an operation would exceed defined risk parameters."""
+    pass
+
 
 
 class InsufficientBalanceError(RiskError):
@@ -265,6 +286,12 @@ class ModelTrainingError(ModelError):
 class ModelPredictionError(ModelError):
     """Raised when model prediction fails."""
     pass
+
+
+class ModelSaveError(ModelError):
+    """Raised when saving a model fails."""
+    pass
+
 
 
 class InvalidModelStateError(ModelError):
@@ -515,6 +542,11 @@ class ModelNotFoundError(ModelError):
     """Raised when a requested ML model is not found."""
     pass
 
+
+class ModelRegistrationError(ModelError):
+    """Raised when a model fails to register with the system."""
+    pass
+
 class DashboardError(QuantumSpectreError):
     """Raised for errors related to dashboard operations."""
     pass
@@ -531,12 +563,22 @@ class DrawdownLimitExceededException(RiskLimitExceededError):
     """Raised when a drawdown limit is exceeded."""
     pass
 
+
+class MaxDrawdownExceededError(RiskLimitExceededError):
+    """Raised when maximum allowed drawdown is breached."""
+    pass
+
 class RiskManagementException(RiskError):
     """General exception for risk management issues."""
     pass
 
 class ModelVersionError(ModelError):
     """Raised for issues related to model versioning."""
+    pass
+
+
+class InvalidModelStateError(ModelError):
+    """Raised when a model is in an invalid state for the requested operation."""
     pass
 
 class LogAnalysisError(MonitoringError):
@@ -932,6 +974,13 @@ __all__ = [
     'DatabaseQueryError', 'RedisError', 'RedisConnectionError', 'SecurityError',
     'APIKeyError', 'AuthenticationError', 'AuthorizationError', 'ExecutionError',
     'OrderError', 'OrderRejectedError', 'OrderTimeoutError', 'InsufficientFundsError',
+    'InsufficientBalanceError',
+    'InvalidOrderError', 'OrderCancellationError', 'SlippageExceededError', 'NetworkError',
+    'PositionError', 'PositionExecutionError',
+    'InvalidPositionStateError',
+    'RiskError', 'RiskLimitExceededError', 'RiskExceededError', 'BacktestError', 'ModelError',
+    'ModelTrainingError', 'ModelPredictionError', 'ModelRegistrationError', 'InvalidModelStateError', 'StrategyError', 'SignalGenerationError',
+
     'InsufficientBalanceError', 'PositionError', 'PositionExecutionError',
     'InvalidPositionStateError',
     'InvalidOrderError', 'OrderCancellationError', 'SlippageExceededError', 'NetworkError',
@@ -952,7 +1001,7 @@ __all__ = [
     'GPUNotAvailableError', 'TimeoutError', 'ExchangeError', 'RateLimitError', 'FeedNotFoundError',
     'FeedInitializationError', 'FeedAuthenticationError', 'DataSourceError',
     'FeedSubscriptionError', 'FeedDataError', 'ParsingError', 'DataFeedConnectionError',
-    'ModelLoadError', 'DataParsingError', 'CredentialError', 'SecurityViolationError',
+    'ModelLoadError', 'ModelSaveError', 'DataParsingError', 'CredentialError', 'SecurityViolationError',
     'RegimeDetectionError', 'NewsFeedError', 'NewsParsingError', 'NewsSourceUnavailableError',
     'FeatureNotFoundError', 'FeatureCalculationError', 'FeatureServiceError',
     'InvalidTimeframeError', 'InvalidParameterError', 'AlertDeliveryError',
@@ -961,6 +1010,8 @@ __all__ = [
     'InsufficientBalanceError', 'RiskExceededError', 'PositionError', 'PositionExecutionError',
     'ModelRegistrationError', 'InvalidModelStateError',
     'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError',
+    'ArbitrageOpportunityExpiredError', 'DrawdownLimitExceededException', 'MaxDrawdownExceededError',
+    'RiskManagementException', 'ModelVersionError', 'InvalidModelStateError', 'LogAnalysisError',
     'InsufficientBalanceError', 'PositionError', 'RiskExceededError',
     'ModelRegistrationError', 'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError',
     'MarketDataError', 'CalculationError',

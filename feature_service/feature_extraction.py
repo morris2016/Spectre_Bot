@@ -54,6 +54,24 @@ from common.exceptions import (
     FeatureCalculationError, InvalidFeatureDefinitionError
 )
 
+
+def atr(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> pd.Series:
+    """Simple ATR calculation used by tests."""
+    return ta.atr(high=high, low=low, close=close, length=period)
+
+
+def fibonacci_levels(high: float, low: float) -> Dict[str, float]:
+    """Compute basic Fibonacci retracement levels."""
+    diff = high - low
+    return {
+        '0.0%': high,
+        '23.6%': high - diff * 0.236,
+        '38.2%': high - diff * 0.382,
+        '50.0%': high - diff * 0.5,
+        '61.8%': high - diff * 0.618,
+        '100%': low,
+    }
+
 logger = get_logger(__name__)
 metrics = MetricsCollector.get_instance("feature_service.extractor")
 

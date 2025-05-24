@@ -9,9 +9,15 @@ This module defines the base class for all strategy brains in the system.
 import time
 import asyncio
 from abc import ABC, abstractmethod
+
+from dataclasses import dataclass
+from enum import Enum
+from typing import Dict, List, Any, Optional
+
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Any, Optional, Union
+
 
 from common.logger import get_logger
 from common.metrics import MetricsCollector
@@ -33,6 +39,9 @@ class TradeDirection(Enum):
 @dataclass
 class BrainConfig:
     """Base configuration for strategy brains."""
+    
+    pass
+
 
     # Arbitrary strategy parameters
     parameters: Dict[str, Any] = field(default_factory=dict)
@@ -42,6 +51,7 @@ class BrainConfig:
     max_position_size: float = 0.05
     stop_loss_atr_multiplier: float = 1.5
     take_profit_atr_multiplier: float = 3.0
+
 
 
 class StrategyBrain(ABC):
