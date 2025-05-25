@@ -27,7 +27,7 @@ from common.exceptions import (
     ExchangeError
 )
 from common.utils.retry import async_retry_with_backoff
-from common.utils.event_bus import EventBus
+from common.event_bus import EventBus
 
 from .base_connector import BaseConnector
 

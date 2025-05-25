@@ -117,6 +117,8 @@ DEFAULT_CONFIG = {
         "assets_dir": "./ui/assets",
         "template_dir": "./ui/templates",
         "cache_dir": "./ui/cache",
+        "static_dir": "./ui/dist",
+        "index_file": "index.html",
         "debug": False,
         "ssl": False,
         "ssl_cert": None,
@@ -249,6 +251,12 @@ DEFAULT_CONFIG = {
             "performance_threshold": 0.05  # Retrain if performance drops by 5%
         }
     },
+    "ml_models": {
+        "type": "supervised",
+        "rl_algorithm": "dqn",
+        "rl_episodes": 10,
+        "rl_features": []
+    },
     "intelligence": {
         "loophole_detection": {
             "enabled": True,
@@ -363,6 +371,7 @@ DEFAULT_CONFIG = {
         "batch_size": 1024, # Added default batch size
         "timeframes": ["1m", "5m", "15m", "1h", "4h", "1d"],
         "real_time": True,
+        "cross_asset_features": True,
         "history_length": {
             "1m": 24,    # 24 hours
             "5m": 72,    # 3 days
@@ -378,7 +387,8 @@ DEFAULT_CONFIG = {
             "sentiment": True,
             "market_structure": True,
             "order_flow": True,
-            "pattern": True
+            "pattern": True,
+            "cross_asset": True
         }
     },
     "brain_council": {

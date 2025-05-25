@@ -10,6 +10,8 @@ system components.
 import logging
 import importlib
 from typing import Callable, Dict, List, Any
+
+from typing import Dict, List, Any, Callable
 from pathlib import Path
 
 # Version information
@@ -31,7 +33,7 @@ _registry = {
     "patterns": set(),
     "indicators": set(),
     "hooks": set(),
-    "plugins": set()
+    "plugins": set(),
 }
 
 
@@ -220,6 +222,7 @@ def discover_modules() -> None:
 
 # Automatically discover modules when package is imported
 discover_modules()
+
 
 # Export version info
 __all__ = [
