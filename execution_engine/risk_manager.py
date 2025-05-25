@@ -1565,3 +1565,14 @@ class PositionManager:
         minutes, seconds = divmod(remainder, 60)
         
         return f"{int(hours)}:{int(minutes):02d}:{int(seconds):02d}"
+
+
+class RiskManager:
+    """Minimal placeholder risk manager."""
+
+    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
+        self.config = config or {}
+
+    async def validate_trade(self, *args: Any, **kwargs: Any) -> bool:
+        """Validate a trade request. Always returns True for now."""
+        return True
