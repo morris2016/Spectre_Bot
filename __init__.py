@@ -10,6 +10,7 @@ system components.
 import logging
 import importlib
 from typing import Dict, List, Any, Callable
+
 from pathlib import Path
 
 # Version information
@@ -31,7 +32,7 @@ _registry = {
     "patterns": set(),
     "indicators": set(),
     "hooks": set(),
-    "plugins": set()
+    "plugins": set(),
 }
 
 
@@ -50,6 +51,7 @@ class Registry:
         Returns:
             Decorator function
         """
+
         def decorator(obj: Any) -> Any:
             nonlocal name
             if name is None:
@@ -61,6 +63,7 @@ class Registry:
                 _registry[category] = {(name, obj)}
 
             return obj
+
         return decorator
 
     @classmethod
@@ -214,11 +217,13 @@ def discover_modules() -> None:
             importlib.import_module(module_name)
         except Exception as e:
             # Log but continue
+
             logging.warning(f"Failed to import module {module_name}: {str(e)}")
 
 
 # Automatically discover modules when package is imported
 discover_modules()
+
 
 # Export version info
 __all__ = [
@@ -238,5 +243,6 @@ __all__ = [
     "register_pattern",
     "register_indicator",
     "register_hook",
-    "register_plugin"
+    "register_plugin",
 ]
+
