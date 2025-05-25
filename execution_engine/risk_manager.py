@@ -1568,6 +1568,15 @@ class PositionManager:
 
 
 class RiskManager:
+    """Minimal placeholder risk manager."""
+
+    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
+        self.config = config or {}
+
+    async def validate_trade(self, *args: Any, **kwargs: Any) -> bool:
+        """Validate a trade request. Always returns True for now."""
+        return True
+
     """Minimal risk manager placeholder."""
 
     def __init__(self, *args, **kwargs) -> None:

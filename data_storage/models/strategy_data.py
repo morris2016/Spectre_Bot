@@ -576,12 +576,15 @@ class StrategyGeneticHistory(Base):
 
 
 class PositionModel(Base):
+    """Minimal position model used for execution history."""
     """Simplified model for executed positions."""
     """Model for storing executed trading positions."""
 
     __tablename__ = 'positions'
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    strategy_id = Column(UUID(as_uuid=True), ForeignKey('strategies.id'))
+    symbol = Column(String(20), nullable=False)
     strategy_id = Column(UUID(as_uuid=True), ForeignKey('strategies.id'), nullable=False)
     symbol = Column(String(50), nullable=False)
     side = Column(String(10), nullable=False)
@@ -592,6 +595,11 @@ class PositionModel(Base):
     quantity = Column(Float, nullable=False)
     entry_price = Column(Float, nullable=False)
     exit_price = Column(Float, nullable=True)
+    opened_at = Column(DateTime, default=datetime.datetime.utcnow)
+    closed_at = Column(DateTime, nullable=True)
+
+    strategy = relationship('Strategy', backref=backref('positions', lazy='dynamic'))
+
     status = Column(String(20), default='open')
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)

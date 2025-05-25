@@ -215,6 +215,9 @@ ORDER_TYPE = OrderType
 # Aliases for backward compatibility
 ORDER_TYPE = OrderType
 
+# Aliases for backward compatibility
+ORDER_TYPE = OrderType
+
 # Order sides
 
 class OrderSide(enum.Enum):
@@ -290,6 +293,23 @@ POSITION_STATUSES = [ps.value for ps in PositionStatus]
 # Backward compatibility
 POSITION_STATUS = PositionStatus
 
+# Backwards compatibility
+ORDER_STATUS = OrderStatus
+
+
+# Position lifecycle statuses
+class PositionStatus(enum.Enum):
+    PENDING = "pending"
+    OPEN = "open"
+    PARTIALLY_CLOSED = "partially_closed"
+    CLOSED = "closed"
+    FAILED = "failed"
+
+POSITION_STATUSES = [ps.value for ps in PositionStatus]
+
+# Backward compatibility
+POSITION_STATUS = PositionStatus
+
 # Trigger types for stop and take profit orders
 class TriggerType(enum.Enum):
     PRICE = "price"           # Regular price based trigger
@@ -303,6 +323,8 @@ class TimeInForce(enum.Enum):
     IOC = "ioc"  # Immediate or Cancel
     FOK = "fok"  # Fill or Kill
     GTD = "gtd"  # Good Till Date
+
+TIME_IN_FORCE = TimeInForce
 
 TIME_IN_FORCE = TimeInForce
 
@@ -629,6 +651,7 @@ __all__ = [
     'POSITION_SIZE_PRECISION', 'MAX_LEVERAGE_BINANCE', 'MAX_LEVERAGE_DERIV',
     'DEFAULT_GROWTH_FACTOR', 'PARTIAL_CLOSE_LEVELS',
     'DEFAULT_FIXED_STOP_PERCENTAGE', 'DEFAULT_MIN_STOP_DISTANCE',
+
     'DEFAULT_TRAILING_ACTIVATION_PERCENTAGE', 'DEFAULT_TRAILING_CALLBACK_RATE',
     'MAX_STOP_LEVELS', 'DEFAULT_CHANDELIER_EXIT_MULTIPLIER',
 
@@ -1193,7 +1216,10 @@ MAX_LEVERAGE_DERIV = 100
 DEFAULT_STOP_LOSS_MULTIPLIER = 1.5
 DEFAULT_TAKE_PROFIT_MULTIPLIER = 2.0
 POSITION_SIZE_PRECISION = 4
-
+DEFAULT_GROWTH_FACTOR = 1.05
+PARTIAL_CLOSE_LEVELS = [0.25, 0.5, 0.75]
+DEFAULT_FIXED_STOP_PERCENTAGE = 0.02
+DEFAULT_MIN_STOP_DISTANCE = 0.001
 MAX_POSITION_CORRELATION = 0.7  # Maximum allowed correlation between positions
 CORRELATION_LOOKBACK_PERIODS = 100  # Periods to look back for correlation calculation
 
@@ -1727,6 +1753,8 @@ SignalType = {
 }
 
 # Order type mapping
+ORDER_TYPE_LEGACY_MAP = {
+=======
 ORDER_TYPE_DICT = {
     "MARKET": "market",
     "LIMIT": "limit",
@@ -1735,6 +1763,8 @@ ORDER_TYPE_DICT = {
 }
 
 # Order side mapping
+ORDER_SIDE_LEGACY_MAP = {
+
 ORDER_SIDE_DICT = {
     "BUY": "buy",
     "SELL": "sell"
