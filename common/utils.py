@@ -3414,7 +3414,6 @@ def create_directory_if_not_exists(path: str) -> str:
     return create_directory(path, exist_ok=True)
 
 
-
 ASSET_PRECISION_MAP = {
     'BTC': 8,
     'ETH': 8,
@@ -4661,7 +4660,6 @@ __all__ = [
     'calculate_distance', 'calculate_distance_percentage', 'memoize',
     'is_higher_timeframe', 'threaded_calculation', 'create_batches',
     'create_directory', 'create_directory_if_not_exists',
-
 
     'create_directory', 'create_directory_if_not_exists',
     'create_directory', 'create_directory_if_not_exists', 'safe_nltk_download',

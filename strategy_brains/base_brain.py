@@ -46,6 +46,7 @@ class BrainConfig:
     short_memory: int = 50
     long_memory: int = 500
 
+
     # Arbitrary strategy parameters
     parameters: Dict[str, Any] = field(default_factory=dict)
 
