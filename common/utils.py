@@ -2271,10 +2271,7 @@ def calculate_expected_value(trades: List[Union[float, Dict[str, float]]]) -> fl
     return calculate_expectancy(win_rate, avg_win, avg_loss)
 
 
-
-def calculate_kelly_criterion(win_rate: float, avg_win_loss_ratio: float) -> float:
-
-def calculate_kelly_criterion(win_rate: float, 
+def calculate_kelly_criterion(win_rate: float,
                              avg_win_loss_ratio: float) -> float:
 
     """
@@ -3633,17 +3630,6 @@ def safe_nltk_download(resource: str, quiet: bool = True) -> bool:
     instead of attempting a network download. This prevents network timeouts
     when running in restricted environments.
 
-def compress_object(data: Any) -> bytes:
-    """Serialize and gzip-compress arbitrary Python objects."""
-    serialized = pickle.dumps(data)
-    return gzip.compress(serialized)
-
-
-def decompress_object(data: bytes) -> Any:
-    """Decompress and deserialize data produced by :func:`compress_object`."""
-    decompressed = gzip.decompress(data)
-    return pickle.loads(decompressed)
-
     Args:
         resource: Name of the NLTK resource (e.g. ``'vader_lexicon'``).
         quiet: Unused, maintained for API compatibility.
@@ -3658,6 +3644,18 @@ def decompress_object(data: bytes) -> Any:
         logger = logging.getLogger(__name__)
         logger.warning("NLTK resource '%s' not available; skipping download", resource)
         return False
+
+
+def compress_object(data: Any) -> bytes:
+    """Serialize and gzip-compress arbitrary Python objects."""
+    serialized = pickle.dumps(data)
+    return gzip.compress(serialized)
+
+
+def decompress_object(data: bytes) -> Any:
+    """Decompress and deserialize data produced by :func:`compress_object`."""
+    decompressed = gzip.decompress(data)
+    return pickle.loads(decompressed)
 def compress_data(data: bytes) -> bytes:
     """Compress binary data using gzip."""
     out = io.BytesIO()

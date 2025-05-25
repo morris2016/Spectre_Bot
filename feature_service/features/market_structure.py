@@ -1440,22 +1440,17 @@ class MarketStructureFeature(BaseFeature):
 MarketStructureFeatures = MarketStructureFeature
 
 
-def identify_swing_points(df: pd.DataFrame, timeframe: str) -> List[SwingPoint]:
-    """Convenience wrapper to extract swing points."""
-    return MarketStructureFeature()._identify_swing_points(df, timeframe)
-
-
-__all__ = ['MarketStructureFeature', 'MarketStructureFeatures', 'SwingPoint', 'identify_swing_points']
-    """Convenience wrapper for swing point detection."""
-    ms = MarketStructureFeature()
-    return ms._identify_swing_points(df, timeframe)
-def identify_swing_points(df: pd.DataFrame, timeframe: str, lookback: int = 20) -> List[SwingPoint]:
+def identify_swing_points(
+    df: pd.DataFrame, timeframe: str, lookback: int = 20
+) -> List[SwingPoint]:
     """Convenience wrapper to identify swing points."""
     feature = MarketStructureFeature({'swing_lookback': lookback})
     return feature._identify_swing_points(df, timeframe)
-def identify_swing_points(df: pd.DataFrame, timeframe: str) -> List[SwingPoint]:
-    """Convenience wrapper for swing point detection."""
-    feature = MarketStructureFeature()
-    return feature._identify_swing_points(df, timeframe)
 
-__all__ = ['identify_swing_points']
+
+__all__ = [
+    'MarketStructureFeature',
+    'MarketStructureFeatures',
+    'SwingPoint',
+    'identify_swing_points',
+]
