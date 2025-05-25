@@ -29,7 +29,7 @@ from common.exceptions import (
 )
 from common.utils.retry import async_retry_with_backoff
 from common.utils.rate_limiter import RateLimiter
-from common.utils.event_bus import EventBus
+from common.event_bus import EventBus
 
 logger = get_logger(__name__)
 
