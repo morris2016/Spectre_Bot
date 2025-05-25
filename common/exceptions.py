@@ -179,19 +179,6 @@ class InvalidAssetError(DataValidationError):
     pass
 
 
-class PositionError(ExecutionError):
-    """Base class for position-related errors."""
-    pass
-
-
-class InsufficientBalanceError(PositionError):
-    """Raised when account balance is insufficient for a position."""
-    pass
-
-
-class PositionExecutionError(PositionError):
-    """Raised when a position operation fails."""
-    pass
 
 
 class RiskError(QuantumSpectreError):
@@ -248,14 +235,6 @@ class DataIntegrityError(DataError):
     pass
 
 
-class ModelRegistrationError(ModelError):
-    """Raised when registering a model fails."""
-    pass
-
-
-class InvalidModelStateError(ModelError):
-    """Raised when a model is in an invalid state."""
-    pass
 
 
 class StrategyError(QuantumSpectreError):
@@ -629,14 +608,6 @@ class RiskExceededError(RiskError):
     """Raised when a trade exceeds defined risk parameters."""
     pass
 
-class ModelRegistrationError(ModelError):
-    """Raised when an ML model cannot be registered."""
-    pass
-
-
-class InvalidPositionStateError(PositionError):
-    """Raised when a position enters an invalid state."""
-    pass
 
 
 class MaxDrawdownExceededError(RiskError):

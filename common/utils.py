@@ -2245,8 +2245,6 @@ def calculate_expected_value(trades: List[Union[float, Dict[str, float]]]) -> fl
     return calculate_expectancy(win_rate, avg_win, avg_loss)
 
 
-def calculate_kelly_criterion(win_rate: float, 
-
 def calculate_kelly_criterion(win_rate: float,
                              avg_win_loss_ratio: float) -> float:
 

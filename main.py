@@ -434,7 +434,7 @@ def setup_argument_parser():
 
     parser.add_argument(
         "--service",
-        choices=SERVICE_NAMES + ["all"],
+        choices=list(SERVICE_NAMES) + ["all"],
         default="all",
         help="Specific service to run (default: all services)"
     )
