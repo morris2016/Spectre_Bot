@@ -602,11 +602,19 @@ def setup_nltk_data():
         except LookupError:
             logger.warning(f"NLTK package '{package}' not found locally, attempting to download")
             try:
-                nltk.download(package, quiet=True)
-                logger.info(f"Successfully downloaded NLTK package '{package}'")
+                downloaded = nltk.download(package, quiet=True)
+                if downloaded:
+                    logger.info(f"Successfully downloaded NLTK package '{package}'")
+                else:
+                    logger.error(f"Failed to download NLTK package '{package}'")
+                    logger.warning(
+                        f"System will continue without NLTK package '{package}', some NLP features may be limited"
+                    )
             except Exception as e:
                 logger.error(f"Failed to download NLTK package '{package}': {str(e)}")
-                logger.warning(f"System will continue without NLTK package '{package}', some NLP features may be limited")
+                logger.warning(
+                    f"System will continue without NLTK package '{package}', some NLP features may be limited"
+                )
 
     logger.info("NLTK setup complete")
 
