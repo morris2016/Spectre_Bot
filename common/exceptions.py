@@ -211,6 +211,16 @@ class RiskExceededError(RiskError):
     pass
 
 
+class RiskExceededError(RiskError):
+    """Raised when overall risk exposure is exceeded."""
+    pass
+
+
+class InsufficientBalanceError(RiskError):
+    """Raised when an account balance is insufficient to open a position."""
+    pass
+
+
 class BacktestError(QuantumSpectreError):
     """Base class for backtesting errors."""
 class DataSourceError(DataError):
@@ -1155,6 +1165,75 @@ class VoiceAdvisorError(QuantumSpectreError):
     pass
 
 
+class TimeSeriesConnectionError(Exception):
+    """
+    Exception raised when a connection to the time series database fails
+    """
+    def __init__(self, message="Failed to connect to time series database", details=None):
+        self.message = message
+        self.details = details
+        super().__init__(self.message)
+
+    def __str__(self):
+        if self.details:
+            return f"{self.message}: {self.details}"
+        return self.message
+
+class TimeSeriesQueryError(Exception):
+    """
+    Exception raised when a query to the time series database fails
+    """
+    def __init__(self, message="Failed to execute time series query", query=None, details=None):
+        self.message = message
+        self.query = query
+        self.details = details
+        super().__init__(self.message)
+
+    def __str__(self):
+        result = self.message
+        if self.query:
+            result += f"\nQuery: {self.query}"
+        if self.details:
+            result += f"\nDetails: {self.details}"
+        return result
+
+class TimeSeriesDataError(Exception):
+    """
+    Exception raised when there's an issue with time series data
+    (missing data, corrupted data, etc.)
+    """
+    def __init__(self, message="Time series data error", data_info=None, details=None):
+        self.message = message
+        self.data_info = data_info
+        self.details = details
+        super().__init__(self.message)
+
+    def __str__(self):
+        result = self.message
+        if self.data_info:
+            result += f"\nData info: {self.data_info}"
+        if self.details:
+            result += f"\nDetails: {self.details}"
+        return result
+
+class TimeSeriesConfigError(Exception):
+    """
+    Exception raised when there's a configuration error with the time series database
+    (invalid settings, connection parameters, etc.)
+    """
+    def __init__(self, message="Time series configuration error", config_key=None, details=None):
+        self.message = message
+        self.config_key = config_key
+        self.details = details
+        super().__init__(self.message)
+
+    def __str__(self):
+        result = self.message
+        if self.config_key:
+            result += f"\nConfig key: {self.config_key}"
+        if self.details:
+            result += f"\nDetails: {self.details}"
+        return result
 class ReportGenerationError(QuantumSpectreError):
     """Raised for errors during report generation."""
     pass
@@ -1173,6 +1252,10 @@ __all__ = [
     'DatabaseQueryError', 'RedisError', 'RedisConnectionError', 'SecurityError',
     'APIKeyError', 'AuthenticationError', 'AuthorizationError', 'ExecutionError',
     'OrderError', 'OrderRejectedError', 'OrderTimeoutError', 'InsufficientFundsError',
+    'InsufficientBalanceError',
+    'InvalidOrderError', 'OrderCancellationError', 'SlippageExceededError', 'NetworkError',
+    'RiskError', 'RiskLimitExceededError', 'RiskExceededError', 'BacktestError', 'ModelError',
+    'ModelTrainingError', 'ModelPredictionError', 'StrategyError', 'SignalGenerationError',
     'PositionError', 'InsufficientBalanceError', 'PositionExecutionError',
     'InvalidOrderError', 'OrderCancellationError', 'SlippageExceededError', 'NetworkError',
     'RiskError', 'RiskLimitExceededError', 'BacktestError', 'ModelError',

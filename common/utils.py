@@ -2623,6 +2623,10 @@ def obfuscate_sensitive_data(
         's3': s3
     }
 
+
+# Backward compatibility alias
+pivot_points = calculate_pivot_points
+
 # Backward compatibility alias
 pivot_points = calculate_pivot_points
 
@@ -4782,10 +4786,12 @@ __all__ = [
     'calculate_kelly_criterion', 'calculate_sharpe_ratio', 'calculate_sortino_ratio',
     'calculate_max_drawdown', 'calculate_calmar_ratio', 'z_score',
     'is_price_consolidating', 'is_breaking_out', 'calculate_pivot_points',
+    'pivot_points',
     'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',
     'calculate_distance', 'calculate_distance_percentage', 'memoize',
     'is_higher_timeframe', 'threaded_calculation', 'create_batches',
     'create_directory', 'create_directory_if_not_exists',
+    'UuidUtils', 'HashUtils', 'SecurityUtils',
     'OrderSide', 'OrderType', 'TimeInForce',
     'UuidUtils', 'HashUtils', 'SecurityUtils',
 

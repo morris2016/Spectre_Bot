@@ -165,6 +165,12 @@ CACHE_VERY_LONG_TTL = 86400
 
 
 # ======================================
+DEFAULT_FEATURE_PARAMS = {}  # Default parameters for feature calculations
+# Exchange and Trading Constants
+# ======================================
+
+# Supported exchanges
+
 # Exchange and Trading Enums
 # ======================================
 
@@ -174,6 +180,8 @@ class Exchange(enum.Enum):
     DERIV = "deriv"
     BACKTEST = "backtest"
 
+
+# Supported asset classes
 
 class AssetClass(enum.Enum):
     """Supported asset classes."""
@@ -208,6 +216,9 @@ class OrderType(enum.Enum):
     TAKE_PROFIT_LIMIT = "take_profit_limit"
     TRAILING_STOP = "trailing_stop"
 
+
+# Aliases for backward compatibility
+ORDER_TYPE = OrderType
 
 # Aliases for backward compatibility
 ORDER_TYPE = OrderType
@@ -310,6 +321,23 @@ POSITION_STATUSES = [ps.value for ps in PositionStatus]
 # Backward compatibility
 POSITION_STATUS = PositionStatus
 
+# Backwards compatibility
+ORDER_STATUS = OrderStatus
+
+
+# Position lifecycle statuses
+class PositionStatus(enum.Enum):
+    PENDING = "pending"
+    OPEN = "open"
+    PARTIALLY_CLOSED = "partially_closed"
+    CLOSED = "closed"
+    FAILED = "failed"
+
+POSITION_STATUSES = [ps.value for ps in PositionStatus]
+
+# Backward compatibility
+POSITION_STATUS = PositionStatus
+
 # Trigger types for stop and take profit orders
 class TriggerType(enum.Enum):
     PRICE = "price"           # Regular price based trigger
@@ -323,6 +351,8 @@ class TimeInForce(enum.Enum):
     IOC = "ioc"  # Immediate or Cancel
     FOK = "fok"  # Fill or Kill
     GTD = "gtd"  # Good Till Date
+
+TIME_IN_FORCE = TimeInForce
 
 TIME_IN_FORCE = TimeInForce
 
@@ -367,6 +397,143 @@ class RiskLevel(enum.Enum):
     VERY_HIGH = 5
 
 
+# Fee types
+class FeeType(enum.Enum):
+    MAKER = "maker"
+    TAKER = "taker"
+    FUNDING = "funding"
+    WITHDRAWAL = "withdrawal"
+    DEPOSIT = "deposit"
+
+
+# ======================================
+# Feature and Pattern Constants
+# ======================================
+
+# Technical indicator categories
+class IndicatorCategory(enum.Enum):
+    TREND = "trend"
+    MOMENTUM = "momentum"
+    VOLATILITY = "volatility"
+    VOLUME = "volume"
+    OSCILLATOR = "oscillator"
+    SUPPORT_RESISTANCE = "support_resistance"
+    PATTERN = "pattern"
+    CUSTOM = "custom"
+
+
+# Candlestick pattern types
+class CandlestickPattern(enum.Enum):
+    DOJI = "doji"
+    HAMMER = "hammer"
+    SHOOTING_STAR = "shooting_star"
+    ENGULFING_BULLISH = "engulfing_bullish"
+    ENGULFING_BEARISH = "engulfing_bearish"
+    MORNING_STAR = "morning_star"
+    EVENING_STAR = "evening_star"
+    THREE_WHITE_SOLDIERS = "three_white_soldiers"
+    THREE_BLACK_CROWS = "three_black_crows"
+    PIERCING_LINE = "piercing_line"
+    DARK_CLOUD_COVER = "dark_cloud_cover"
+    HARAMI_BULLISH = "harami_bullish"
+    HARAMI_BEARISH = "harami_bearish"
+    MARUBOZU = "marubozu"
+
+
+# Chart pattern types
+class ChartPattern(enum.Enum):
+    HEAD_AND_SHOULDERS = "head_and_shoulders"
+    INVERSE_HEAD_AND_SHOULDERS = "inverse_head_and_shoulders"
+    DOUBLE_TOP = "double_top"
+    DOUBLE_BOTTOM = "double_bottom"
+    TRIPLE_TOP = "triple_top"
+    TRIPLE_BOTTOM = "triple_bottom"
+    ASCENDING_TRIANGLE = "ascending_triangle"
+    DESCENDING_TRIANGLE = "descending_triangle"
+    SYMMETRICAL_TRIANGLE = "symmetrical_triangle"
+    WEDGE_RISING = "wedge_rising"
+    WEDGE_FALLING = "wedge_falling"
+    CHANNEL_UP = "channel_up"
+    CHANNEL_DOWN = "channel_down"
+    RECTANGLE = "rectangle"
+    CUP_AND_HANDLE = "cup_and_handle"
+    ROUNDING_BOTTOM = "rounding_bottom"
+    ROUNDING_TOP = "rounding_top"
+
+
+# Harmonic pattern types
+class HarmonicPattern(enum.Enum):
+    GARTLEY = "gartley"
+    BUTTERFLY = "butterfly"
+    BAT = "bat"
+    CRAB = "crab"
+    SHARK = "shark"
+    CYPHER = "cypher"
+    THREE_DRIVES = "three_drives"
+    FIVE_ZERO = "five_zero"
+    ABCD = "abcd"
+
+
+# Fibonacci ratios
+FIBONACCI_RATIOS = {
+    "0": 0.0,
+    "23.6": 0.236,
+    "38.2": 0.382,
+    "50": 0.5,
+    "61.8": 0.618,
+    "76.4": 0.764,
+    "78.6": 0.786,
+    "100": 1.0,
+    "127.2": 1.272,
+    "138.2": 1.382,
+    "150": 1.5,
+    "161.8": 1.618,
+    "200": 2.0,
+    "223.6": 2.236,
+    "261.8": 2.618,
+    "361.8": 3.618,
+    "423.6": 4.236
+}
+
+# Common indicator parameters
+SMA_PERIODS = [10, 20, 50, 100, 200]
+EMA_PERIODS = [9, 12, 26, 50, 200]
+RSI_PERIODS = [7, 14, 21]
+MACD_PARAMS = {
+    "FAST": 12,
+    "SLOW": 26,
+    "SIGNAL": 9
+}
+BOLLINGER_BANDS_PARAMS = {
+    "PERIOD": 20,
+    "STD_DEV": 2
+}
+STOCHASTIC_PARAMS = {
+    "K_PERIOD": 14,
+    "K_SLOWING": 3,
+    "D_PERIOD": 3
+}
+
+# ======================================
+# Machine Learning Constants
+# ======================================
+
+# ML model types
+class ModelType(enum.Enum):
+    LINEAR_REGRESSION = "linear_regression"
+    LOGISTIC_REGRESSION = "logistic_regression"
+    RANDOM_FOREST = "random_forest"
+    GRADIENT_BOOSTING = "gradient_boosting"
+    SVM = "svm"
+    NEURAL_NETWORK = "neural_network"
+    LSTM = "lstm"
+    GRU = "gru"
+    CNN = "cnn"
+    ARIMA = "arima"
+    PROPHET = "prophet"
+    XGBOOST = "xgboost"
+    LIGHTGBM = "lightgbm"
+    ENSEMBLE = "ensemble"
 # ======================================
 # Trading Platform Configuration
 # ======================================
@@ -391,6 +558,68 @@ ASSET_TYPES = [
     "crypto", "forex", "stocks", "indices", "commodities", "futures", "options",
 ]
 
+# Feature scaling methods
+class ScalingMethod(enum.Enum):
+    STANDARD = "standard"  # Z-score normalization
+    MINMAX = "minmax"      # Min-max scaling to [0,1]
+    ROBUST = "robust"      # Scaling using quantiles
+    MAXABS = "maxabs"      # Scaling by maximum absolute value
+    NONE = "none"          # No scaling
+
+
+# Hyperparameter optimization methods
+class HyperparamOptMethod(enum.Enum):
+    GRID_SEARCH = "grid_search"
+    RANDOM_SEARCH = "random_search"
+    BAYESIAN = "bayesian"
+    GENETIC = "genetic"
+    TPE = "tpe"            # Tree-structured Parzen Estimator
+
+
+# Cross-validation strategies
+class CrossValidationStrategy(enum.Enum):
+    K_FOLD = "k_fold"
+    STRATIFIED_K_FOLD = "stratified_k_fold"
+    TIME_SERIES_SPLIT = "time_series_split"
+    GROUP_K_FOLD = "group_k_fold"
+    PURGED_K_FOLD = "purged_k_fold"  # Specific for financial data
+
+
+# ======================================
+# Loophole Detection Constants
+# ======================================
+
+# Loophole types
+class LoopholeType(enum.Enum):
+    ARBITRAGE = "arbitrage"
+    MARKET_INEFFICIENCY = "market_inefficiency"
+    LIQUIDITY_IMBALANCE = "liquidity_imbalance"
+    PREDICTABLE_PATTERN = "predictable_pattern"
+    PLATFORM_QUIRK = "platform_quirk"
+    ORDER_BOOK_ANOMALY = "order_book_anomaly"
+
+# Loophole detection thresholds
+MIN_INEFFICIENCY_SCORE = 0.65  # Minimum score for market inefficiency detection
+ANOMALY_CONTAMINATION_FACTOR = 0.05  # Contamination factor for anomaly detection
+
+
+# Arbitrage types
+class ArbitrageType(enum.Enum):
+    SPATIAL = "spatial"           # Same asset, different venues
+    TRIANGULAR = "triangular"     # Three related assets on same venue
+    STATISTICAL = "statistical"   # Correlated assets
+    FUTURES_SPOT = "futures_spot" # Futures vs spot price difference
+    FUNDING_RATE = "funding_rate" # Funding rate arbitrage in perpetuals
+    INDEX_TRACKING = "index_tracking" # Index vs constituents
+
+# Arbitrage opportunity types
+ARBITRAGE_OPPORTUNITY_TYPES = [
+    "cross_exchange",
+    "triangular",
+    "statistical",
+    "futures_spot",
+    "funding_rate",
+    "index_tracking"
 STRATEGY_TYPES = [
     "trend_following", "mean_reversion", "breakout", "momentum", "statistical_arbitrage",
     "market_making", "sentiment_based", "machine_learning", "pattern_recognition",
@@ -408,6 +637,8 @@ SLIPPAGE_MODELS = [
 
 
 # ======================================
+# Risk Management Constants
+=======
 # Risk Management Configuration
 # ======================================
 
@@ -486,6 +717,10 @@ MACD_PARAMS = {"FAST": 12, "SLOW": 26, "SIGNAL": 9}
 BOLLINGER_BANDS_PARAMS = {"PERIOD": 20, "STD_DEV": 2}
 STOCHASTIC_PARAMS = {"K_PERIOD": 14, "K_SLOWING": 3, "D_PERIOD": 3}
 
+# ======================================
+# Notification Constants
+# ======================================
+
 
 # ======================================
 # Machine Learning Configuration
@@ -553,6 +788,81 @@ class NotificationChannel(enum.Enum):
 
 
 # ======================================
+# User Interface Constants
+# ======================================
+
+# UI themes
+class UITheme(enum.Enum):
+    LIGHT = "light"
+    DARK = "dark"
+    SYSTEM = "system"
+    CUSTOM = "custom"
+
+
+# Chart types
+class ChartType(enum.Enum):
+    CANDLESTICK = "candlestick"
+    LINE = "line"
+    AREA = "area"
+    BAR = "bar"
+    HEIKIN_ASHI = "heikin_ashi"
+    RENKO = "renko"
+    POINT_AND_FIGURE = "point_and_figure"
+    KAGI = "kagi"
+
+
+# Dashboard layouts
+class DashboardLayout(enum.Enum):
+    SINGLE = "single"
+    DUAL = "dual"
+    QUAD = "quad"
+    CUSTOM = "custom"
+    TRADING_FOCUS = "trading_focus"
+    ANALYSIS_FOCUS = "analysis_focus"
+    MONITORING_FOCUS = "monitoring_focus"
+
+
+# Default dashboard components
+DEFAULT_DASHBOARD_COMPONENTS = [
+    "asset_selector",
+    "timeframe_selector",
+    "chart_main",
+    "order_book",
+    "position_summary",
+    "recent_trades",
+    "strategy_performance",
+    "signals_panel",
+    "risk_metrics",
+    "market_overview"
+]
+
+# Export format types
+class ExportFormat(enum.Enum):
+    CSV = "csv"
+    JSON = "json"
+    EXCEL = "excel"
+    PDF = "pdf"
+    PNG = "png"
+    HTML = "html"
+
+
+# Default UI configuration
+DEFAULT_UI_CONFIG = {
+    "theme": "dark",
+    "chart_type": "candlestick",
+    "default_timeframe": "1h",
+    "default_exchange": "binance",
+    "default_layout": "trading_focus",
+    "auto_refresh_interval": 5,  # seconds
+    "enable_sound_alerts": True,
+    "enable_voice_assistant": True,
+    "trading_hotkeys_enabled": False,
+    "confirm_orders": True,
+    "log_level_ui": "info"
+}
+# ======================================
+# Deriv-specific Constants
+# ======================================
 # Deriv-specific Configuration
 # ======================================
 
@@ -574,6 +884,45 @@ DERIV_ASSET_CLASSES = {
     "forex": "forex",
     "indices": "indices",
     "commodities": "commodities",
+    "synthetic": "synthetic_index"
+}
+
+# Deriv markets
+DERIV_MARKETS = {
+    "forex": ["AUD/JPY", "AUD/USD", "EUR/AUD", "EUR/GBP", "EUR/JPY", "EUR/USD", 
+              "GBP/AUD", "GBP/JPY", "GBP/USD", "USD/CAD", "USD/CHF", "USD/JPY"],
+    "indices": ["AUS200", "EUROPE50", "FRANCE40", "GERMANY40", "HONGKONG50", 
+                "JAPAN225", "NETHERLAND25", "SPAIN35", "UK100", "US30", "US500", "USTECH100"],
+    "commodities": ["ALUMINIUM", "COPPER", "GOLD", "PALLADIUM", "PLATINUM", "SILVER"],
+    "synthetic": ["BOOM1000", "BOOM500", "CRASH1000", "CRASH500", "CRYPTO", 
+                  "JUMP10", "JUMP25", "JUMP50", "JUMP75", "JUMP100", "RANGE_BREAK_100", 
+                  "RANGE_BREAK_200", "STEP_INDEX", "VOLATILITY10", "VOLATILITY25", 
+                  "VOLATILITY50", "VOLATILITY75", "VOLATILITY100"]
+}
+
+# ======================================
+# Social Media Constants
+# ======================================
+# Supported social media platforms
+SOCIAL_PLATFORMS = ["twitter", "reddit", "telegram", "discord", "stocktwits", "tradingview"]
+
+SOCIAL_API_KEYS = {
+    "twitter": {
+        "api_key": "",
+        "api_secret": "",
+        "bearer_token": ""
+    },
+    "reddit": {
+        "client_id": "",
+        "client_secret": "",
+        "user_agent": "QuantumSpectre/1.0"
+    },
+    "telegram": {
+        "bot_token": ""
+    },
+    "discord": {
+        "bot_token": ""
+    }
     "synthetic": "synthetic_index",
 }
 
@@ -620,6 +969,7 @@ __all__ = [
     'ORDER_TYPE', 'ORDER_STATUS', 'TIME_IN_FORCE',
     'POSITION_SIDES', 'ORDER_STATUSES', 'POSITION_STATUSES', 'POSITION_SIDE', 'POSITION_STATUS',
 
+
     # Service configuration
     "SERVICE_NAMES", "SERVICE_DEPENDENCIES", "SERVICE_STARTUP_ORDER",
     "DATA_INGEST_METRICS_PREFIX",
@@ -648,6 +998,10 @@ __all__ = [
     'DEFAULT_PROFIT_FACTOR_THRESHOLD', 'DEFAULT_WIN_RATE_THRESHOLD',
     'DEFAULT_TRAILING_STOP_ACTIVATION', 'DEFAULT_KELLY_FRACTION',
     'DEFAULT_STOP_LOSS_MULTIPLIER', 'DEFAULT_TAKE_PROFIT_MULTIPLIER',
+    'POSITION_SIZE_PRECISION', 'DEFAULT_GROWTH_FACTOR',
+    'PARTIAL_CLOSE_LEVELS', 'DEFAULT_FIXED_STOP_PERCENTAGE',
+    'DEFAULT_MIN_STOP_DISTANCE',
+    'MAX_LEVERAGE_BINANCE', 'MAX_LEVERAGE_DERIV',
     'POSITION_SIZE_PRECISION', 'MAX_LEVERAGE_BINANCE', 'MAX_LEVERAGE_DERIV',
     'DEFAULT_GROWTH_FACTOR', 'PARTIAL_CLOSE_LEVELS',
     'DEFAULT_FIXED_STOP_PERCENTAGE', 'DEFAULT_MIN_STOP_DISTANCE',
@@ -1216,6 +1570,11 @@ MAX_LEVERAGE_DERIV = 100
 DEFAULT_STOP_LOSS_MULTIPLIER = 1.5
 DEFAULT_TAKE_PROFIT_MULTIPLIER = 2.0
 POSITION_SIZE_PRECISION = 4
+DEFAULT_GROWTH_FACTOR = 1.0
+PARTIAL_CLOSE_LEVELS = [0.25, 0.5, 0.75]
+DEFAULT_FIXED_STOP_PERCENTAGE = 1.0
+DEFAULT_MIN_STOP_DISTANCE = 0.5
+
 DEFAULT_GROWTH_FACTOR = 1.05
 PARTIAL_CLOSE_LEVELS = [0.25, 0.5, 0.75]
 DEFAULT_FIXED_STOP_PERCENTAGE = 0.02

@@ -18,6 +18,7 @@ __author__ = "QuantumSpectre Team"
 __license__ = "MIT"
 
 # Module registry for automatic component discovery and management
+
 _registry = {
     "utils": set(),
     "constants": set(),
