@@ -577,6 +577,8 @@ class StrategyGeneticHistory(Base):
 
 class PositionModel(Base):
     """Simplified model for executed positions."""
+    """Model for storing executed trading positions."""
+
     __tablename__ = 'positions'
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -585,6 +587,10 @@ class PositionModel(Base):
     side = Column(String(10), nullable=False)
     quantity = Column(Float, default=0.0)
     entry_price = Column(Float, default=0.0)
+    asset_id = Column(UUID(as_uuid=True), ForeignKey('assets.id'), nullable=False)
+    side = Column(String(10), nullable=False)
+    quantity = Column(Float, nullable=False)
+    entry_price = Column(Float, nullable=False)
     exit_price = Column(Float, nullable=True)
     status = Column(String(20), default='open')
     created_at = Column(DateTime, default=datetime.datetime.utcnow)

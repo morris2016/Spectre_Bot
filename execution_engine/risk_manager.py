@@ -29,9 +29,9 @@ from common.utils import (
     calculate_liquidation_price,
 )
 from common.constants import (
-    PositionStatus, OrderType, PositionSide, TimeInForce, 
+    PositionStatus, OrderType, PositionSide, TimeInForce,
     DEFAULT_STOP_LOSS_MULTIPLIER, DEFAULT_TAKE_PROFIT_MULTIPLIER,
-    PARTIAL_CLOSE_LEVELS
+    DEFAULT_MAX_RISK_PER_TRADE, PARTIAL_CLOSE_LEVELS
 )
 from common.metrics import MetricsCollector
 from common.exceptions import (
@@ -1576,3 +1576,14 @@ class RiskManager:
     def evaluate_trade(self, *args, **kwargs) -> bool:
         """Evaluate whether a trade can be taken."""
         return True
+
+    """Basic risk management helper."""
+
+    def __init__(self, max_risk_per_trade: float = DEFAULT_MAX_RISK_PER_TRADE):
+        self.max_risk_per_trade = max_risk_per_trade
+
+    def check_risk(self, equity: float, risk_amount: float) -> bool:
+        """Return True if the risk amount does not exceed allowed percentage."""
+        if equity <= 0:
+            return False
+        return risk_amount <= equity * self.max_risk_per_trade
