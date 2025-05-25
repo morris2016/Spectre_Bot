@@ -191,6 +191,37 @@ class InsufficientFundsError(OrderError):
     pass
 
 
+class PositionError(ExecutionError):
+    """Base class for position-related errors."""
+    pass
+
+
+class PositionExecutionError(PositionError):
+    """Raised when there is an error executing a position."""
+    pass
+
+
+class InvalidPositionStateError(PositionError):
+    """Raised when a position is in an invalid state."""
+    pass
+
+
+class InsufficientBalanceError(PositionError):
+    """Raised when there is insufficient balance for a position."""
+    pass
+
+
+class MarginCallError(PositionError):
+    """Raised when a margin call occurs on a position."""
+    pass
+
+
+class PositionLiquidationError(PositionError):
+    """Raised when a position is forcibly liquidated."""
+
+class RiskError(QuantumSpectreError):
+    """Base class for risk management errors."""
+    pass
 
 class InsufficientBalanceError(OrderError):
     """Raised when an account balance is too low to execute an action."""
@@ -214,12 +245,10 @@ class PositionError(ExecutionError):
     """Raised when there is an invalid or unknown position state."""
 
     """Raised for invalid operations on a trading position."""
+
     pass
 
 
-class RiskError(QuantumSpectreError):
-    """Base class for risk management errors."""
-    pass
 
 
 class RiskLimitExceededError(RiskError):
@@ -537,15 +566,14 @@ class RiskManagerError(RiskError):
 class PositionSizingError(RiskError):
     """Raised for errors in position sizing calculations."""
     pass
-
 class PositionError(RiskError):
     """Raised for general position management errors."""
-=======
-class InsufficientBalanceError(RiskError):
-    """Raised when an account balance is insufficient for a position."""
+    pass
 
+class InsufficientBalanceError(RiskError):
     """Raised when an account has insufficient balance for an operation."""
     pass
+
 
 
 class PositionError(ExecutionError):
@@ -588,12 +616,58 @@ class StopLossError(OrderError):
     """Raised for errors related to stop-loss order management."""
     pass
 
+class PositionError(OrderError):
+    """Raised for generic position-related errors."""
+    pass
+
+class InsufficientBalanceError(PositionError):
+    """Raised when account balance is insufficient."""
+    pass
+
+class ModelRegistrationError(ModelError):
+    """Raised when a model cannot be registered."""
+    pass
+
+class RiskExceededError(RiskError):
+    """Raised when a trade exceeds configured risk limits."""
+    pass
+
+class PositionExecutionError(PositionError):
+    """Raised when a position cannot be executed."""
+    pass
+
+class InvalidModelStateError(ModelError):
+    """Raised when an ML model is in an invalid state."""
+    pass
+
 class ModelNotFoundError(ModelError):
     """Raised when a requested ML model is not found."""
     pass
 
 
 class ModelRegistrationError(ModelError):
+    """Raised when model registration fails."""
+    pass
+
+
+class InvalidModelStateError(ModelError):
+    """Raised when a model is in an invalid state."""
+    pass
+
+
+class PositionError(ExecutionError):
+    """Base class for position-related errors."""
+    pass
+
+
+class InsufficientBalanceError(PositionError):
+    """Raised when an account balance is insufficient for a trade."""
+    pass
+
+
+class RiskExceededError(RiskError):
+    """Raised when a calculated risk exceeds configured limits."""
+
     """Raised when a model fails to register with the system."""
     pass
 
@@ -603,6 +677,26 @@ class DashboardError(QuantumSpectreError):
 
 class InsufficientLiquidityError(ExecutionError):
     """Raised when there is insufficient liquidity to execute a trade."""
+    pass
+
+
+class InsufficientBalanceError(ExecutionError):
+    """Raised when account balance is too low to execute an order."""
+    pass
+
+
+class PositionError(ExecutionError):
+    """Raised for position management failures."""
+    pass
+
+
+class RiskExceededError(RiskError):
+    """Raised when a calculated risk exceeds allowable limits."""
+    pass
+
+
+class ModelRegistrationError(ModelError):
+    """Raised when registering a machine learning model fails."""
     pass
 
 class ArbitrageOpportunityExpiredError(StrategyError):
@@ -615,6 +709,7 @@ class DrawdownLimitExceededException(RiskLimitExceededError):
 
 
 class MaxDrawdownExceededError(RiskLimitExceededError):
+    """Raised when the maximum allowed drawdown is exceeded."""
     """Raised when maximum allowed drawdown is breached."""
     pass
 
@@ -1102,16 +1197,26 @@ __all__ = [
     'FeatureNotFoundError', 'FeatureCalculationError', 'FeatureServiceError',
     'InvalidTimeframeError', 'InvalidParameterError', 'AlertDeliveryError',
     'AlertConfigurationError', 'RiskManagerError', 'PositionSizingError', 'StopLossError',
+
+    'PositionError', 'PositionExecutionError', 'InvalidPositionStateError', 'InsufficientBalanceError',
+    'MarginCallError', 'PositionLiquidationError',
     'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError', 'InsufficientBalanceError',
     'InsufficientBalanceError', 'RiskExceededError', 'PositionError', 'PositionExecutionError',
     'ModelRegistrationError', 'InvalidModelStateError',
     'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError',
+    'ModelRegistrationError', 'InvalidModelStateError',
+    'PositionError', 'InsufficientBalanceError', 'RiskExceededError',
+
+    'InsufficientBalanceError', 'PositionError', 'RiskExceededError',
+    'ModelRegistrationError',
     'ArbitrageOpportunityExpiredError', 'DrawdownLimitExceededException', 'MaxDrawdownExceededError',
     'RiskManagementException', 'ModelVersionError', 'InvalidModelStateError', 'LogAnalysisError',
     'InsufficientBalanceError', 'PositionError', 'RiskExceededError',
     'ModelRegistrationError', 'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError',
     'MarketDataError', 'CalculationError',
     'ArbitrageOpportunityExpiredError', 'DrawdownLimitExceededException',
+    'MaxDrawdownExceededError',
+    'RiskManagementException', 'ModelVersionError', 'LogAnalysisError',
     'RiskManagementException', 'RiskExceededError', 'PositionError',
     'InsufficientBalanceError',
     'ModelRegistrationError', 'ModelVersionError', 'LogAnalysisError',

@@ -9,6 +9,8 @@ including time handling, data processing, JSON manipulation, validation, and mor
 
 import os
 import re
+import gzip
+import io
 import time
 import json
 import io
@@ -35,6 +37,8 @@ import collections
 import urllib.parse
 import numpy as np
 import pandas as pd
+import logging
+import nltk
 import gzip
 import sys
 import asyncio
@@ -2502,7 +2506,7 @@ def calculate_pivot_points(high: float, low: float, close: float) -> Dict[str, f
     r1 = (2 * pivot) - low
     r2 = pivot + (high - low)
     r3 = high + 2 * (pivot - low)
-    
+
     return {
         'pivot': pivot,
         'r1': r1,
@@ -2514,6 +2518,7 @@ def calculate_pivot_points(high: float, low: float, close: float) -> Dict[str, f
     }
 
 
+# Backward compatibility alias
 # Backwards compatibility alias
 
 
@@ -3368,16 +3373,18 @@ def get_submodules(package_name):
     return submodules
 
 
-def compress_data(data: Union[str, bytes]) -> bytes:
-    """Compress data using gzip."""
-    if isinstance(data, str):
-        data = data.encode()
-    return gzip.compress(data)
+def compress_data(data: bytes) -> bytes:
+    """Compress binary data using gzip."""
+    buffer = io.BytesIO()
+    with gzip.GzipFile(fileobj=buffer, mode='wb') as f:
+        f.write(data)
+    return buffer.getvalue()
 
 
-def decompress_data(data: bytes) -> str:
-    """Decompress gzip-compressed data."""
-    return gzip.decompress(data).decode()
+def decompress_data(data: bytes) -> bytes:
+    """Decompress gzip-compressed binary data."""
+    with gzip.GzipFile(fileobj=io.BytesIO(data), mode='rb') as f:
+        return f.read()
 
 def create_directory(path, exist_ok=True):
     """
@@ -3403,33 +3410,57 @@ def create_directory_if_not_exists(path: str) -> str:
     return create_directory(path, exist_ok=True)
 
 
-def pivot_points(high: float, low: float, close: float) -> Dict[str, float]:
-    """Backward-compatible alias for calculate_pivot_points."""
-    return calculate_pivot_points(high, low, close)
+def safe_nltk_download(resource: str, quiet: bool = True) -> bool:
+    """Check for an NLTK resource without downloading.
+
+    If the resource is not found locally, log a warning and return ``False``
+    instead of attempting a network download. This prevents network timeouts
+    when running in restricted environments.
+
+def compress_object(data: Any) -> bytes:
+    """Serialize and gzip-compress arbitrary Python objects."""
+    serialized = pickle.dumps(data)
+    return gzip.compress(serialized)
 
 
+def decompress_object(data: bytes) -> Any:
+    """Decompress and deserialize data produced by :func:`compress_object`."""
+    decompressed = gzip.decompress(data)
+    return pickle.loads(decompressed)
+
+    Args:
+        resource: Name of the NLTK resource (e.g. ``'vader_lexicon'``).
+        quiet: Unused, maintained for API compatibility.
+
+    Returns:
+        ``True`` if the resource is available locally, otherwise ``False``.
+    """
+    try:
+        nltk.data.find(resource)
+        return True
+    except LookupError:
+        logger = logging.getLogger(__name__)
+        logger.warning("NLTK resource '%s' not available; skipping download", resource)
+        return False
 def compress_data(data: bytes) -> bytes:
     """Compress binary data using gzip."""
     out = io.BytesIO()
     with gzip.GzipFile(fileobj=out, mode="wb") as f:
-
-def compress_data(data: bytes) -> bytes:
-    """Compress binary data using gzip."""
-    out = io.BytesIO()
-    with gzip.GzipFile(fileobj=out, mode='wb') as f:
-
         f.write(data)
     return out.getvalue()
+    if not data:
+        return b""
+    return gzip.compress(data)
 
 
 def decompress_data(data: bytes) -> bytes:
     """Decompress gzip-compressed binary data."""
-    with gzip.GzipFile(fileobj=io.BytesIO(data), mode="rb") as f:
-        return f.read()
-
-
-    with gzip.GzipFile(fileobj=io.BytesIO(data)) as f:
-        return f.read()
+    if not data:
+        return b""
+    return gzip.decompress(data)
+def pivot_points(high: float, low: float, close: float) -> Dict[str, float]:
+    """Backward-compatible alias for calculate_pivot_points."""
+    return calculate_pivot_points(high, low, close)
 
 def compress_data(data: Union[str, bytes]) -> bytes:
     """Compress data using gzip."""
@@ -3446,15 +3477,6 @@ def decompress_data(data: bytes) -> str:
 def create_directory_if_not_exists(path: str) -> str:
     """Create directory if it does not already exist."""
     return create_directory(path, exist_ok=True)
-    def create_directory_if_not_exists(path: str) -> str:
-        """Create directory if it does not already exist."""
-        return create_directory(path, exist_ok=True)
-
-
-def create_directory_if_not_exists(path: str) -> str:
-    """Create directory if it does not already exist."""
-    return create_directory(path, exist_ok=True)
-
 
 def compress_data(data: Any) -> bytes:
     """Serialize and gzip-compress arbitrary Python data."""
@@ -3463,51 +3485,8 @@ def compress_data(data: Any) -> bytes:
         return gzip.compress(serialized)
     except Exception as exc:  # pragma: no cover - best effort
         logger.error("Failed to compress data: %s", exc)
-    def get_asset_precision(asset: str) -> int:
-        """Return decimal precision for a given asset."""
-        return POSITION_SIZE_PRECISION
-def get_asset_precision(asset: str) -> int:
-    """Return decimal precision for a given asset."""
-    return POSITION_SIZE_PRECISION
+        raise
 
-
-    def compress_data(data: bytes) -> bytes:
-        """Compress binary data using gzip."""
-        import gzip
-        return gzip.compress(data)
-
-
-    def decompress_data(data: bytes) -> bytes:
-        """Decompress gzip-compressed binary data."""
-        import gzip
-        return gzip.decompress(data)
-def decompress_data(data: bytes) -> bytes:
-    """Decompress gzip-compressed binary data."""
-    import gzip
-    return gzip.decompress(data)
-
-
-    def compress_data(data: Any) -> bytes:
-        """Serialize and compress data using pickle and zlib."""
-        try:
-            serialized = pickle.dumps(data)
-            return zlib.compress(serialized)
-        except Exception as e:
-            logger.error(f"Failed to compress data: {str(e)}")
-            raise
-
-
-    def decompress_data(data: bytes) -> Any:
-        """Decompress and deserialize data produced by :func:`compress_data`."""
-        try:
-            decompressed = gzip.decompress(data)
-            return pickle.loads(decompressed)
-        except Exception as exc:  # pragma: no cover - best effort
-            logger.error("Failed to decompress data: %s", exc)
-            return pickle.loads(zlib.decompress(data))
-        except Exception as e:
-            logger.error(f"Failed to decompress data: {str(e)}")
-            raise
 
 def decompress_data(data: bytes) -> Any:
     """Decompress and deserialize data produced by :func:`compress_data`."""
@@ -4639,7 +4618,11 @@ __all__ = [
     'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',
     'calculate_distance', 'calculate_distance_percentage', 'memoize',
     'is_higher_timeframe', 'threaded_calculation', 'create_batches',
+
     'create_directory', 'create_directory_if_not_exists',
+    'create_directory', 'create_directory_if_not_exists', 'safe_nltk_download',
+    'create_directory', 'create_directory_if_not_exists',
+    'compress_data', 'decompress_data',
 
     'create_directory', 'create_directory_if_not_exists', 'compress_data', 'decompress_data',
     'create_directory', 'create_directory_if_not_exists',
