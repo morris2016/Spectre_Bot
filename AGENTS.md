@@ -25,3 +25,5 @@
 - Run `pre-commit run --files <file1> <file2>` on changed files before
   committing, or `pre-commit run --all-files` to check the entire repository.
 - The hooks enforce formatting (end-of-file fixer) and run `flake8`.
+
+## Make sure there are no conflicts in the code or no characters are added to create merge conflicts.
