@@ -115,7 +115,7 @@ class Position:
             
         total_pnl = self.realized_pnl + self.unrealized_pnl
         return total_pnl / self.risk_amount
-        
+
     def get_duration(self) -> Optional[timedelta]:
         """Calculate the position duration."""
         if self.entry_time is None:
@@ -1560,8 +1560,19 @@ class PositionManager:
             
         total_seconds = sum(d.total_seconds() for d in durations)
         avg_seconds = total_seconds / len(durations)
-        
+
         hours, remainder = divmod(avg_seconds, 3600)
         minutes, seconds = divmod(remainder, 60)
-        
+
         return f"{int(hours)}:{int(minutes):02d}:{int(seconds):02d}"
+
+
+class RiskManager:
+    """Minimal risk manager placeholder."""
+
+    def __init__(self, *args, **kwargs) -> None:
+        self.active_positions: Dict[str, Position] = {}
+
+    def evaluate_trade(self, *args, **kwargs) -> bool:
+        """Evaluate whether a trade can be taken."""
+        return True

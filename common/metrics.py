@@ -944,5 +944,15 @@ def calculate_trading_metrics(returns: List[float], trades: List[Dict[str, Any]]
     
     # Annualize Sortino ratio
     sortino_ratio = daily_sortino * math.sqrt(annualization_factor)
-    
+
     return sortino_ratio
+
+
+class ExecutionMetrics:
+    """Simple execution metrics wrapper."""
+
+    def __init__(self) -> None:
+        self.collector = MetricsCollector('execution')
+
+    def record_order(self, metric: str) -> None:
+        self.collector.increment(metric)

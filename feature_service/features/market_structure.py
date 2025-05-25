@@ -26,6 +26,13 @@ from common.logger import get_logger
 from common.utils import parallelize_calculation, window_calculation
 from feature_service.features.base_feature import BaseFeature
 
+
+def identify_swing_points(df: pd.DataFrame, order: int = 5) -> List[int]:
+    """Identify swing high and low indexes using local extrema."""
+    highs = argrelextrema(df['high'].values, np.greater, order=order)[0]
+    lows = argrelextrema(df['low'].values, np.less, order=order)[0]
+    return sorted(list(highs) + list(lows))
+
 logger = get_logger(__name__)
 class MarketStructure(BaseFeature):
     """

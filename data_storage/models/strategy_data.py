@@ -573,3 +573,21 @@ class StrategyGeneticHistory(Base):
             mutation_details=mutation_details or {},
             crossover_details=crossover_details or {}
         )
+
+
+class PositionModel(Base):
+    """Simplified model for executed positions."""
+    __tablename__ = 'positions'
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    strategy_id = Column(UUID(as_uuid=True), ForeignKey('strategies.id'), nullable=False)
+    symbol = Column(String(50), nullable=False)
+    side = Column(String(10), nullable=False)
+    quantity = Column(Float, default=0.0)
+    entry_price = Column(Float, default=0.0)
+    exit_price = Column(Float, nullable=True)
+    status = Column(String(20), default='open')
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+    strategy = relationship('Strategy', back_populates='trades')

@@ -382,6 +382,38 @@ class PositionSizingError(RiskError):
     """Raised for errors in position sizing calculations."""
     pass
 
+class PositionError(ExecutionError):
+    """Raised for position management errors."""
+    pass
+
+class PositionExecutionError(PositionError):
+    """Raised when executing a position fails."""
+    pass
+
+class InvalidPositionStateError(PositionError):
+    """Raised when a position is in an invalid state."""
+    pass
+
+class InsufficientBalanceError(PositionError):
+    """Raised when the account balance is insufficient."""
+    pass
+
+class MarginCallError(PositionError):
+    """Raised when a margin call is triggered."""
+    pass
+
+class PositionLiquidationError(PositionError):
+    """Raised when a position is forcibly liquidated."""
+    pass
+
+class RiskExceededError(RiskError):
+    """Raised when a trade exceeds defined risk parameters."""
+    pass
+
+class ModelRegistrationError(ModelError):
+    """Raised when an ML model cannot be registered."""
+    pass
+
 class StopLossError(OrderError):
     """Raised for errors related to stop-loss order management."""
     pass
@@ -404,6 +436,10 @@ class ArbitrageOpportunityExpiredError(StrategyError):
 
 class DrawdownLimitExceededException(RiskLimitExceededError):
     """Raised when a drawdown limit is exceeded."""
+    pass
+
+class MaxDrawdownExceededError(RiskLimitExceededError):
+    """Raised when the maximum allowed drawdown is exceeded."""
     pass
 
 class RiskManagementException(RiskError):
@@ -819,8 +855,11 @@ __all__ = [
     'FeatureNotFoundError', 'FeatureCalculationError', 'FeatureServiceError',
     'InvalidTimeframeError', 'InvalidParameterError', 'AlertDeliveryError',
     'AlertConfigurationError', 'RiskManagerError', 'PositionSizingError', 'StopLossError',
+    'PositionError', 'PositionExecutionError', 'InvalidPositionStateError',
+    'InsufficientBalanceError', 'MarginCallError', 'PositionLiquidationError',
+    'RiskExceededError', 'ModelRegistrationError',
     'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError',
-    'ArbitrageOpportunityExpiredError', 'DrawdownLimitExceededException',
+    'ArbitrageOpportunityExpiredError', 'DrawdownLimitExceededException', 'MaxDrawdownExceededError',
     'RiskManagementException', 'ModelVersionError', 'LogAnalysisError',
     'InsufficientDataError', 'EncodingError', 'MetricCollectionError',
     'ServiceConnectionError', 'DataStoreError', 'InvalidDataError', 'TrainingError',

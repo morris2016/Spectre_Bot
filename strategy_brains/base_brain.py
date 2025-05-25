@@ -9,11 +9,31 @@ This module defines the base class for all strategy brains in the system.
 import time
 import asyncio
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from enum import Enum
 from typing import Dict, List, Any, Optional
 
 from common.logger import get_logger
 from common.metrics import MetricsCollector
 from common.exceptions import StrategyError, SignalGenerationError
+from common.models import AssetType
+from common.constants import SignalStrength
+
+
+class TradeDirection(Enum):
+    STRONG_BUY = "strong_buy"
+    BUY = "buy"
+    WEAK_BUY = "weak_buy"
+    NEUTRAL = "neutral"
+    WEAK_SELL = "weak_sell"
+    SELL = "sell"
+    STRONG_SELL = "strong_sell"
+
+
+@dataclass
+class BrainConfig:
+    """Base configuration for strategy brains."""
+    pass
 
 
 class StrategyBrain(ABC):
@@ -391,3 +411,16 @@ class StrategyBrain(ABC):
         """
         # Default implementation, override in subclasses
         return False
+
+
+# Backwards compatibility
+BaseBrain = StrategyBrain
+
+__all__ = [
+    "BrainConfig",
+    "TradeDirection",
+    "SignalStrength",
+    "AssetType",
+    "StrategyBrain",
+    "BaseBrain",
+]

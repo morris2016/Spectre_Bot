@@ -250,13 +250,26 @@ class OrderType(enum.Enum):
 
 ORDER_TYPES = [ot.value for ot in OrderType]
 
+# Aliases for backward compatibility
+ORDER_TYPE = OrderType
+
 # Order sides
 class OrderSide(enum.Enum):
     BUY = "buy"
     SELL = "sell"
 ORDER_SIDES = [side.value for side in OrderSide]
 
-# Position types
+# Position side (alias for backward compatibility with PositionType)
+class PositionSide(enum.Enum):
+    LONG = "long"
+    SHORT = "short"
+
+POSITION_SIDES = [ps.value for ps in PositionSide]
+
+# Backward compatibility
+POSITION_SIDE = PositionSide
+
+# Position types (deprecated, use PositionSide)
 class PositionType(enum.Enum):
     LONG = "long"
     SHORT = "short"
@@ -273,6 +286,23 @@ class OrderStatus(enum.Enum):
     EXPIRED = "expired"
 ORDER_STATUSES = [ps.value for ps in OrderStatus]
 
+# Backwards compatibility
+ORDER_STATUS = OrderStatus
+
+
+# Position lifecycle statuses
+class PositionStatus(enum.Enum):
+    PENDING = "pending"
+    OPEN = "open"
+    PARTIALLY_CLOSED = "partially_closed"
+    CLOSED = "closed"
+    FAILED = "failed"
+
+POSITION_STATUSES = [ps.value for ps in PositionStatus]
+
+# Backward compatibility
+POSITION_STATUS = PositionStatus
+
 # Trigger types for stop and take profit orders
 class TriggerType(enum.Enum):
     PRICE = "price"           # Regular price based trigger
@@ -286,6 +316,8 @@ class TimeInForce(enum.Enum):
     IOC = "ioc"    # Immediate or Cancel
     FOK = "fok"    # Fill or Kill
     GTD = "gtd"    # Good Till Date
+
+TIME_IN_FORCE = TimeInForce
 
 
 # Trade direction for signals
@@ -850,9 +882,12 @@ __all__ = [
     
     # Exchange and trading enums
     'Exchange', 'AssetClass', 'Timeframe', 'OrderType', 'OrderSide',
-    'PositionType', 'OrderStatus', 'TriggerType', 'TimeInForce',
+    'PositionSide', 'PositionType', 'OrderStatus', 'PositionStatus',
+    'TriggerType', 'TimeInForce',
     'SignalDirection', 'SignalStrength', 'MarketRegime', 'StrategyType',
-    'RiskLevel', 'FeeType','EXCHANGE_TYPES', 'TIME_FRAMES','ORDER_TYPES', 'ORDER_SIDES', 'ORDER_STATUSES',
+    'RiskLevel', 'FeeType','EXCHANGE_TYPES', 'TIME_FRAMES','ORDER_TYPES', 'ORDER_SIDES',
+    'ORDER_TYPE', 'ORDER_STATUS', 'TIME_IN_FORCE',
+    'POSITION_SIDES', 'ORDER_STATUSES', 'POSITION_STATUSES', 'POSITION_SIDE', 'POSITION_STATUS',
     
     # Feature and pattern enums
     'IndicatorCategory', 'CandlestickPattern', 'ChartPattern', 'HarmonicPattern',
@@ -872,6 +907,12 @@ __all__ = [
     'DEFAULT_MAX_CORRELATED_TRADES', 'DEFAULT_MAX_DRAWDOWN_PERCENT',
     'DEFAULT_PROFIT_FACTOR_THRESHOLD', 'DEFAULT_WIN_RATE_THRESHOLD',
     'DEFAULT_TRAILING_STOP_ACTIVATION', 'DEFAULT_KELLY_FRACTION',
+    'DEFAULT_STOP_LOSS_MULTIPLIER', 'DEFAULT_TAKE_PROFIT_MULTIPLIER',
+    'POSITION_SIZE_PRECISION', 'MAX_LEVERAGE_BINANCE', 'MAX_LEVERAGE_DERIV',
+    'DEFAULT_GROWTH_FACTOR', 'PARTIAL_CLOSE_LEVELS',
+    'DEFAULT_FIXED_STOP_PERCENTAGE', 'DEFAULT_MIN_STOP_DISTANCE',
+    'DEFAULT_TRAILING_ACTIVATION_PERCENTAGE', 'DEFAULT_TRAILING_CALLBACK_RATE',
+    'MAX_STOP_LEVELS', 'DEFAULT_CHANDELIER_EXIT_MULTIPLIER',
     
     # Notification enums
     'NotificationType', 'NotificationPriority', 'NotificationChannel',
@@ -1425,12 +1466,27 @@ EXPOSURE_LIMITS = {
 
 DEFAULT_MAX_RISK_PER_TRADE = 0.02  # 2% of account per trade
 DEFAULT_BASE_POSITION_SIZE = 0.01  # 1% of account as base position size
+MAX_LEVERAGE_BINANCE = 125
+MAX_LEVERAGE_DERIV = 100
+DEFAULT_STOP_LOSS_MULTIPLIER = 1.5
+DEFAULT_TAKE_PROFIT_MULTIPLIER = 2.0
+POSITION_SIZE_PRECISION = 4
 
 MAX_POSITION_CORRELATION = 0.7  # Maximum allowed correlation between positions
 CORRELATION_LOOKBACK_PERIODS = 100  # Periods to look back for correlation calculation
 
 DEFAULT_ATR_PERIODS = 14  # Default periods for ATR calculation
 DEFAULT_ATR_MULTIPLIER = 2.0  # Default multiplier for ATR-based stops
+
+# Additional risk parameters
+DEFAULT_GROWTH_FACTOR = 1.2
+PARTIAL_CLOSE_LEVELS = [0.5, 0.75]
+DEFAULT_FIXED_STOP_PERCENTAGE = 1.0  # percent
+DEFAULT_MIN_STOP_DISTANCE = 0.005  # 0.5% of entry price
+DEFAULT_TRAILING_ACTIVATION_PERCENTAGE = 0.5
+DEFAULT_TRAILING_CALLBACK_RATE = 0.25
+MAX_STOP_LEVELS = 3
+DEFAULT_CHANDELIER_EXIT_MULTIPLIER = 3.0
 
 RECOVERY_STRATEGIES = {
     "REDUCE_POSITION_SIZE": "reduce_position_size",
@@ -1448,7 +1504,7 @@ ACCOUNT_STATES = {
 }
 
 # Order and position constants
-ORDER_TYPE = {
+ORDER_TYPE_MAP = {
     "MARKET": "market",
     "LIMIT": "limit",
     "STOP": "stop",
@@ -1458,12 +1514,12 @@ ORDER_TYPE = {
     "TRAILING_STOP": "trailing_stop"
 }
 
-ORDER_SIDE = {
+ORDER_SIDE_MAP = {
     "BUY": "buy",
     "SELL": "sell"
 }
 
-ORDER_STATUS = {
+ORDER_STATUS_MAP = {
     "NEW": "new",
     "PARTIALLY_FILLED": "partially_filled",
     "FILLED": "filled",
@@ -1472,18 +1528,18 @@ ORDER_STATUS = {
     "EXPIRED": "expired"
 }
 
-POSITION_SIDE = {
+POSITION_SIDE_MAP = {
     "LONG": "long",
     "SHORT": "short"
 }
 
-PositionStatus = {
+POSITION_STATUS_MAP = {
     "OPEN": "open",
     "CLOSED": "closed",
     "PARTIALLY_CLOSED": "partially_closed"
 }
 
-TimeInForce = {
+TIME_IN_FORCE_MAP = {
     "GTC": "gtc",  # Good Till Canceled
     "IOC": "ioc",  # Immediate Or Cancel
     "FOK": "fok",  # Fill Or Kill
@@ -1917,16 +1973,16 @@ SignalType = {
     "TAKE_PROFIT": "take_profit"
 }
 
-# Order type enum
-OrderType = {
+# Order type mapping
+ORDER_TYPE_DICT = {
     "MARKET": "market",
     "LIMIT": "limit",
     "STOP": "stop",
     "STOP_LIMIT": "stop_limit"
 }
 
-# Order side enum
-OrderSide = {
+# Order side mapping
+ORDER_SIDE_DICT = {
     "BUY": "buy",
     "SELL": "sell"
 }
