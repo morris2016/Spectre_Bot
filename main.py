@@ -622,7 +622,7 @@ async def startup():
         args = parser.parse_args()
 
         # Set up logging system
-        log_level = LOG_LEVELS[args.log_level]
+        log_level = LOG_LEVELS[args.log_level.upper()]
         if args.debug:
             log_level = logging.DEBUG
 
