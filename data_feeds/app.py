@@ -18,6 +18,7 @@ from common.event_bus import EventBus
 
 from common.logger import get_logger
 from common.metrics import MetricsCollector
+from common.event_bus import EventBus
 from common.exceptions import (
     FeedError, FeedConnectionError, ServiceStartupError, ServiceShutdownError
 )
@@ -29,7 +30,7 @@ from data_feeds.deriv_feed import DerivFeed
 
 class DataFeedService:
     """Service for managing data feeds from various sources."""
-    
+
     def __init__(self, config, loop=None, redis_client=None, db_client=None, event_bus: Optional[EventBus] = None):
         """
         Initialize the data feed service.
@@ -44,6 +45,7 @@ class DataFeedService:
         self.loop = loop or asyncio.get_event_loop()
         self.redis_client = redis_client
         self.db_client = db_client
+        self.event_bus = event_bus or EventBus.get_instance()
         self.logger = get_logger("DataFeedService")
         self.event_bus = event_bus or EventBus.get_instance()
         

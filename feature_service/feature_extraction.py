@@ -1627,6 +1627,20 @@ def fibonacci_levels(data: pd.DataFrame) -> Dict[str, float]:
         return vwap
 
 
+def atr(high: Union[pd.Series, List[float]],
+        low: Union[pd.Series, List[float]],
+        close: Union[pd.Series, List[float]],
+        period: int = 14) -> pd.Series:
+    """Standalone ATR calculator for easy reuse."""
+    data = pd.DataFrame({'high': high, 'low': low, 'close': close})
+    return ta.atr(high=data['high'], low=data['low'], close=data['close'], length=period)
+
+
+def fibonacci_levels(high: float, low: float) -> List[float]:
+    """Calculate Fibonacci retracement levels."""
+    levels = [0.0, 0.236, 0.382, 0.5, 0.618, 0.786, 1.0]
+    diff = high - low
+    return [high - diff * lvl for lvl in levels]
 # Convenience wrapper functions
 
 def atr(data: pd.DataFrame, period: int = 14) -> pd.Series:

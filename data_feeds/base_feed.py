@@ -11,7 +11,6 @@ import time
 import asyncio
 import logging
 from abc import ABC, abstractmethod
-from typing import Dict, List, Any, Optional, Set
 
 from common.logger import get_logger
 from common.exceptions import FeedError, FeedConnectionError, FeedDisconnectedError
@@ -36,6 +35,7 @@ class BaseFeed(ABC):
         self.config = config
         self.loop = loop or asyncio.get_event_loop()
         self.redis_client = redis_client
+        self.event_bus = event_bus or EventBus.get_instance()
         self.logger = get_logger(self.__class__.__name__)
         self.event_bus = event_bus or EventBus.get_instance()
         
@@ -173,6 +173,9 @@ class BaseFeed(ABC):
 
             # Publish over the event bus
             await self.event_bus.publish(channel, data)
+            # Publish to EventBus
+            if self.event_bus:
+                await self.event_bus.publish(channel, data)
             
             # Update metrics
             self.metrics.increment("data.received")
@@ -240,7 +243,7 @@ class BaseDataFeed(BaseFeed):
     specific to data feeds used for trading analysis and signal generation.
     """
     
-    def __init__(self, name, config):
+    def __init__(self, name, config, event_bus: Optional[EventBus] = None):
         """
         Initialize the data feed.
         
@@ -248,7 +251,7 @@ class BaseDataFeed(BaseFeed):
             name: Feed name
             config: System configuration
         """
-        super().__init__(config)
+        super().__init__(config, event_bus=event_bus)
         self.name = name
         self.feed_type = "data"
         
@@ -322,6 +325,17 @@ class FeedOptions:
     
     # Additional options
     extra: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class MarketData:
+    """Simple OHLCV data container."""
+    timestamp: float
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: float
 
 
 class DataProcessor:

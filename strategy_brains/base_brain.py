@@ -12,10 +12,11 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Any, Optional
-
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Any, Optional, Union
+
+from .historical_memory import HistoricalMemoryMixin
 
 
 from common.logger import get_logger
@@ -38,9 +39,11 @@ class TradeDirection(Enum):
 @dataclass
 class BrainConfig:
     """Base configuration for strategy brains."""
-    pass
+    
 
-
+    # Memory windows for performance tracking
+    short_memory: int = 50
+    long_memory: int = 500
 
     # Arbitrary strategy parameters
     parameters: Dict[str, Any] = field(default_factory=dict)
@@ -53,7 +56,7 @@ class BrainConfig:
 
 
 
-class StrategyBrain(ABC):
+class StrategyBrain(HistoricalMemoryMixin, ABC):
     """
     Base class for all trading strategy brains.
     
@@ -91,6 +94,12 @@ class StrategyBrain(ABC):
         self.redis_client = redis_client
         self.db_client = db_client
         self.loop = loop or asyncio.get_event_loop()
+
+        HistoricalMemoryMixin.__init__(
+            self,
+            short_window=getattr(self.config, "short_memory", 50),
+            long_window=getattr(self.config, "long_memory", 500),
+        )
         
         self.logger = get_logger(f"Brain.{self.name}")
         self.metrics = MetricsCollector(f"brain.{self.name}")
