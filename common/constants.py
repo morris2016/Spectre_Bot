@@ -217,20 +217,10 @@ class OrderType(enum.Enum):
     TRAILING_STOP = "trailing_stop"
 
 
-# Aliases for backward compatibility
-ORDER_TYPE = OrderType
-
-# Aliases for backward compatibility
-ORDER_TYPE = OrderType
-
-# Aliases for backward compatibility
-ORDER_TYPE = OrderType
-
-# Aliases for backward compatibility
+# Alias for backward compatibility
 ORDER_TYPE = OrderType
 
 # Order sides
-
 class OrderSide(enum.Enum):
     """Order sides for trading."""
     BUY = "buy"
@@ -248,10 +238,6 @@ POSITION_SIDE = PositionSide
 
 # Position types (deprecated, use PositionSide)
 class PositionType(enum.Enum):
-
-
-class PositionSide(enum.Enum):
-    """Position sides for trading."""
     LONG = "long"
     SHORT = "short"
 
@@ -270,10 +256,6 @@ class OrderStatus(enum.Enum):
 ORDER_STATUS = OrderStatus
 
 
-# Position lifecycle statuses
-class PositionStatus(enum.Enum):
-
-
 class PositionStatus(enum.Enum):
     """Position status states."""
     PENDING = "pending"
@@ -287,59 +269,9 @@ POSITION_STATUSES = [ps.value for ps in PositionStatus]
 # Backward compatibility
 POSITION_STATUS = PositionStatus
 
-# Backwards compatibility
-ORDER_STATUS = OrderStatus
 
-
-# Position lifecycle statuses
-class PositionStatus(enum.Enum):
-    PENDING = "pending"
-    OPEN = "open"
-    PARTIALLY_CLOSED = "partially_closed"
-    CLOSED = "closed"
-    FAILED = "failed"
-
-POSITION_STATUSES = [ps.value for ps in PositionStatus]
-
-# Backward compatibility
-POSITION_STATUS = PositionStatus
-
-# Backwards compatibility
-ORDER_STATUS = OrderStatus
-
-
-# Position lifecycle statuses
-class PositionStatus(enum.Enum):
-    PENDING = "pending"
-    OPEN = "open"
-    PARTIALLY_CLOSED = "partially_closed"
-    CLOSED = "closed"
-    FAILED = "failed"
-
-POSITION_STATUSES = [ps.value for ps in PositionStatus]
-
-# Backward compatibility
-POSITION_STATUS = PositionStatus
-
-# Backwards compatibility
-ORDER_STATUS = OrderStatus
-
-
-# Position lifecycle statuses
-class PositionStatus(enum.Enum):
-    PENDING = "pending"
-    OPEN = "open"
-    PARTIALLY_CLOSED = "partially_closed"
-    CLOSED = "closed"
-    FAILED = "failed"
-
-POSITION_STATUSES = [ps.value for ps in PositionStatus]
-
-# Backward compatibility
-POSITION_STATUS = PositionStatus
-
-# Trigger types for stop and take profit orders
 class TriggerType(enum.Enum):
+    """Trigger types for stop and take profit orders."""
     PRICE = "price"           # Regular price based trigger
     MARK_PRICE = "mark_price" # Mark price trigger (for futures)
     INDEX_PRICE = "index_price" # Index price trigger
@@ -351,12 +283,6 @@ class TimeInForce(enum.Enum):
     IOC = "ioc"  # Immediate or Cancel
     FOK = "fok"  # Fill or Kill
     GTD = "gtd"  # Good Till Date
-
-TIME_IN_FORCE = TimeInForce
-
-TIME_IN_FORCE = TimeInForce
-
-TIME_IN_FORCE = TimeInForce
 
 TIME_IN_FORCE = TimeInForce
 
@@ -620,6 +546,7 @@ ARBITRAGE_OPPORTUNITY_TYPES = [
     "futures_spot",
     "funding_rate",
     "index_tracking"
+]
 STRATEGY_TYPES = [
     "trend_following", "mean_reversion", "breakout", "momentum", "statistical_arbitrage",
     "market_making", "sentiment_based", "machine_learning", "pattern_recognition",
@@ -638,7 +565,6 @@ SLIPPAGE_MODELS = [
 
 # ======================================
 # Risk Management Constants
-=======
 # Risk Management Configuration
 # ======================================
 
@@ -922,7 +848,7 @@ SOCIAL_API_KEYS = {
     },
     "discord": {
         "bot_token": ""
-    }
+    },
     "synthetic": "synthetic_index",
 }
 
@@ -1959,7 +1885,6 @@ EXCHANGE_NAMES = [
     "kraken",
     "deriv",
     "oanda"
-=======
     # Risk management
     "RiskControlMethod", "PositionSizingMethod", "ExecutionAlgorithm",
     "DEFAULT_RISK_PERCENT_PER_TRADE", "DEFAULT_MAX_OPEN_TRADES", "DEFAULT_MAX_CORRELATED_TRADES",
@@ -2113,21 +2038,21 @@ SignalType = {
 
 # Order type mapping
 ORDER_TYPE_LEGACY_MAP = {
-=======
-ORDER_TYPE_DICT = {
     "MARKET": "market",
     "LIMIT": "limit",
     "STOP": "stop",
-    "STOP_LIMIT": "stop_limit"
+    "STOP_LIMIT": "stop_limit",
 }
+
+ORDER_TYPE_DICT = ORDER_TYPE_LEGACY_MAP
 
 # Order side mapping
 ORDER_SIDE_LEGACY_MAP = {
-
-ORDER_SIDE_DICT = {
     "BUY": "buy",
-    "SELL": "sell"
+    "SELL": "sell",
 }
+
+ORDER_SIDE_DICT = ORDER_SIDE_LEGACY_MAP
 
 # Asset classes
 ASSET_CLASSES = {
