@@ -398,6 +398,11 @@ class InsufficientLiquidityError(ExecutionError):
     """Raised when there is insufficient liquidity to execute a trade."""
     pass
 
+
+class InsufficientBalanceError(ExecutionError):
+    """Raised when account balance is insufficient for an action."""
+    pass
+
 class ArbitrageOpportunityExpiredError(StrategyError):
     """Raised when an arbitrage opportunity is no longer valid."""
     pass
@@ -820,6 +825,7 @@ __all__ = [
     'InvalidTimeframeError', 'InvalidParameterError', 'AlertDeliveryError',
     'AlertConfigurationError', 'RiskManagerError', 'PositionSizingError', 'StopLossError',
     'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError',
+    'InsufficientBalanceError',
     'ArbitrageOpportunityExpiredError', 'DrawdownLimitExceededException',
     'RiskManagementException', 'ModelVersionError', 'LogAnalysisError',
     'InsufficientDataError', 'EncodingError', 'MetricCollectionError',
