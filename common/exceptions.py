@@ -1123,4 +1123,4 @@ __all__ = [
     # Risk management
     "RiskError", "InsufficientBalanceError", "RiskLimitExceededError", "RiskExceededError",
     "MaxDrawdownExceededError", "DrawdownLimitExceededException", "RiskManagerError",
-    "
+]

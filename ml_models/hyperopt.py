@@ -3,16 +3,25 @@
 
 from __future__ import annotations
 
-from typing import Dict, Any
-
-import numpy as np
-from hyperopt import fmin, tpe, hp, Trials, STATUS_OK
+from typing import Any, Callable, Dict, Iterable
+import itertools
+import logging
+import optuna
+from common.metrics import MetricsCollector
+try:
+    from hyperopt import fmin, tpe, hp, Trials, STATUS_OK
+    _HYPEROPT_AVAILABLE = True
+except ModuleNotFoundError:  # pragma: no cover - optional dependency
+    fmin = tpe = hp = Trials = STATUS_OK = None
+    _HYPEROPT_AVAILABLE = False
 
 
 class HyperOptService:
     """Run hyperparameter optimization using Hyperopt."""
 
     def __init__(self, max_evals: int = 50):
+        if not _HYPEROPT_AVAILABLE:
+            raise ImportError("hyperopt is required for HyperOptService")
         self.max_evals = max_evals
 
     def optimize(self, objective_fn, search_space: Dict[str, Any]) -> Dict[str, Any]:
@@ -33,14 +42,6 @@ class HyperOptService:
                 final_params[k] = v
         return final_params
 
-
-import itertools
-import logging
-from typing import Any, Callable, Dict, Iterable, List
-
-import optuna
-
-from common.metrics import MetricsCollector
 
 logger = logging.getLogger(__name__)
 
