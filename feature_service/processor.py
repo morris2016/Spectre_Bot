@@ -19,8 +19,12 @@ import multiprocessing as mp
 from functools import partial
 import time
 import traceback
-import dask
-import dask.dataframe as dd
+try:
+    import dask  # type: ignore
+    import dask.dataframe as dd  # type: ignore
+except Exception:  # pragma: no cover - optional
+    dask = None
+    dd = None
 from feature_service.processor_utils import cudf, HAS_GPU
 
 # Try to import GPU-related libraries

@@ -80,6 +80,11 @@ class DataValidationError(DataError):
     pass
 
 
+class MarketDataError(DataError):
+    """Raised when market data retrieval fails or is invalid."""
+    pass
+
+
 class FeedError(QuantumSpectreError):
     """Base class for feed-related errors."""
 
@@ -206,14 +211,94 @@ class OrderExecutionError(OrderError):
     pass
 
 
+class PositionError(ExecutionError):
+    """Raised for errors related to position management."""
+    pass
+
+
+class PositionExecutionError(PositionError):
+    """Raised when a position operation fails during execution."""
+    pass
+
+
+class InvalidPositionStateError(PositionError):
+    """Raised when a position is in an unexpected state."""
+
+    """Raised for position management errors."""
+    pass
+
+
 class InsufficientFundsError(OrderError):
     """Raised when there are insufficient funds for an order."""
 
     pass
 
 
+class InsufficientBalanceError(OrderError):
+    """Raised when the account balance is too low to execute an action."""
+    pass
+
+
+class PositionError(ExecutionError):
+    """Base class for position-related errors."""
+    pass
+
+
+class PositionExecutionError(PositionError):
+    """Raised when there is an error executing a position."""
+    pass
+
+
+class InvalidPositionStateError(PositionError):
+    """Raised when a position is in an invalid state."""
+    pass
+
+
+class InsufficientBalanceError(PositionError):
+    """Raised when there is insufficient balance for a position."""
+    pass
+
+
+class MarginCallError(PositionError):
+    """Raised when a margin call occurs on a position."""
+    pass
+
+
+class PositionLiquidationError(PositionError):
+    """Raised when a position is forcibly liquidated."""
+
 class RiskError(QuantumSpectreError):
     """Base class for risk management errors."""
+    pass
+
+class InsufficientBalanceError(OrderError):
+    """Raised when an account balance is too low to execute an action."""
+    """Raised when account balance is too low for an operation."""
+
+class RiskError(QuantumSpectreError):
+    """Base class for risk management errors."""
+
+    pass
+
+
+class InsufficientBalanceError(RiskError):
+    """Raised when account balance is insufficient for a trade."""
+class PositionError(ExecutionError):
+    """Raised for invalid or inconsistent position state."""
+    pass
+
+
+class PositionExecutionError(ExecutionError):
+    """Raised when an error occurs executing a position."""
+class InsufficientBalanceError(OrderError):
+    """Raised when account balance is insufficient for an operation."""
+    pass
+
+
+class PositionError(ExecutionError):
+    """Raised when there is an invalid or unknown position state."""
+
+    """Raised for invalid operations on a trading position."""
 
     pass
 
@@ -227,6 +312,49 @@ class RiskLimitExceededError(RiskError):
 class RiskExceededError(RiskError):
     """Raised when a calculated risk exceeds the allowed threshold."""
 
+    pass
+
+
+class RiskExceededError(RiskError):
+    """Raised when a proposed trade exceeds defined risk parameters."""
+    pass
+
+
+
+    """Raised when calculated risk exceeds configured maximum."""
+    pass
+
+
+
+    """Raised when an operation would exceed defined risk parameters."""
+    pass
+
+
+
+class InsufficientBalanceError(RiskError):
+    """Raised when account balance is too low for an operation."""
+    pass
+
+
+class RiskExceededError(RiskError):
+    """Raised when calculated risk exceeds configured threshold."""
+class RiskExceededError(RiskError):
+    """Raised when calculated risk exceeds the allowed threshold."""
+    pass
+
+
+class PositionExecutionError(PositionError):
+    """Raised when a position cannot be executed properly."""
+    pass
+
+
+class InvalidPositionStateError(PositionError):
+    """Raised when a position state transition is invalid."""
+    pass
+
+
+class MaxDrawdownExceededError(RiskError):
+    """Raised when maximum drawdown is exceeded."""
     pass
 
 
@@ -248,6 +376,11 @@ class ModelError(QuantumSpectreError):
     pass
 
 
+class ModelRegistrationError(ModelError):
+    """Raised when registration of an ML model fails."""
+    pass
+
+
 class ModelTrainingError(ModelError):
     """Raised when model training fails."""
 
@@ -258,6 +391,58 @@ class ModelPredictionError(ModelError):
     """Raised when model prediction fails."""
 
     pass
+
+
+class ModelRegistrationError(ModelError):
+    """Raised when registering a model fails."""
+    pass
+
+
+class ModelSaveError(ModelError):
+    """Raised when saving a model fails."""
+    pass
+
+
+
+class InvalidModelStateError(ModelError):
+    """Raised when a model is in an invalid state for the requested operation."""
+    pass
+
+
+class ModelRegistrationError(ModelError):
+    """Raised when a model fails to register."""
+class InvalidModelStateError(ModelError):
+    """Raised when a model is in an invalid state for the requested operation."""
+    pass
+
+
+class ModelSaveError(ModelError):
+    """Raised when saving a model to disk fails."""
+    pass
+
+
+class ModelPersistenceError(ModelError):
+    """Raised when loading or persisting a model fails."""
+    pass
+
+
+class HyperparameterOptimizationError(ModelError):
+    """Raised when hyperparameter optimization fails."""
+    pass
+
+
+class ResourceError(QuantumSpectreError):
+    """Base class for resource-related errors."""
+    pass
+
+
+class GPUNotAvailableError(ResourceError):
+    """Raised when GPU resources are requested but not available."""
+    pass
+
+class ModelRegistrationError(ModelError):
+    """Raised when registering a model fails."""
+
 
 
 class StrategyError(QuantumSpectreError):
@@ -355,6 +540,10 @@ class DataSourceError(DataError):
     pass
 
 
+
+class MarketDataError(DataError):
+    """Raised for errors fetching or processing market data."""
+    pass
 class FeedSubscriptionError(FeedError):
     """Raised when there is an error with feed subscription."""
 
@@ -379,6 +568,10 @@ class DataFeedConnectionError(FeedError):
     pass
 
 
+
+class MarketDataError(DataError):
+    """Raised when market data retrieval fails."""
+    pass
 # Removed duplicate ParsingError definition
 # class ParsingError(DataError):
 #     """Raised when there is an error parsing data."""
@@ -396,7 +589,12 @@ class ModelLoadError(QuantumSpectreError):
     pass
 
 
-class DataParsingError(DataError):
+
+class ModelSaveError(ModelError):
+    """Raised when saving a model fails."""
+    pass
+
+  class DataParsingError(DataError):
     """Raised when there is an error parsing data."""
 
     pass
@@ -468,6 +666,11 @@ class FeatureCalculationError(QuantumSpectreError):
     pass
 
 
+
+class CalculationError(QuantumSpectreError):
+    """Raised when a numerical calculation fails."""
+    pass
+
 class FeatureServiceError(QuantumSpectreError):
     """Base class for feature service errors."""
 
@@ -486,7 +689,12 @@ class InvalidParameterError(QuantumSpectreError):
     pass
 
 
-# --- Auto-generated missing exceptions ---
+
+class CalculationError(QuantumSpectreError):
+    """Raised when a numerical calculation fails."""
+    pass
+
+  # --- Auto-generated missing exceptions ---
 
 
 class AlertDeliveryError(AlertError):
@@ -529,6 +737,51 @@ class ModelRegistrationError(ModelError):
     """Raised when registering a model fails."""
 
     pass
+class PositionError(RiskError):
+    """Raised for general position management errors."""
+    pass
+
+class InsufficientBalanceError(RiskError):
+    """Raised when an account has insufficient balance for an operation."""
+    pass
+
+
+
+class PositionError(ExecutionError):
+    """Base class for position-related errors."""
+    pass
+
+
+class PositionExecutionError(PositionError):
+    """Raised when executing a position fails."""
+    pass
+
+
+class InsufficientBalanceError(RiskError):
+    """Raised when account balance is insufficient."""
+
+    """Raised when a position fails to execute properly."""
+    pass
+
+
+class InvalidPositionStateError(PositionError):
+    """Raised when a position transition is not allowed."""
+
+    """Raised for general position handling errors."""
+
+    pass
+
+
+class RiskExceededError(RiskError):
+    """Raised when an action exceeds configured risk limits."""
+
+    """Raised when a calculated risk exceeds allowable thresholds."""
+    pass
+
+
+class ModelRegistrationError(ModelError):
+    """Raised when a model cannot be registered properly."""
+    pass
 
 
 class StopLossError(OrderError):
@@ -537,9 +790,62 @@ class StopLossError(OrderError):
     pass
 
 
+class PositionError(OrderError):
+    """Raised for generic position-related errors."""
+    pass
+
+class InsufficientBalanceError(PositionError):
+    """Raised when account balance is insufficient."""
+    pass
+
+class ModelRegistrationError(ModelError):
+    """Raised when a model cannot be registered."""
+    pass
+
+class RiskExceededError(RiskError):
+    """Raised when a trade exceeds configured risk limits."""
+    pass
+
+class PositionExecutionError(PositionError):
+    """Raised when a position cannot be executed."""
+    pass
+
+class InvalidModelStateError(ModelError):
+    """Raised when an ML model is in an invalid state."""
+    pass
+
+
 class ModelNotFoundError(ModelError):
     """Raised when a requested ML model is not found."""
 
+    pass
+
+
+
+class ModelRegistrationError(ModelError):
+    """Raised when model registration fails."""
+    pass
+
+
+class InvalidModelStateError(ModelError):
+    """Raised when a model is in an invalid state."""
+    pass
+
+
+class PositionError(ExecutionError):
+    """Base class for position-related errors."""
+    pass
+
+
+class InsufficientBalanceError(PositionError):
+    """Raised when an account balance is insufficient for a trade."""
+    pass
+
+
+class RiskExceededError(RiskError):
+    """Raised when a calculated risk exceeds configured limits."""
+
+    """Raised when a model fails to register with the system."""
     pass
 
 
@@ -555,6 +861,28 @@ class InsufficientLiquidityError(ExecutionError):
     pass
 
 
+
+class InsufficientBalanceError(ExecutionError):
+
+    """Raised when account balance is too low to execute an order."""
+    pass
+
+
+class PositionError(ExecutionError):
+    """Raised for position management failures."""
+    pass
+
+
+class RiskExceededError(RiskError):
+    """Raised when a calculated risk exceeds allowable limits."""
+    pass
+
+
+class ModelRegistrationError(ModelError):
+    """Raised when registering a machine learning model fails."""
+    pass
+
+
 class ArbitrageOpportunityExpiredError(StrategyError):
     """Raised when an arbitrage opportunity is no longer valid."""
 
@@ -567,17 +895,51 @@ class DrawdownLimitExceededException(RiskLimitExceededError):
     pass
 
 
+
+class MaxDrawdownExceededError(RiskLimitExceededError):
+    """Raised when the maximum allowed drawdown is exceeded."""
+    """Raised when maximum allowed drawdown is breached."""
+    pass
+
 class RiskManagementException(RiskError):
     """General exception for risk management issues."""
 
     pass
 
 
+class PositionError(ExecutionError):
+    """Raised for generic position-related failures."""
+    pass
+
+
+class InsufficientBalanceError(RiskError):
+    """Raised when available balance is insufficient to execute an action."""
+    pass
+
+
+class ModelRegistrationError(ModelError):
+    """Raised when registering a model fails due to a conflict."""
+
+class RiskExceededError(RiskError):
+    """Raised when a calculated risk exceeds allowed thresholds."""
+    pass
+
 class ModelVersionError(ModelError):
     """Raised for issues related to model versioning."""
 
     pass
 
+
+
+class ModelRegistrationError(ModelError):
+    """Raised when registering an ML model fails."""
+    pass
+
+
+
+class InvalidModelStateError(ModelError):
+    """Raised when a model is in an invalid state for the requested operation."""
+    pass
 
 class LogAnalysisError(MonitoringError):
     """Raised for errors during log analysis."""
@@ -680,6 +1042,11 @@ class PredictionError(ModelPredictionError):
 
     pass
 
+
+
+class CalculationError(QuantumSpectreError):
+    """Raised when a general calculation fails."""
+    pass
 
 class AnalysisError(QuantumSpectreError):
     """Raised for general errors during analysis tasks."""
@@ -842,6 +1209,15 @@ class ModelValidationError(ModelError):
 
     pass
 
+
+class InvalidModelStateError(ModelError):
+    """Raised when a model is in an invalid state."""
+    pass
+
+
+class ModelRegistrationError(ModelError):
+    """Raised when registering a model fails."""
+    pass
 
 class WebSocketError(FeedConnectionError):
     """Raised for errors related to WebSocket connections."""
@@ -1292,4 +1668,104 @@ __all__ = [
     "TimeSeriesQueryError",
     "TimeSeriesDataError",
     "TimeSeriesConfigError",
+    'QuantumSpectreError', 'ConfigurationError', 'ServiceError', 'ServiceStartupError',
+    'ServiceShutdownError', 'SystemCriticalError', 'DataError', 'DataIngestionError',
+    'DataProcessorError', 'ProcessorNotFoundError', 'SourceNotFoundError', 'DataValidationError',
+    'MarketDataError',
+    'FeedError', 'FeedConnectionError', 'BlockchainConnectionError', 'FeedDisconnectedError',
+    'FeedTimeoutError', 'FeedRateLimitError', 'DatabaseError', 'DatabaseConnectionError',
+    'DatabaseQueryError', 'RedisError', 'RedisConnectionError', 'SecurityError',
+    'APIKeyError', 'AuthenticationError', 'AuthorizationError', 'ExecutionError',
+    'OrderError', 'OrderRejectedError', 'OrderTimeoutError', 'InsufficientFundsError',
+    'InsufficientBalanceError',
+    'InvalidOrderError', 'OrderCancellationError', 'SlippageExceededError', 'NetworkError',
+    'RiskError', 'RiskLimitExceededError', 'RiskExceededError', 'BacktestError', 'ModelError',
+    'ModelTrainingError', 'ModelPredictionError', 'StrategyError', 'SignalGenerationError',
+    'InsufficientBalanceError', 'PositionError', 'PositionExecutionError',
+    'InvalidPositionStateError', 'ModelRegistrationError', 'InvalidModelStateError',
+    'InsufficientBalanceError', 'PositionError',
+
+    'InsufficientBalanceError',
+    'InvalidOrderError', 'OrderCancellationError', 'SlippageExceededError', 'NetworkError',
+    'PositionError', 'PositionExecutionError',
+    'InvalidPositionStateError',
+    'RiskError', 'RiskLimitExceededError', 'RiskExceededError', 'BacktestError', 'ModelError',
+    'ModelTrainingError', 'ModelPredictionError', 'ModelRegistrationError', 'InvalidModelStateError', 'StrategyError', 'SignalGenerationError',
+
+    'InsufficientBalanceError', 'PositionError', 'PositionExecutionError',
+    'InvalidPositionStateError',
+    'InvalidOrderError', 'OrderCancellationError', 'SlippageExceededError', 'NetworkError',
+    'RiskError', 'RiskLimitExceededError', 'RiskExceededError', 'MaxDrawdownExceededError',
+    'BacktestError', 'ModelError',
+    'ModelTrainingError', 'ModelPredictionError', 'InvalidModelStateError',
+    'ModelRegistrationError', 'ModelSaveError', 'ModelPersistenceError',
+    'HyperparameterOptimizationError',
+    'StrategyError', 'SignalGenerationError',
+
+    'InvalidOrderError', 'OrderCancellationError', 'SlippageExceededError', 'NetworkError',
+    'PositionError', 'RiskError', 'RiskLimitExceededError', 'BacktestError', 'ModelError',
+    'RiskError', 'RiskLimitExceededError', 'RiskExceededError', 'BacktestError', 'ModelError',
+    'ModelTrainingError', 'ModelPredictionError', 'InvalidModelStateError', 'ModelRegistrationError', 'StrategyError', 'SignalGenerationError',
+    'RiskError', 'RiskLimitExceededError', 'BacktestError', 'ModelError',
+    'ModelTrainingError', 'ModelPredictionError', 'ModelRegistrationError', 'StrategyError', 'SignalGenerationError',
+    'MonitoringError', 'AlertError', 'ResourceError', 'ResourceExhaustionError',
+    'GPUNotAvailableError', 'TimeoutError', 'ExchangeError', 'RateLimitError', 'FeedNotFoundError',
+    'FeedInitializationError', 'FeedAuthenticationError', 'DataSourceError',
+    'FeedSubscriptionError', 'FeedDataError', 'ParsingError', 'DataFeedConnectionError',
+    'MarketDataError',
+    'ModelLoadError', 'DataParsingError', 'CredentialError', 'SecurityViolationError',
+
+    'ModelLoadError', 'ModelSaveError', 'DataParsingError', 'CredentialError', 'SecurityViolationError',
+    'RegimeDetectionError', 'NewsFeedError', 'NewsParsingError', 'NewsSourceUnavailableError',
+    'FeatureNotFoundError', 'FeatureCalculationError', 'FeatureServiceError',
+    'InvalidTimeframeError', 'InvalidParameterError', 'CalculationError', 'AlertDeliveryError',
+    'AlertConfigurationError', 'RiskManagerError', 'PositionSizingError', 'StopLossError',
+
+    'PositionError', 'PositionExecutionError', 'InvalidPositionStateError', 'InsufficientBalanceError',
+    'MarginCallError', 'PositionLiquidationError',
+    'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError', 'InsufficientBalanceError',
+    'InsufficientBalanceError', 'RiskExceededError', 'PositionError', 'PositionExecutionError',
+    'ModelRegistrationError', 'InvalidModelStateError',
+    'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError',
+
+    'ModelRegistrationError', 'InvalidModelStateError',
+    'PositionError', 'InsufficientBalanceError', 'RiskExceededError',
+
+    'InsufficientBalanceError', 'PositionError', 'RiskExceededError',
+    'ModelRegistrationError',
+    'ArbitrageOpportunityExpiredError', 'DrawdownLimitExceededException', 'MaxDrawdownExceededError',
+    'RiskManagementException', 'ModelVersionError', 'InvalidModelStateError', 'LogAnalysisError',
+    'InsufficientBalanceError', 'PositionError', 'RiskExceededError',
+    'ModelRegistrationError', 'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError',
+    'MarketDataError', 'CalculationError',
+
+    'ArbitrageOpportunityExpiredError', 'DrawdownLimitExceededException',
+    'MaxDrawdownExceededError',
+    'RiskManagementException', 'ModelVersionError', 'LogAnalysisError',
+    'RiskManagementException', 'RiskExceededError', 'PositionError',
+    'InsufficientBalanceError',
+    'ModelRegistrationError', 'ModelVersionError', 'LogAnalysisError',
+    'RiskManagementException', 'RiskExceededError', 'ModelVersionError', 'LogAnalysisError',
+    'InsufficientDataError', 'EncodingError', 'MetricCollectionError',
+    'ServiceConnectionError', 'DataStoreError', 'InvalidDataError', 'TrainingError',
+    'ArbitrageValidationError', 'PredictionError', 'CalculationError', 'AnalysisError', 'RecoveryStrategyError',
+    'OptimizationError', 'CorrelationCalculationError', 'SamplingError', 'DataQualityError',
+    'HardwareError', 'EnsembleConfigError', 'ServiceUnavailableError', 'ModelNotSupportedError',
+    'InvalidFeatureFormatError', 'StrategyExecutionError', 'AdaptationError', 'InferenceError',
+    'CircuitBreakerTrippedException', 'PatternRecognitionError', 'PatternNotFoundError',
+    'DataAlignmentError', 'RESTClientError', 'RequestError', 'DataTransformationError',
+    'CapitalManagementError', 'MicrostructureAnalysisError', 'MigrationError',
+    'ModelValidationError', 'ModelRegistrationError', 'InvalidModelStateError',
+    'WebSocketError', 'SubscriptionError', 'DataFetchError',
+    'BacktestConfigError', 'BacktestDataError', 'BacktestStrategyError', 'AssetCouncilError',
+    'BrainNotFoundError', 'CouncilError', 'DecisionError', 'PerformanceTrackerError',
+    'InvalidStrategyError', 'SimulationError', 'SentimentAnalysisError', 'RegimeCouncilError',
+    'ReportGenerationError', 'OperationNotPermittedError', 'BacktestScenarioError',
+    'DataNotFoundError', 'VoiceAdvisorError', 'TTSEngineError', 'VotingError',
+    'PermissionDeniedError', 'WeightingSystemError', 'FeedCoordinationError',
+    'DataInsufficientError', 'InvalidAssetError', 'InvalidTimeRangeError',
+    'InvalidFeatureDefinitionError', 'FeatureTimeoutError',
+    'TimeSeriesConnectionError', 'TimeSeriesQueryError', 'TimeSeriesDataError',
+    'TimeSeriesConfigError', 'PositionError', 'PositionExecutionError',
+    'InsufficientBalanceError', 'RiskExceededError'
 ]

@@ -12,6 +12,12 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Any, Optional
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Dict, List, Any, Optional, Union
+
+from .historical_memory import HistoricalMemoryMixin
+
 
 from common.logger import get_logger
 from common.metrics import MetricsCollector
@@ -36,7 +42,23 @@ class BrainConfig:
     pass
 
 
-class StrategyBrain(ABC):
+    # Memory windows for performance tracking
+    short_memory: int = 50
+    long_memory: int = 500
+
+
+    # Arbitrary strategy parameters
+    parameters: Dict[str, Any] = field(default_factory=dict)
+
+    # Generic risk management settings
+    risk_per_trade: float = 0.01
+    max_position_size: float = 0.05
+    stop_loss_atr_multiplier: float = 1.5
+    take_profit_atr_multiplier: float = 3.0
+
+
+
+class StrategyBrain(HistoricalMemoryMixin, ABC):
     """
     Base class for all trading strategy brains.
     
@@ -44,8 +66,16 @@ class StrategyBrain(ABC):
     generates signals, and adapts to changing market conditions.
     """
     
-    def __init__(self, config: Dict[str, Any], name: str = None, 
-                redis_client=None, db_client=None, loop=None):
+    def __init__(
+        self,
+        config: Optional[Union[BrainConfig, Dict[str, Any]]] = None,
+        *args,
+        name: str = None,
+        redis_client=None,
+        db_client=None,
+        loop=None,
+        **kwargs,
+    ):
         """
         Initialize a strategy brain.
         
@@ -55,12 +85,23 @@ class StrategyBrain(ABC):
             redis_client: Redis client for communication
             db_client: Database client
             loop: Asyncio event loop
+            *args: Additional positional arguments (ignored)
+            **kwargs: Additional keyword arguments (ignored)
         """
-        self.config = config
+        self.config = config or BrainConfig()
+        if isinstance(self.config, dict):
+            self.config = BrainConfig(**self.config)
+        self._validate_config(self.config)
         self.name = name or self.__class__.__name__
         self.redis_client = redis_client
         self.db_client = db_client
         self.loop = loop or asyncio.get_event_loop()
+
+        HistoricalMemoryMixin.__init__(
+            self,
+            short_window=getattr(self.config, "short_memory", 50),
+            long_window=getattr(self.config, "long_memory", 500),
+        )
         
         self.logger = get_logger(f"Brain.{self.name}")
         self.metrics = MetricsCollector(f"brain.{self.name}")
@@ -83,7 +124,14 @@ class StrategyBrain(ABC):
         }
         
         # Strategy parameters
-        self.parameters = config.get("parameters", {})
+        self.parameters = self.config.parameters
+
+    def _validate_config(self, config: BrainConfig) -> None:
+        """Validate core configuration options."""
+        if config.risk_per_trade <= 0 or config.risk_per_trade > 1:
+            raise ValueError("risk_per_trade must be between 0 and 1")
+        if config.max_position_size <= 0:
+            raise ValueError("max_position_size must be positive")
         
     async def initialize(self):
         """Initialize the strategy brain."""
