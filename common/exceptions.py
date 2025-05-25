@@ -67,6 +67,11 @@ class DataValidationError(DataError):
     pass
 
 
+class MarketDataError(DataError):
+    """Raised when market data retrieval fails or is invalid."""
+    pass
+
+
 class FeedError(QuantumSpectreError):
     """Base class for feed-related errors."""
     pass
@@ -174,6 +179,11 @@ class InsufficientFundsError(OrderError):
     pass
 
 
+class InsufficientBalanceError(OrderError):
+    """Raised when the account balance is too low to execute an action."""
+    pass
+
+
 class RiskError(QuantumSpectreError):
     """Base class for risk management errors."""
     pass
@@ -181,6 +191,11 @@ class RiskError(QuantumSpectreError):
 
 class RiskLimitExceededError(RiskError):
     """Raised when a risk limit is exceeded."""
+    pass
+
+
+class RiskExceededError(RiskError):
+    """Raised when a proposed trade exceeds defined risk parameters."""
     pass
 
 
@@ -363,6 +378,11 @@ class InvalidTimeframeError(QuantumSpectreError):
 
 class InvalidParameterError(QuantumSpectreError):
     """Raised when an invalid parameter is provided to a function or method."""
+    pass
+
+
+class CalculationError(QuantumSpectreError):
+    """Raised when a numerical calculation fails."""
     pass
 # --- Auto-generated missing exceptions ---
 
@@ -802,13 +822,15 @@ __all__ = [
     'QuantumSpectreError', 'ConfigurationError', 'ServiceError', 'ServiceStartupError',
     'ServiceShutdownError', 'SystemCriticalError', 'DataError', 'DataIngestionError',
     'DataProcessorError', 'ProcessorNotFoundError', 'SourceNotFoundError', 'DataValidationError',
+    'MarketDataError',
     'FeedError', 'FeedConnectionError', 'BlockchainConnectionError', 'FeedDisconnectedError',
     'FeedTimeoutError', 'FeedRateLimitError', 'DatabaseError', 'DatabaseConnectionError',
     'DatabaseQueryError', 'RedisError', 'RedisConnectionError', 'SecurityError',
     'APIKeyError', 'AuthenticationError', 'AuthorizationError', 'ExecutionError',
     'OrderError', 'OrderRejectedError', 'OrderTimeoutError', 'InsufficientFundsError',
+    'InsufficientBalanceError',
     'InvalidOrderError', 'OrderCancellationError', 'SlippageExceededError', 'NetworkError',
-    'RiskError', 'RiskLimitExceededError', 'BacktestError', 'ModelError',
+    'RiskError', 'RiskLimitExceededError', 'RiskExceededError', 'BacktestError', 'ModelError',
     'ModelTrainingError', 'ModelPredictionError', 'StrategyError', 'SignalGenerationError',
     'MonitoringError', 'AlertError', 'ResourceError', 'ResourceExhaustionError',
     'TimeoutError', 'ExchangeError', 'RateLimitError', 'FeedNotFoundError',
@@ -817,7 +839,7 @@ __all__ = [
     'ModelLoadError', 'DataParsingError', 'CredentialError', 'SecurityViolationError',
     'RegimeDetectionError', 'NewsFeedError', 'NewsParsingError', 'NewsSourceUnavailableError',
     'FeatureNotFoundError', 'FeatureCalculationError', 'FeatureServiceError',
-    'InvalidTimeframeError', 'InvalidParameterError', 'AlertDeliveryError',
+    'InvalidTimeframeError', 'InvalidParameterError', 'CalculationError', 'AlertDeliveryError',
     'AlertConfigurationError', 'RiskManagerError', 'PositionSizingError', 'StopLossError',
     'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError',
     'ArbitrageOpportunityExpiredError', 'DrawdownLimitExceededException',

@@ -319,6 +319,17 @@ class FeedOptions:
     extra: Dict[str, Any] = field(default_factory=dict)
 
 
+@dataclass
+class MarketData:
+    """Simple OHLCV data container."""
+    timestamp: float
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: float
+
+
 class DataProcessor:
     """Base class for data processors."""
     

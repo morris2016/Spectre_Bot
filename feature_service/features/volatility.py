@@ -942,6 +942,14 @@ class VolatilityFeatures(BaseFeature):
     
     # Add more volatility indicator calculation methods as needed
 
+
+class VolatilityAnalyzer:
+    """Lightweight wrapper exposing common volatility indicators."""
+
+    def atr(self, data: pd.DataFrame, period: int = 14) -> pd.Series:
+        return ta.atr(high=data['high'], low=data['low'], close=data['close'], length=period)
+
+
 def calculate_volatility_features(data, config=None):
     """
     Convenience function to calculate volatility features from OHLCV data.
