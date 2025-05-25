@@ -395,11 +395,18 @@ class ExposureManager(BaseExposureManager):
         
         # Apply additional platform-specific requirements
         if platform == Exchange.BINANCE:
-            # Add logic for Binance min notional, lot size, etc.
-            pass
+            min_notional = Decimal('10')
+            lot_step = Decimal('0.001')
+            if max_position_value < min_notional:
+                max_position_value = Decimal('0')
+                max_position_size = Decimal('0')
+            else:
+                max_position_size = (max_position_size // lot_step) * lot_step
+                max_position_value = max_position_size * price
         elif platform == Exchange.DERIV:
-            # Add logic for Deriv-specific size restrictions
-            pass
+            contract_step = Decimal('0.1')
+            max_position_size = (max_position_size // contract_step) * contract_step
+            max_position_value = max_position_size * price
         
         return {
             'symbol': symbol,
