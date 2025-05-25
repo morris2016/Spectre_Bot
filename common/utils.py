@@ -2213,7 +2213,7 @@ def calculate_risk_reward_ratio(risk: float, reward: float) -> float:
 
 def calculate_expectancy(win_rate: float, avg_win: float, avg_loss: float) -> float:
 
-def calculate_expectancy(win_rate: float,
+  def calculate_expectancy(win_rate: float,
                         avg_win: float,
                         avg_loss: float) -> float:
 
@@ -2650,6 +2650,9 @@ def obfuscate_sensitive_data(
 
 
 def pivot_points(high: float, low: float, close: float) -> Dict[str, float]:
+    """Alias for calculate_pivot_points for backward compatibility."""
+    return calculate_pivot_points(high, low, close)
+
     """Alias for :func:`calculate_pivot_points`."""
     return calculate_pivot_points(high, low, close)
 
@@ -2666,6 +2669,7 @@ def pivot_points(high: float, low: float, close: float) -> Dict[str, float]:
 
 
 pivot_points = calculate_pivot_points
+
 
 def obfuscate_sensitive_data(data: Union[str, Dict, List], level: int = 1) -> Union[str, Dict, List]:
 
@@ -3709,8 +3713,6 @@ def decompress_data(data: bytes) -> Any:
     except Exception as e:
         logger.error(f"Failed to decompress data: {str(e)}")
         raise
-
-
 
 class ThreadSafeDict:
     """
@@ -4988,6 +4990,7 @@ __all__ = [
     'is_higher_timeframe', 'threaded_calculation', 'create_batches',
     'create_directory', 'create_directory_if_not_exists',
 
+
     'create_directory', 'create_directory_if_not_exists',
     'create_directory', 'create_directory_if_not_exists', 'safe_nltk_download',
     'create_directory', 'create_directory_if_not_exists',
@@ -5010,7 +5013,6 @@ __all__ = [
     'compress_data', 'decompress_data',
 
     'create_directory', 'create_directory_if_not_exists', 'compress_data', 'decompress_data',
-
 
     'UuidUtils', 'HashUtils', 'SecurityUtils',
     'ClassRegistry', 'AsyncService', 'Signal', 'SignalBus'

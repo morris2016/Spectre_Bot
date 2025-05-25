@@ -15,14 +15,18 @@ from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
 from contextlib import asynccontextmanager
 
+
 import jwt  # PyJWT
+
 import uvicorn
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+
 # from fastapi.staticfiles import StaticFiles # Not used in this snippet
 from fastapi.responses import JSONResponse  # HTMLResponse, FileResponse not used here
 # from fastapi.encoders import jsonable_encoder # Not used in this snippet
+
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.websockets import WebSocketState
 
@@ -33,6 +37,7 @@ from starlette.websockets import WebSocketState
 # Assuming 'common' is a top-level package or accessible in PYTHONPATH
 from common.logger import get_logger
 
+
 from common.metrics import MetricsCollector
 # from common.async_utils import AsyncLimiter, AsyncRetry, AsyncCircuitBreaker # Not used in this snippet
 from common.redis_client import RedisClient  # Async-compatible Redis client
@@ -41,6 +46,7 @@ from common.redis_client import RedisClient  # Async-compatible Redis client
 # If 'config.py' provides an instance: from config import app_config as Config (or similar)
 # If 'core.config' is the module: from core.config import Config
 from config import Config  # This might need adjustment based on actual project structure
+
 
 # Import service clients - Assuming these exist and are correctly structured
 # These paths suggest that 'brain_council', 'execution_engine', etc., are top-level packages
