@@ -13,17 +13,12 @@ import gzip
 import io
 import time
 import json
-import io
-import gzip
 import uuid
 import hmac
 import hashlib
 import base64
-import gzip
-
 import pickle
 import random
-import pickle
 import zlib
 import socket
 import string
@@ -39,14 +34,14 @@ import numpy as np
 import pandas as pd
 import logging
 import nltk
-import gzip
 import sys
 import asyncio
 import importlib
 import pkgutil
-import io
-import gzip
 import enum
+from pathlib import Path
+from functools import wraps
+from contextlib import suppress, asynccontextmanager, contextmanager
 from typing import (
     Dict,
     List,
@@ -58,14 +53,9 @@ from typing import (
     Generator,
     Set,
     Type,
+    Sequence,
 )
-
-from typing import Dict, List, Any, Optional, Union, Callable, Tuple, Generator, Set, Type, Sequence
-from pathlib import Path
-from functools import wraps
-from contextlib import suppress, asynccontextmanager, contextmanager
-import inspect  # Add this to the imports at the top
-import nltk
+import inspect
 from common.logger import get_logger, performance_log
 
 # Configure module logger
@@ -117,20 +107,6 @@ NANOSECONDS_IN_SECOND = 1000000000
 
 
 
-def safe_nltk_download(resource: str) -> None:
-    """Attempt to download an NLTK resource gracefully."""
-    try:
-        nltk.data.find(resource)
-    except LookupError:
-        # Try common paths before attempting a download
-        alt_path = f"tokenizers/{resource}"
-        try:
-            nltk.data.find(alt_path)
-        except LookupError:
-            logger.warning(
-                "NLTK resource %s not available and cannot be downloaded in offline mode",
-                resource,
-            )
 
 def import_submodules(package_name):
     """
@@ -3656,63 +3632,10 @@ def decompress_object(data: bytes) -> Any:
     """Decompress and deserialize data produced by :func:`compress_object`."""
     decompressed = gzip.decompress(data)
     return pickle.loads(decompressed)
-def compress_data(data: bytes) -> bytes:
-    """Compress binary data using gzip."""
-    out = io.BytesIO()
-    with gzip.GzipFile(fileobj=out, mode="wb") as f:
-        f.write(data)
-    return out.getvalue()
-    if not data:
-        return b""
-    return gzip.compress(data)
-
-
-def decompress_data(data: bytes) -> bytes:
-    """Decompress gzip-compressed binary data."""
-    if not data:
-        return b""
-    return gzip.decompress(data)
 def pivot_points(high: float, low: float, close: float) -> Dict[str, float]:
     """Backward-compatible alias for calculate_pivot_points."""
     return calculate_pivot_points(high, low, close)
 
-def compress_data(data: Union[str, bytes]) -> bytes:
-    """Compress data using gzip."""
-    if isinstance(data, str):
-        data = data.encode("utf-8")
-    return gzip.compress(data)
-
-
-def decompress_data(data: bytes) -> str:
-    """Decompress gzip-compressed data."""
-    return gzip.decompress(data).decode("utf-8")
-
-
-def create_directory_if_not_exists(path: str) -> str:
-    """Create directory if it does not already exist."""
-    return create_directory(path, exist_ok=True)
-
-def compress_data(data: Any) -> bytes:
-    """Serialize and gzip-compress arbitrary Python data."""
-    try:
-        serialized = pickle.dumps(data)
-        return gzip.compress(serialized)
-    except Exception as exc:  # pragma: no cover - best effort
-        logger.error("Failed to compress data: %s", exc)
-        raise
-
-
-def decompress_data(data: bytes) -> Any:
-    """Decompress and deserialize data produced by :func:`compress_data`."""
-    try:
-        decompressed = gzip.decompress(data)
-        return pickle.loads(decompressed)
-    except Exception as exc:  # pragma: no cover - best effort
-        logger.error("Failed to decompress data: %s", exc)
-        return pickle.loads(zlib.decompress(data))
-    except Exception as e:
-        logger.error(f"Failed to decompress data: {str(e)}")
-        raise
 
 class ThreadSafeDict:
     """
@@ -4812,212 +4735,6 @@ def normalize_quantity(
     return max(normalized, min_quantity)
 
 
-__all__ = [
-    # Time utilities
-    "timestamp_ms",
-    "current_timestamp",
-    "current_timestamp_micros",
-    "current_timestamp_nanos",
-    "timestamp_to_datetime",
-    "datetime_to_timestamp",
-    "parse_datetime",
-    "format_datetime",
-    "timeframe_to_seconds",
-    "timeframe_to_timedelta",
-    "round_timestamp",
-    "generate_timeframes",
-    "parse_timeframe",
-    "validate_timeframe",
-    "get_higher_timeframes",
-    "TimestampUtils",
-    # Data handling and trading utilities
-    "calculate_price_precision",
-    "calculate_quantity_precision",
-    "round_to_precision",
-    "convert_timeframe",
-    "calculate_order_cost",
-    "calculate_order_risk",
-    "normalize_price",
-    "normalize_quantity",
-    "parse_decimal",
-    "safe_divide",
-    "round_to_tick",
-    "round_to_tick_size",
-    "calculate_change_percent",
-    "normalize_value",
-    "moving_average",
-    "exponential_moving_average",
-    "rolling_window",
-
-    'calculate_price_precision', 'calculate_quantity_precision', 'get_asset_precision',
-    'round_to_precision', 'convert_timeframe', 'calculate_order_cost',
-    'calculate_order_risk', 'normalize_price', 'normalize_quantity',
-    'parse_decimal', 'safe_divide', 'round_to_tick', 'round_to_tick_size', 'calculate_change_percent',
-    'normalize_value', 'moving_average', 'exponential_moving_average', 'rolling_window',
-    
-    # String and format
-    "camel_to_snake",
-    "snake_to_camel",
-    "format_number",
-    "format_currency",
-    "truncate_string",
-    "pluralize",
-    # JSON and data structures
-    "EnhancedJSONEncoder",
-    "JsonEncoder",
-    "json_dumps",
-    "json_loads",
-    "deep_update",
-    "deep_get",
-    "flatten_dict",
-    "unflatten_dict",
-    "dict_to_object",
-    "dict_to_namedtuple",
-    "group_by",
-    "chunks",
-    "filter_none_values",
-    "find_duplicate_items",
-    "merge_lists",
-    # Security and validation
-    "generate_secure_random_string",
-    "generate_uuid",
-    "generate_hmac_signature",
-    "is_valid_url",
-    "is_valid_email",
-    "sanitize_filename",
-    "validate_required_keys",
-    "mask_sensitive_data",
-    "hash_content",
-    "generate_uid",
-    # Network and system
-    "get_host_info",
-    "is_port_open",
-    "rate_limit",
-    "rate_limited",
-    "retry",
-    "timer",
-    "retry_with_backoff",
-    "exponential_backoff",
-    "time_execution",
-    "calculate_checksum",
-    # Async utilities
-    "ensure_future",
-    "create_task_name",
-    # Thread-safe utilities
-    "AtomicCounter",
-    "SafeDict",
-    # Trading-specific
-    "calculate_order_size",
-    "calculate_position_value",
-    "calculate_pip_value",
-    "calculate_arbitrage_profit",
-    "calculate_position_size",
-    "calculate_volatility",
-    "calculate_correlation",
-    "calculate_drawdown",
-    "calculate_liquidation_price",
-    "calculate_risk_reward",
-    "calculate_win_rate",
-    "calculate_risk_reward_ratio",
-    "calculate_confidence_score",
-    "normalize_probability",
-    "weighted_average",
-    "time_weighted_average",
-    "validate_signal",
-    "calculate_expectancy",
-    "calculate_kelly_criterion",
-    "calculate_sharpe_ratio",
-    "calculate_sortino_ratio",
-    "calculate_max_drawdown",
-    "calculate_calmar_ratio",
-    "z_score",
-    "is_price_consolidating",
-    "is_breaking_out",
-    "calculate_pivot_points",
-    "pivot_points",
-    "periodic_reset",
-    "obfuscate_sensitive_data",
-    "exponential_smoothing",
-    "calculate_distance",
-    "calculate_distance_percentage",
-    "memoize",
-    "is_higher_timeframe",
-    "threaded_calculation",
-    "create_batches",
-    "create_directory",
-    "create_directory_if_not_exists",
-    "UuidUtils",
-    "HashUtils",
-    "SecurityUtils",
-    "ClassRegistry",
-    "AsyncService",
-    "Signal",
-    "SignalBus",
-
-    'calculate_order_size', 'calculate_position_value', 'calculate_pip_value', 'calculate_arbitrage_profit',
-    'calculate_position_size', 'calculate_volatility', 'calculate_correlation', 'calculate_drawdown',
-    'calculate_liquidation_price', 'calculate_risk_reward', 'calculate_win_rate',
-    'calculate_risk_reward_ratio', 'calculate_confidence_score', 'normalize_probability',
-    'weighted_average', 'time_weighted_average', 'validate_signal', 'calculate_expectancy',
-    'calculate_kelly_criterion', 'calculate_sharpe_ratio', 'calculate_sortino_ratio',
-    'calculate_max_drawdown', 'calculate_calmar_ratio', 'z_score',
-    'is_price_consolidating', 'is_breaking_out', 'calculate_pivot_points', 'pivot_points',
-    'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',
-    'calculate_distance', 'calculate_distance_percentage', 'memoize',
-    'is_higher_timeframe', 'threaded_calculation', 'create_batches',
-    'create_directory', 'create_directory_if_not_exists', 'get_asset_precision',
-    'calculate_zscore', 'detect_outliers', 'exponential_backoff',
-
-    'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',
-    'calculate_distance', 'calculate_distance_percentage', 'memoize',
-    'is_higher_timeframe', 'threaded_calculation', 'create_batches',
-    'create_directory', 'create_directory_if_not_exists',
-    'compress_data', 'decompress_data',
-
-    'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',
-    'calculate_distance', 'calculate_distance_percentage', 'memoize',
-    'is_higher_timeframe', 'threaded_calculation', 'create_batches',
-    'create_directory', 'create_directory_if_not_exists', 'safe_nltk_download',
-
-    'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',
-    'calculate_distance', 'calculate_distance_percentage', 'memoize',
-    'is_higher_timeframe', 'threaded_calculation', 'create_batches',
-    'create_directory', 'create_directory_if_not_exists', 'compress_data', 'decompress_data',
-    'is_price_consolidating', 'is_breaking_out', 'calculate_pivot_points',
-    'pivot_points',
-    'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',
-    'calculate_distance', 'calculate_distance_percentage', 'memoize',
-    'is_higher_timeframe', 'threaded_calculation', 'create_batches',
-    'create_directory', 'create_directory_if_not_exists',
-
-
-    'create_directory', 'create_directory_if_not_exists',
-    'create_directory', 'create_directory_if_not_exists', 'safe_nltk_download',
-    'create_directory', 'create_directory_if_not_exists',
-    'compress_data', 'decompress_data',
-
-    'create_directory', 'create_directory_if_not_exists', 'compress_data', 'decompress_data',
-    'create_directory', 'create_directory_if_not_exists',
-    'compress_data', 'decompress_data', 'pivot_points',
-    'get_asset_precision',
-    'compress_data', 'decompress_data',
-    'create_directory', 'create_directory_if_not_exists',
-
-    'create_directory', 'create_directory_if_not_exists', 'compress_data', 'decompress_data',
-
-
-    'create_directory', 'create_directory_if_not_exists',
-    'compress_data', 'decompress_data', 'pivot_points',
-
-    'get_asset_precision',
-    'compress_data', 'decompress_data',
-
-    'create_directory', 'create_directory_if_not_exists', 'compress_data', 'decompress_data',
-
-    'UuidUtils', 'HashUtils', 'SecurityUtils',
-    'ClassRegistry', 'AsyncService', 'Signal', 'SignalBus'
-
-]
 
 
 class SecurityUtils:
@@ -5140,3 +4857,10 @@ class SecurityUtils:
 
         # Compare hashes
         return hashed_password == calculated_hash
+
+
+__all__ = sorted(
+    name
+    for name, obj in globals().items()
+    if not name.startswith("_") and (callable(obj) or isinstance(obj, type))
+)
