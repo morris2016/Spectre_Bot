@@ -9,7 +9,7 @@ system components.
 
 import logging
 import importlib
-from typing import Any, Callable, Dict, List
+from typing import Dict, List, Any, Callable
 
 from pathlib import Path
 
@@ -51,6 +51,7 @@ class Registry:
         Returns:
             Decorator function
         """
+
         def decorator(obj: Any) -> Any:
             nonlocal name
             if name is None:
@@ -62,6 +63,7 @@ class Registry:
                 _registry[category] = {(name, obj)}
 
             return obj
+
         return decorator
 
     @classmethod
@@ -241,6 +243,6 @@ __all__ = [
     "register_pattern",
     "register_indicator",
     "register_hook",
-    "register_plugin"
+    "register_plugin",
 ]
 
