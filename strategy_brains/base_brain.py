@@ -39,6 +39,7 @@ class TradeDirection(Enum):
 @dataclass
 class BrainConfig:
     """Base configuration for strategy brains."""
+    pass
     
 
     # Memory windows for performance tracking
