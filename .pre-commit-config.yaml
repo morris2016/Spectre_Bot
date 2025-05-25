@@ -31,7 +31,7 @@ repos:
     hooks:
       - id: black
         language_version: python3
-        args: [--line-length=88, --target-version=py311]
+        args: [--line-length=120, --target-version=py311]
 
   # Import sorting and organization
   - repo: https://github.com/pycqa/isort
@@ -40,7 +40,7 @@ repos:
       - id: isort
         args: [
           --profile=black,
-          --line-length=88,
+          --line-length=120,
           --multi-line=3,
           --trailing-comma,
           --force-grid-wrap=0,
@@ -54,7 +54,7 @@ repos:
     hooks:
       - id: flake8
         args: [
-          --max-line-length=88,
+          --max-line-length=120,
           --extend-ignore=E203,W503,E501,
           --max-complexity=10,
           --select=E,W,F,C,N,
@@ -119,8 +119,8 @@ repos:
       - id: docformatter
         args: [
           --in-place,
-          --wrap-summaries=88,
-          --wrap-descriptions=88,
+          --wrap-summaries=120,
+          --wrap-descriptions=120,
           --make-summary-multi-line
         ]
 
@@ -130,7 +130,7 @@ repos:
     hooks:
       - id: prettier
         types_or: [yaml, json, markdown]
-        args: [--prose-wrap=always, --print-width=88]
+        args: [--prose-wrap=always, --print-width=120]
 
   # Spell checking for documentation
   - repo: https://github.com/codespell-project/codespell
