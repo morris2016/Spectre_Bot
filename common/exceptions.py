@@ -184,6 +184,11 @@ class RiskLimitExceededError(RiskError):
     pass
 
 
+class RiskExceededError(RiskError):
+    """Raised when cumulative risk exposure is exceeded."""
+    pass
+
+
 class BacktestError(QuantumSpectreError):
     """Base class for backtesting errors."""
     pass
@@ -412,6 +417,16 @@ class RiskManagementException(RiskError):
 
 class ModelVersionError(ModelError):
     """Raised for issues related to model versioning."""
+    pass
+
+
+class ModelRegistrationError(ModelError):
+    """Raised when a model fails to register."""
+    pass
+
+
+class InsufficientBalanceError(RiskError):
+    """Raised when account balance is insufficient for a trade."""
     pass
 
 class LogAnalysisError(MonitoringError):
@@ -808,7 +823,7 @@ __all__ = [
     'APIKeyError', 'AuthenticationError', 'AuthorizationError', 'ExecutionError',
     'OrderError', 'OrderRejectedError', 'OrderTimeoutError', 'InsufficientFundsError',
     'InvalidOrderError', 'OrderCancellationError', 'SlippageExceededError', 'NetworkError',
-    'RiskError', 'RiskLimitExceededError', 'BacktestError', 'ModelError',
+    'RiskError', 'RiskLimitExceededError', 'RiskExceededError', 'BacktestError', 'ModelError',
     'ModelTrainingError', 'ModelPredictionError', 'StrategyError', 'SignalGenerationError',
     'MonitoringError', 'AlertError', 'ResourceError', 'ResourceExhaustionError',
     'TimeoutError', 'ExchangeError', 'RateLimitError', 'FeedNotFoundError',
@@ -821,7 +836,7 @@ __all__ = [
     'AlertConfigurationError', 'RiskManagerError', 'PositionSizingError', 'StopLossError',
     'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError',
     'ArbitrageOpportunityExpiredError', 'DrawdownLimitExceededException',
-    'RiskManagementException', 'ModelVersionError', 'LogAnalysisError',
+    'RiskManagementException', 'ModelVersionError', 'ModelRegistrationError', 'InsufficientBalanceError', 'LogAnalysisError',
     'InsufficientDataError', 'EncodingError', 'MetricCollectionError',
     'ServiceConnectionError', 'DataStoreError', 'InvalidDataError', 'TrainingError',
     'ArbitrageValidationError', 'PredictionError', 'AnalysisError', 'RecoveryStrategyError',

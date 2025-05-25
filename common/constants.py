@@ -250,13 +250,26 @@ class OrderType(enum.Enum):
 
 ORDER_TYPES = [ot.value for ot in OrderType]
 
+# Aliases for backward compatibility
+ORDER_TYPE = OrderType
+
 # Order sides
 class OrderSide(enum.Enum):
     BUY = "buy"
     SELL = "sell"
 ORDER_SIDES = [side.value for side in OrderSide]
 
-# Position types
+# Position side (alias for backward compatibility with PositionType)
+class PositionSide(enum.Enum):
+    LONG = "long"
+    SHORT = "short"
+
+POSITION_SIDES = [ps.value for ps in PositionSide]
+
+# Backward compatibility
+POSITION_SIDE = PositionSide
+
+# Position types (deprecated, use PositionSide)
 class PositionType(enum.Enum):
     LONG = "long"
     SHORT = "short"
@@ -273,6 +286,23 @@ class OrderStatus(enum.Enum):
     EXPIRED = "expired"
 ORDER_STATUSES = [ps.value for ps in OrderStatus]
 
+# Backwards compatibility
+ORDER_STATUS = OrderStatus
+
+
+# Position lifecycle statuses
+class PositionStatus(enum.Enum):
+    PENDING = "pending"
+    OPEN = "open"
+    PARTIALLY_CLOSED = "partially_closed"
+    CLOSED = "closed"
+    FAILED = "failed"
+
+POSITION_STATUSES = [ps.value for ps in PositionStatus]
+
+# Backward compatibility
+POSITION_STATUS = PositionStatus
+
 # Trigger types for stop and take profit orders
 class TriggerType(enum.Enum):
     PRICE = "price"           # Regular price based trigger
@@ -286,6 +316,8 @@ class TimeInForce(enum.Enum):
     IOC = "ioc"    # Immediate or Cancel
     FOK = "fok"    # Fill or Kill
     GTD = "gtd"    # Good Till Date
+
+TIME_IN_FORCE = TimeInForce
 
 
 # Trade direction for signals
@@ -617,6 +649,10 @@ DEFAULT_PROFIT_FACTOR_THRESHOLD = 1.5  # Minimum profit:loss ratio
 DEFAULT_WIN_RATE_THRESHOLD = 65.0  # Minimum win percentage
 DEFAULT_TRAILING_STOP_ACTIVATION = 1.0  # % profit to activate trailing stop
 DEFAULT_KELLY_FRACTION = 0.5  # Half Kelly for conservative sizing
+DEFAULT_GROWTH_FACTOR = 1.0  # Factor for incremental position scaling
+PARTIAL_CLOSE_LEVELS = [0.25, 0.5, 0.75]  # Partial profit taking levels
+DEFAULT_FIXED_STOP_PERCENTAGE = 2.0  # Default fixed stop percent of entry price
+DEFAULT_MIN_STOP_DISTANCE = 0.005  # Minimum stop distance as fraction of price
 
 #======================================
 # Notification Constants
@@ -850,9 +886,12 @@ __all__ = [
     
     # Exchange and trading enums
     'Exchange', 'AssetClass', 'Timeframe', 'OrderType', 'OrderSide',
-    'PositionType', 'OrderStatus', 'TriggerType', 'TimeInForce',
+    'PositionSide', 'PositionType', 'OrderStatus', 'PositionStatus',
+    'TriggerType', 'TimeInForce',
     'SignalDirection', 'SignalStrength', 'MarketRegime', 'StrategyType',
-    'RiskLevel', 'FeeType','EXCHANGE_TYPES', 'TIME_FRAMES','ORDER_TYPES', 'ORDER_SIDES', 'ORDER_STATUSES',
+    'RiskLevel', 'FeeType','EXCHANGE_TYPES', 'TIME_FRAMES','ORDER_TYPES', 'ORDER_SIDES',
+    'ORDER_TYPE', 'ORDER_STATUS', 'TIME_IN_FORCE',
+    'POSITION_SIDES', 'ORDER_STATUSES', 'POSITION_STATUSES', 'POSITION_SIDE', 'POSITION_STATUS',
     
     # Feature and pattern enums
     'IndicatorCategory', 'CandlestickPattern', 'ChartPattern', 'HarmonicPattern',
@@ -872,6 +911,10 @@ __all__ = [
     'DEFAULT_MAX_CORRELATED_TRADES', 'DEFAULT_MAX_DRAWDOWN_PERCENT',
     'DEFAULT_PROFIT_FACTOR_THRESHOLD', 'DEFAULT_WIN_RATE_THRESHOLD',
     'DEFAULT_TRAILING_STOP_ACTIVATION', 'DEFAULT_KELLY_FRACTION',
+    'DEFAULT_GROWTH_FACTOR', 'PARTIAL_CLOSE_LEVELS',
+    'DEFAULT_FIXED_STOP_PERCENTAGE', 'DEFAULT_MIN_STOP_DISTANCE',
+    'DEFAULT_STOP_LOSS_MULTIPLIER', 'DEFAULT_TAKE_PROFIT_MULTIPLIER',
+    'POSITION_SIZE_PRECISION', 'MAX_LEVERAGE_BINANCE', 'MAX_LEVERAGE_DERIV',
     
     # Notification enums
     'NotificationType', 'NotificationPriority', 'NotificationChannel',
@@ -1425,6 +1468,11 @@ EXPOSURE_LIMITS = {
 
 DEFAULT_MAX_RISK_PER_TRADE = 0.02  # 2% of account per trade
 DEFAULT_BASE_POSITION_SIZE = 0.01  # 1% of account as base position size
+MAX_LEVERAGE_BINANCE = 125
+MAX_LEVERAGE_DERIV = 100
+DEFAULT_STOP_LOSS_MULTIPLIER = 1.5
+DEFAULT_TAKE_PROFIT_MULTIPLIER = 2.0
+POSITION_SIZE_PRECISION = 4
 
 MAX_POSITION_CORRELATION = 0.7  # Maximum allowed correlation between positions
 CORRELATION_LOOKBACK_PERIODS = 100  # Periods to look back for correlation calculation
@@ -1448,7 +1496,7 @@ ACCOUNT_STATES = {
 }
 
 # Order and position constants
-ORDER_TYPE = {
+ORDER_TYPE_MAP = {
     "MARKET": "market",
     "LIMIT": "limit",
     "STOP": "stop",
@@ -1458,12 +1506,12 @@ ORDER_TYPE = {
     "TRAILING_STOP": "trailing_stop"
 }
 
-ORDER_SIDE = {
+ORDER_SIDE_MAP = {
     "BUY": "buy",
     "SELL": "sell"
 }
 
-ORDER_STATUS = {
+ORDER_STATUS_MAP = {
     "NEW": "new",
     "PARTIALLY_FILLED": "partially_filled",
     "FILLED": "filled",
@@ -1472,18 +1520,18 @@ ORDER_STATUS = {
     "EXPIRED": "expired"
 }
 
-POSITION_SIDE = {
+POSITION_SIDE_MAP = {
     "LONG": "long",
     "SHORT": "short"
 }
 
-PositionStatus = {
+POSITION_STATUS_MAP = {
     "OPEN": "open",
     "CLOSED": "closed",
     "PARTIALLY_CLOSED": "partially_closed"
 }
 
-TimeInForce = {
+TIME_IN_FORCE_MAP = {
     "GTC": "gtc",  # Good Till Canceled
     "IOC": "ioc",  # Immediate Or Cancel
     "FOK": "fok",  # Fill Or Kill

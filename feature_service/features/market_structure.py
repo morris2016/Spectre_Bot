@@ -1425,3 +1425,11 @@ class MarketStructureFeature(BaseFeature):
 
 # Add MarketStructureFeatures class (plural form) as an alias for MarketStructureFeature
 MarketStructureFeatures = MarketStructureFeature
+
+
+def identify_swing_points(df: pd.DataFrame, timeframe: str) -> List[SwingPoint]:
+    """Convenience wrapper to extract swing points."""
+    return MarketStructureFeature()._identify_swing_points(df, timeframe)
+
+
+__all__ = ['MarketStructureFeature', 'MarketStructureFeatures', 'SwingPoint', 'identify_swing_points']

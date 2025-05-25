@@ -1548,5 +1548,16 @@ class FeatureExtractor:
         
         # Calculate VWAP
         vwap = cum_price_volume / (cum_volume + 1e-10)  # Avoid division by zero
-        
+
         return vwap
+
+
+def atr(data: pd.DataFrame, period: int = 14) -> pd.Series:
+    """Convenience wrapper for ATR calculation."""
+    return ta.atr(high=data['high'], low=data['low'], close=data['close'], length=period)
+
+
+def fibonacci_levels(high: float, low: float) -> List[float]:
+    """Simple Fibonacci retracement level calculator."""
+    diff = high - low
+    return [high - diff * r for r in [0.236, 0.382, 0.5, 0.618, 0.786]]
