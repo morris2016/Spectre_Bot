@@ -219,6 +219,10 @@ class MarginCallError(PositionError):
 class PositionLiquidationError(PositionError):
     """Raised when a position is forcibly liquidated."""
 
+class RiskError(QuantumSpectreError):
+    """Base class for risk management errors."""
+    pass
+
 class InsufficientBalanceError(OrderError):
     """Raised when an account balance is too low to execute an action."""
     """Raised when account balance is too low for an operation."""
@@ -615,6 +619,30 @@ class ModelRegistrationError(ModelError):
 
 class StopLossError(OrderError):
     """Raised for errors related to stop-loss order management."""
+    pass
+
+class PositionError(OrderError):
+    """Raised for generic position-related errors."""
+    pass
+
+class InsufficientBalanceError(PositionError):
+    """Raised when account balance is insufficient."""
+    pass
+
+class ModelRegistrationError(ModelError):
+    """Raised when a model cannot be registered."""
+    pass
+
+class RiskExceededError(RiskError):
+    """Raised when a trade exceeds configured risk limits."""
+    pass
+
+class PositionExecutionError(PositionError):
+    """Raised when a position cannot be executed."""
+    pass
+
+class InvalidModelStateError(ModelError):
+    """Raised when an ML model is in an invalid state."""
     pass
 
 class ModelNotFoundError(ModelError):
@@ -1174,6 +1202,7 @@ __all__ = [
     'FeatureNotFoundError', 'FeatureCalculationError', 'FeatureServiceError',
     'InvalidTimeframeError', 'InvalidParameterError', 'AlertDeliveryError',
     'AlertConfigurationError', 'RiskManagerError', 'PositionSizingError', 'StopLossError',
+
     'PositionError', 'PositionExecutionError', 'InvalidPositionStateError', 'InsufficientBalanceError',
     'MarginCallError', 'PositionLiquidationError',
     'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError', 'InsufficientBalanceError',

@@ -9,6 +9,8 @@ including time handling, data processing, JSON manipulation, validation, and mor
 
 import os
 import re
+import gzip
+import io
 import time
 import json
 import io
@@ -3371,6 +3373,18 @@ def get_submodules(package_name):
     return submodules
 
 
+def compress_data(data: bytes) -> bytes:
+    """Compress binary data using gzip."""
+    buffer = io.BytesIO()
+    with gzip.GzipFile(fileobj=buffer, mode='wb') as f:
+        f.write(data)
+    return buffer.getvalue()
+
+
+def decompress_data(data: bytes) -> bytes:
+    """Decompress gzip-compressed binary data."""
+    with gzip.GzipFile(fileobj=io.BytesIO(data), mode='rb') as f:
+        return f.read()
 
 def create_directory(path, exist_ok=True):
     """
@@ -3402,6 +3416,17 @@ def safe_nltk_download(resource: str, quiet: bool = True) -> bool:
     If the resource is not found locally, log a warning and return ``False``
     instead of attempting a network download. This prevents network timeouts
     when running in restricted environments.
+
+def compress_object(data: Any) -> bytes:
+    """Serialize and gzip-compress arbitrary Python objects."""
+    serialized = pickle.dumps(data)
+    return gzip.compress(serialized)
+
+
+def decompress_object(data: bytes) -> Any:
+    """Decompress and deserialize data produced by :func:`compress_object`."""
+    decompressed = gzip.decompress(data)
+    return pickle.loads(decompressed)
 
     Args:
         resource: Name of the NLTK resource (e.g. ``'vader_lexicon'``).
@@ -3436,9 +3461,6 @@ def decompress_data(data: bytes) -> bytes:
 def pivot_points(high: float, low: float, close: float) -> Dict[str, float]:
     """Backward-compatible alias for calculate_pivot_points."""
     return calculate_pivot_points(high, low, close)
-
-
-
 
 def compress_data(data: Union[str, bytes]) -> bytes:
     """Compress data using gzip."""
@@ -4596,6 +4618,7 @@ __all__ = [
     'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',
     'calculate_distance', 'calculate_distance_percentage', 'memoize',
     'is_higher_timeframe', 'threaded_calculation', 'create_batches',
+
     'create_directory', 'create_directory_if_not_exists',
     'create_directory', 'create_directory_if_not_exists', 'safe_nltk_download',
     'create_directory', 'create_directory_if_not_exists',
