@@ -7,9 +7,21 @@ This module initializes the API Gateway component that serves as the interface b
 the frontend UI and the backend services of the QuantumSpectre Elite Trading System.
 """
 
-import os
 import logging
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
+from api_gateway.app import (
+    ApiGatewayService, initialize_api, register_route, register_middleware,
+    register_auth_provider, register_ws_handler
+)
+
+from api_gateway.app import (
+    ApiGatewayService,
+    initialize_api,
+    register_route,
+    register_middleware,
+    register_auth_provider,
+    register_ws_handler,
+)
 
 # Setup package metadata
 __version__ = '1.0.0'
@@ -53,12 +65,6 @@ rate_limit_config = {
 
 # Configure logging
 logger = logging.getLogger('api_gateway')
-
-# Import essential components to make them available from the package
-from api_gateway.app import (
-    ApiGatewayService, initialize_api, register_route, register_middleware,
-    register_auth_provider, register_ws_handler
-)
 
 # Export public interface
 __all__ = [

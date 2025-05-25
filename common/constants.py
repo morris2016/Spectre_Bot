@@ -11,81 +11,44 @@ import os
 import enum
 from pathlib import Path
 
-# System information
+
+# ======================================
+# System Core Constants
+# ======================================
+
 VERSION = "1.0.0"
 CONFIG_SCHEMA_VERSION = 1
 SYSTEM_NAME = "QuantumSpectre Elite Trading System"
 AUTHOR = "QuantumSpectre Team"
 LICENSE = "MIT"
-# Supported trading platforms
-SUPPORTED_PLATFORMS = ["deriv", "binance"]
 
-# Asset types
-ASSET_TYPES = ["crypto", "forex", "stocks", "indices", "commodities", "futures", "options"]
-
-# Strategy types
-STRATEGY_TYPES = [
-    "trend_following", "mean_reversion", "breakout", "momentum", "statistical_arbitrage",
-    "market_making", "sentiment_based", "machine_learning", "pattern_recognition",
-    "volatility_based", "order_flow", "market_structure", "multi_timeframe",
-    "adaptive", "ensemble", "reinforcement_learning", "regime_based"
-]
-
-# Execution modes
-EXECUTION_MODES = [
-    "live", "paper", "backtest", "simulation", "optimization", "stress_test"
-]
-
-# Slippage models
-SLIPPAGE_MODELS = [
-    "fixed", "percentage", "volume_based", "volatility_based", "orderbook_based", "impact_based"
-]
-
-# Supported assets per platform
-SUPPORTED_ASSETS = {
-    "binance": [
-        "BTC", "ETH", "USDT", "BNB", "ADA", "XRP", "DOGE", "SOL", "DOT", "LTC",
-        "BCH", "LINK", "MATIC", "ATOM", "AVAX", "TRX", "XLM", "NEAR", "FIL", "EOS",
-        "AAVE", "UNI", "SAND", "MANA", "SHIB", "ALGO", "FTM", "ETC", "ZIL", "VET",
-        "THETA", "XTZ", "GRT", "CHZ", "ENJ", "BAT", "ZRX", "1INCH", "COMP", "SNX",
-        "YFI", "CRV", "KSM", "DASH", "OMG", "QTUM", "ICX", "ONT", "WAVES", "LRC",
-        "BTT", "HOT", "NANO", "SC", "ZEN", "STMX", "ANKR", "CELR", "CVC", "DENT",
-        "IOST", "KAVA", "NKN", "OCEAN", "RLC", "STORJ", "TOMO", "WRX", "XEM", "ZEC"
-    ],
-    "deriv": [
-        "BTC", "ETH", "LTC", "USDC", "USDT", "XRP"
-    ]
-}
-
-
-# Environment
+# Environment settings
 ENV_PRODUCTION = "production"
 ENV_DEVELOPMENT = "development"
 ENV_TESTING = "testing"
 
 # Default configuration paths
 DEFAULT_CONFIG_PATH = os.environ.get(
-    "QUANTUM_SPECTRE_CONFIG",
-    str(Path.home() / ".quantumspectre" / "config.yml")
+    "QUANTUM_SPECTRE_CONFIG", str(Path.home() / ".quantumspectre" / "config.yml")
 )
 DEFAULT_DATA_DIR = os.environ.get(
-    "QUANTUM_SPECTRE_DATA",
-    str(Path.home() / ".quantumspectre" / "data")
+    "QUANTUM_SPECTRE_DATA", str(Path.home() / ".quantumspectre" / "data")
 )
 STORAGE_ROOT_PATH = os.environ.get(
-    "QUANTUM_SPECTRE_STORAGE",
-    str(Path.home() / ".quantumspectre" / "storage")
+    "QUANTUM_SPECTRE_STORAGE", str(Path.home() / ".quantumspectre" / "storage")
 )
 DEFAULT_LOG_DIR = os.environ.get(
-    "QUANTUM_SPECTRE_LOGS",
-    str(Path.home() / ".quantumspectre" / "logs")
+    "QUANTUM_SPECTRE_LOGS", str(Path.home() / ".quantumspectre" / "logs")
 )
 DEFAULT_MODEL_DIR = os.environ.get(
-    "QUANTUM_SPECTRE_MODELS",
-    str(Path.home() / ".quantumspectre" / "models")
+    "QUANTUM_SPECTRE_MODELS", str(Path.home() / ".quantumspectre" / "models")
 )
 
-# Service names and dependencies
+
+# ======================================
+# System Architecture Configuration
+# ======================================
+
 SERVICE_NAMES = {
     "data_ingest": "Data Ingestion Service",
     "data_feeds": "Data Feeds Service",
@@ -99,7 +62,7 @@ SERVICE_NAMES = {
     "backtester": "Backtester Service",
     "monitoring": "Monitoring Service",
     "api_gateway": "API Gateway Service",
-    "ui": "UI Service"
+    "ui": "UI Service",
 }
 
 SERVICE_DEPENDENCIES = {
@@ -115,90 +78,91 @@ SERVICE_DEPENDENCIES = {
     "backtester": ["feature_service", "strategy_brains", "risk_manager"],
     "monitoring": [],
     "api_gateway": ["brain_council", "execution_engine", "monitoring"],
-    "ui": ["api_gateway"]
+    "ui": ["api_gateway"],
 }
 
 SERVICE_STARTUP_ORDER = [
-    "data_ingest",
-    "data_feeds",
-    "feature_service",
-    "intelligence",
-    "ml_models",
-    "strategy_brains",
-    "risk_manager",
-    "brain_council",
-    "execution_engine",
-    "backtester",
-    "monitoring",
-    "api_gateway",
-    "ui"
+    "data_ingest", "data_feeds", "feature_service", "intelligence", "ml_models",
+    "strategy_brains", "risk_manager", "brain_council", "execution_engine",
+    "backtester", "monitoring", "api_gateway", "ui"
 ]
 
 DATA_INGEST_METRICS_PREFIX = "data_ingest"
 
 
-# Database constants
-DATABASE_POOL_MIN_SIZE = 5
-DATABASE_POOL_MAX_SIZE = 20
-DATABASE_MAX_QUERIES = 50000
-DATABASE_CONNECTION_TIMEOUT = 60  # seconds
-DATABASE_COMMAND_TIMEOUT = 60  # seconds
+# ======================================
+# Resource Management
+# ======================================
 
-# API rate limits
-API_RATE_LIMIT_DEFAULT = 100  # requests per minute
-API_RATE_LIMIT_TRADING = 20   # requests per minute
-API_RATE_LIMIT_AUTH = 10      # requests per minute
+DEFAULT_THREAD_POOL_SIZE = 10
+MAX_THREAD_POOL_SIZE = 100
+DEFAULT_PROCESS_POOL_SIZE = 4
+MAX_PROCESS_POOL_SIZE = 16
+MARKET_DATA_MAX_WORKERS = 16
 
-# WebSocket constants
+MEMORY_WARNING_THRESHOLD = 0.85
+MEMORY_CRITICAL_THRESHOLD = 0.95
+
+LOG_LEVELS = {
+    "CRITICAL": 50, "ERROR": 40, "WARNING": 30, "INFO": 20, "DEBUG": 10, "NOTSET": 0,
+}
+DEFAULT_LOG_LEVEL = "INFO"
+
+
+# ======================================
+# Network Configuration
+# ======================================
+
+# API rate limits (requests per minute)
+API_RATE_LIMIT_DEFAULT = 100
+API_RATE_LIMIT_TRADING = 20
+API_RATE_LIMIT_AUTH = 10
+
+# WebSocket configuration
 WEBSOCKET_MAX_CONNECTIONS = 10000
-WEBSOCKET_PING_INTERVAL = 30  # seconds
-WEBSOCKET_PING_TIMEOUT = 10   # seconds
-WEBSOCKET_CLOSE_TIMEOUT = 5   # seconds
+WEBSOCKET_PING_INTERVAL = 30
+WEBSOCKET_PING_TIMEOUT = 10
+WEBSOCKET_CLOSE_TIMEOUT = 5
 
-# HTTP constants
-HTTP_TIMEOUT_DEFAULT = 10  # seconds
-HTTP_TIMEOUT_FEED = 30     # seconds
-HTTP_TIMEOUT_LONG = 120    # seconds
+# HTTP configuration
+HTTP_TIMEOUT_DEFAULT = 10
+HTTP_TIMEOUT_FEED = 30
+HTTP_TIMEOUT_LONG = 120
 HTTP_MAX_RETRIES = 3
-HTTP_RETRY_BACKOFF = 2.0   # exponential backoff factor
+HTTP_RETRY_BACKOFF = 2.0
 
-# Authentication
-TOKEN_EXPIRY_ACCESS = 3600  # 1 hour in seconds
-TOKEN_EXPIRY_REFRESH = 2592000  # 30 days in seconds
+
+# ======================================
+# Security Configuration
+# ======================================
+
+TOKEN_EXPIRY_ACCESS = 3600  # 1 hour
+TOKEN_EXPIRY_REFRESH = 2592000  # 30 days
 PASSWORD_MIN_LENGTH = 10
 PASSWORD_HASH_ALGORITHM = "pbkdf2_sha256"
 PASSWORD_SALT_LENGTH = 32
 PASSWORD_HASH_ITERATIONS = 200000
 
-# Cache settings
-CACHE_DEFAULT_TTL = 300  # seconds
-CACHE_LONG_TTL = 3600  # seconds
-CACHE_VERY_LONG_TTL = 86400  # 1 day in seconds
 
-# Threading and process limits
-DEFAULT_THREAD_POOL_SIZE = 10
-MAX_THREAD_POOL_SIZE = 100
-DEFAULT_PROCESS_POOL_SIZE = 4
-MAX_PROCESS_POOL_SIZE = 16
+# ======================================
+# Database Configuration
+# ======================================
 
-# Memory limits
-MEMORY_WARNING_THRESHOLD = 0.85  # 85% of available RAM
-MEMORY_CRITICAL_THRESHOLD = 0.95  # 95% of available RAM
+DATABASE_POOL_MIN_SIZE = 5
+DATABASE_POOL_MAX_SIZE = 20
+DATABASE_MAX_QUERIES = 50000
+DATABASE_CONNECTION_TIMEOUT = 60
+DATABASE_COMMAND_TIMEOUT = 60
 
-# Threading and processing limits for market data
-MARKET_DATA_MAX_WORKERS = 16  # Maximum number of workers for market data processing
 
-# Logging levels
-LOG_LEVELS = {
-    "CRITICAL": 50,
-    "ERROR": 40,
-    "WARNING": 30,
-    "INFO": 20,
-    "DEBUG": 10,
-    "NOTSET": 0
-}
-# Feature Service specific constants
-FEATURE_PRIORITY_LEVELS = ["high", "normal", "low"]
+# ======================================
+# Cache Configuration
+# ======================================
+
+CACHE_DEFAULT_TTL = 300
+CACHE_LONG_TTL = 3600
+CACHE_VERY_LONG_TTL = 86400
+
 
 # ======================================
 DEFAULT_FEATURE_PARAMS = {}  # Default parameters for feature calculations
@@ -207,16 +171,20 @@ DEFAULT_FEATURE_PARAMS = {}  # Default parameters for feature calculations
 
 # Supported exchanges
 
+# Exchange and Trading Enums
+# ======================================
+
 class Exchange(enum.Enum):
+    """Supported trading exchanges."""
     BINANCE = "binance"
     DERIV = "deriv"
     BACKTEST = "backtest"
 
-EXCHANGE_TYPES = [ex.value for ex in Exchange]
 
 # Supported asset classes
 
 class AssetClass(enum.Enum):
+    """Supported asset classes."""
     CRYPTO = "crypto"
     FOREX = "forex"
     STOCK = "stock"
@@ -225,22 +193,21 @@ class AssetClass(enum.Enum):
     SYNTHETIC = "synthetic"
 
 
-# Supported timeframes
 class Timeframe(enum.Enum):
-    M1 = "1m"     # 1 minute
-    M5 = "5m"     # 5 minutes
-    M15 = "15m"   # 15 minutes
-    M30 = "30m"   # 30 minutes
-    H1 = "1h"     # 1 hour
-    H4 = "4h"     # 4 hours
-    D1 = "1d"     # 1 day
-    W1 = "1w"     # 1 week
-    MN1 = "1M"    # 1 month
-# Extracted list of Timeframe values for runtime use
-TIME_FRAMES = TIMEFRAMES = [tf.value for tf in Timeframe]
+    """Supported trading timeframes."""
+    M1 = "1m"
+    M5 = "5m"
+    M15 = "15m"
+    M30 = "30m"
+    H1 = "1h"
+    H4 = "4h"
+    D1 = "1d"
+    W1 = "1w"
+    MN1 = "1M"
 
-# Order types
+
 class OrderType(enum.Enum):
+    """Order types for trading."""
     MARKET = "market"
     LIMIT = "limit"
     STOP_MARKET = "stop_market"
@@ -249,16 +216,25 @@ class OrderType(enum.Enum):
     TAKE_PROFIT_LIMIT = "take_profit_limit"
     TRAILING_STOP = "trailing_stop"
 
-ORDER_TYPES = [ot.value for ot in OrderType]
+
+# Aliases for backward compatibility
+ORDER_TYPE = OrderType
+
+# Aliases for backward compatibility
+ORDER_TYPE = OrderType
+
+# Aliases for backward compatibility
+ORDER_TYPE = OrderType
 
 # Aliases for backward compatibility
 ORDER_TYPE = OrderType
 
 # Order sides
+
 class OrderSide(enum.Enum):
+    """Order sides for trading."""
     BUY = "buy"
     SELL = "sell"
-ORDER_SIDES = [side.value for side in OrderSide]
 
 # Position side (alias for backward compatibility with PositionType)
 class PositionSide(enum.Enum):
@@ -272,12 +248,16 @@ POSITION_SIDE = PositionSide
 
 # Position types (deprecated, use PositionSide)
 class PositionType(enum.Enum):
+
+
+class PositionSide(enum.Enum):
+    """Position sides for trading."""
     LONG = "long"
     SHORT = "short"
 
 
-# Order statuses
 class OrderStatus(enum.Enum):
+    """Order status states."""
     NEW = "new"
     PARTIALLY_FILLED = "partially_filled"
     FILLED = "filled"
@@ -285,7 +265,61 @@ class OrderStatus(enum.Enum):
     PENDING_CANCEL = "pending_cancel"
     REJECTED = "rejected"
     EXPIRED = "expired"
-ORDER_STATUSES = [ps.value for ps in OrderStatus]
+
+# Backwards compatibility
+ORDER_STATUS = OrderStatus
+
+
+# Position lifecycle statuses
+class PositionStatus(enum.Enum):
+
+
+class PositionStatus(enum.Enum):
+    """Position status states."""
+    PENDING = "pending"
+    OPEN = "open"
+    PARTIALLY_CLOSED = "partially_closed"
+    CLOSED = "closed"
+    FAILED = "failed"
+
+POSITION_STATUSES = [ps.value for ps in PositionStatus]
+
+# Backward compatibility
+POSITION_STATUS = PositionStatus
+
+# Backwards compatibility
+ORDER_STATUS = OrderStatus
+
+
+# Position lifecycle statuses
+class PositionStatus(enum.Enum):
+    PENDING = "pending"
+    OPEN = "open"
+    PARTIALLY_CLOSED = "partially_closed"
+    CLOSED = "closed"
+    FAILED = "failed"
+
+POSITION_STATUSES = [ps.value for ps in PositionStatus]
+
+# Backward compatibility
+POSITION_STATUS = PositionStatus
+
+# Backwards compatibility
+ORDER_STATUS = OrderStatus
+
+
+# Position lifecycle statuses
+class PositionStatus(enum.Enum):
+    PENDING = "pending"
+    OPEN = "open"
+    PARTIALLY_CLOSED = "partially_closed"
+    CLOSED = "closed"
+    FAILED = "failed"
+
+POSITION_STATUSES = [ps.value for ps in PositionStatus]
+
+# Backward compatibility
+POSITION_STATUS = PositionStatus
 
 # Backwards compatibility
 ORDER_STATUS = OrderStatus
@@ -311,37 +345,40 @@ class TriggerType(enum.Enum):
     INDEX_PRICE = "index_price" # Index price trigger
 
 
-# Time in force options
 class TimeInForce(enum.Enum):
-    GTC = "gtc"    # Good Till Canceled
-    IOC = "ioc"    # Immediate or Cancel
-    FOK = "fok"    # Fill or Kill
-    GTD = "gtd"    # Good Till Date
+    """Time in force options."""
+    GTC = "gtc"  # Good Till Canceled
+    IOC = "ioc"  # Immediate or Cancel
+    FOK = "fok"  # Fill or Kill
+    GTD = "gtd"  # Good Till Date
+
+TIME_IN_FORCE = TimeInForce
+
+TIME_IN_FORCE = TimeInForce
+
+TIME_IN_FORCE = TimeInForce
 
 TIME_IN_FORCE = TimeInForce
 
 
-# Trade direction for signals
 class SignalDirection(enum.Enum):
+    """Trade signal directions."""
     BULLISH = "bullish"
     BEARISH = "bearish"
     NEUTRAL = "neutral"
 
 
-# Signal strength
 class SignalStrength(enum.Enum):
+    """Signal strength levels."""
     VERY_WEAK = 1
     WEAK = 2
     MODERATE = 3
     STRONG = 4
     VERY_STRONG = 5
 
-# Signal strength values for easy access
-SIGNAL_STRENGTHS = [ss.value for ss in SignalStrength]
 
-
-# Market conditions/regimes
 class MarketRegime(enum.Enum):
+    """Market condition types."""
     TRENDING_BULLISH = "trending_bullish"
     TRENDING_BEARISH = "trending_bearish"
     RANGING = "ranging"
@@ -351,23 +388,8 @@ class MarketRegime(enum.Enum):
     REVERSAL = "reversal"
 
 
-# Strategy types
-class StrategyType(enum.Enum):
-    TREND_FOLLOWING = "trend_following"
-    MEAN_REVERSION = "mean_reversion"
-    BREAKOUT = "breakout"
-    PATTERN_RECOGNITION = "pattern_recognition"
-    STATISTICAL_ARBITRAGE = "statistical_arbitrage"
-    MOMENTUM = "momentum"
-    VOLATILITY = "volatility"
-    SENTIMENT = "sentiment"
-    MACHINE_LEARNING = "machine_learning"
-    REINFORCEMENT_LEARNING = "reinforcement_learning"
-    ENSEMBLE = "ensemble"
-
-
-# Risk levels
 class RiskLevel(enum.Enum):
+    """Risk assessment levels."""
     VERY_LOW = 1
     LOW = 2
     MODERATE = 3
@@ -512,16 +534,29 @@ class ModelType(enum.Enum):
     XGBOOST = "xgboost"
     LIGHTGBM = "lightgbm"
     ENSEMBLE = "ensemble"
+# ======================================
+# Trading Platform Configuration
+# ======================================
 
+SUPPORTED_PLATFORMS = ["deriv", "binance"]
 
-# Feature importance methods
-class FeatureImportanceMethod(enum.Enum):
-    PERMUTATION = "permutation"
-    SHAP = "shap"
-    LIME = "lime"
-    FEATURE_IMPORTANCE = "feature_importance"
-    PARTIAL_DEPENDENCE = "partial_dependence"
+SUPPORTED_ASSETS = {
+    "binance": [
+        "BTC", "ETH", "USDT", "BNB", "ADA", "XRP", "DOGE", "SOL", "DOT", "LTC",
+        "BCH", "LINK", "MATIC", "ATOM", "AVAX", "TRX", "XLM", "NEAR", "FIL",
+        "EOS", "AAVE", "UNI", "SAND", "MANA", "SHIB", "ALGO", "FTM", "ETC",
+        "ZIL", "VET", "THETA", "XTZ", "GRT", "CHZ", "ENJ", "BAT", "ZRX",
+        "1INCH", "COMP", "SNX", "YFI", "CRV", "KSM", "DASH", "OMG", "QTUM",
+        "ICX", "ONT", "WAVES", "LRC", "BTT", "HOT", "NANO", "SC", "ZEN",
+        "STMX", "ANKR", "CELR", "CVC", "DENT", "IOST", "KAVA", "NKN", "OCEAN",
+        "RLC", "STORJ", "TOMO", "WRX", "XEM", "ZEC"
+    ],
+    "deriv": ["BTC", "ETH", "LTC", "USDC", "USDT", "XRP"]
+}
 
+ASSET_TYPES = [
+    "crypto", "forex", "stocks", "indices", "commodities", "futures", "options",
+]
 
 # Feature scaling methods
 class ScalingMethod(enum.Enum):
@@ -585,27 +620,30 @@ ARBITRAGE_OPPORTUNITY_TYPES = [
     "futures_spot",
     "funding_rate",
     "index_tracking"
+STRATEGY_TYPES = [
+    "trend_following", "mean_reversion", "breakout", "momentum", "statistical_arbitrage",
+    "market_making", "sentiment_based", "machine_learning", "pattern_recognition",
+    "volatility_based", "order_flow", "market_structure", "multi_timeframe",
+    "adaptive", "ensemble", "reinforcement_learning", "regime_based",
 ]
 
+EXECUTION_MODES = [
+    "live", "paper", "backtest", "simulation", "optimization", "stress_test",
+]
 
-# Market inefficiency patterns
-class InefficiencyPattern(enum.Enum):
-    PRICE_REVERSAL = "price_reversal"
-    OVERREACTION = "overreaction"
-    MOMENTUM_CONTINUATION = "momentum_continuation"
-    LIQUIDITY_VOID = "liquidity_void"
-    STOP_HUNT = "stop_hunt"
-    WHALE_MOVEMENT = "whale_movement"
-    NEWS_REACTION = "news_reaction"
-    VOLUME_SPIKE = "volume_spike"
+SLIPPAGE_MODELS = [
+    "fixed", "percentage", "volume_based", "volatility_based", "orderbook_based", "impact_based",
+]
 
 
 # ======================================
 # Risk Management Constants
+=======
+# Risk Management Configuration
 # ======================================
 
-# Risk control methods
 class RiskControlMethod(enum.Enum):
+    """Risk control methods."""
     FIXED_STOP_LOSS = "fixed_stop_loss"
     TRAILING_STOP = "trailing_stop"
     ATR_STOP = "atr_stop"
@@ -614,11 +652,10 @@ class RiskControlMethod(enum.Enum):
     TIME_STOP = "time_stop"
     EQUITY_STOP = "equity_stop"
     DRAWDOWN_STOP = "drawdown_stop"
-    CORRELATION_HEDGE = "correlation_hedge"
 
 
-# Position sizing methods
 class PositionSizingMethod(enum.Enum):
+    """Position sizing methods."""
     FIXED_SIZE = "fixed_size"
     FIXED_VALUE = "fixed_value"
     FIXED_PERCENT = "fixed_percent"
@@ -626,67 +663,125 @@ class PositionSizingMethod(enum.Enum):
     KELLY_CRITERION = "kelly_criterion"
     OPTIMAL_F = "optimal_f"
     RISK_PARITY = "risk_parity"
-    MAXIMUM_DRAWDOWN = "maximum_drawdown"
 
 
-# Trade execution algorithms
 class ExecutionAlgorithm(enum.Enum):
-    MARKET = "market"           # Simple market order
-    LIMIT = "limit"             # Simple limit order
-    TWAP = "twap"               # Time Weighted Average Price
-    VWAP = "vwap"               # Volume Weighted Average Price
-    ICEBERG = "iceberg"         # Iceberg/reserve order
-    PEG = "peg"                 # Pegged to market orders
-    SNIPER = "sniper"           # Try to get best execution with patience
-    ADAPTIVE = "adaptive"       # Adapts based on market conditions
+    """Trade execution algorithms."""
+    MARKET = "market"
+    LIMIT = "limit"
+    TWAP = "twap"
+    VWAP = "vwap"
+    ICEBERG = "iceberg"
+    PEG = "peg"
+    SNIPER = "sniper"
+    ADAPTIVE = "adaptive"
 
 
 # Default risk parameters
-DEFAULT_RISK_PERCENT_PER_TRADE = 1.0  # 1% of account per trade
+DEFAULT_RISK_PERCENT_PER_TRADE = 1.0
 DEFAULT_MAX_OPEN_TRADES = 5
 DEFAULT_MAX_CORRELATED_TRADES = 2
-DEFAULT_MAX_DRAWDOWN_PERCENT = 20.0  # Max 20% drawdown
-DEFAULT_PROFIT_FACTOR_THRESHOLD = 1.5  # Minimum profit:loss ratio
-DEFAULT_WIN_RATE_THRESHOLD = 65.0  # Minimum win percentage
-DEFAULT_TRAILING_STOP_ACTIVATION = 1.0  # % profit to activate trailing stop
-DEFAULT_KELLY_FRACTION = 0.5  # Half Kelly for conservative sizing
+DEFAULT_MAX_DRAWDOWN_PERCENT = 20.0
+DEFAULT_PROFIT_FACTOR_THRESHOLD = 1.5
+DEFAULT_WIN_RATE_THRESHOLD = 65.0
+DEFAULT_TRAILING_STOP_ACTIVATION = 1.0
+DEFAULT_KELLY_FRACTION = 0.5
+DEFAULT_GROWTH_FACTOR = 1.05
+DEFAULT_FIXED_STOP_PERCENTAGE = 2.0
+DEFAULT_MIN_STOP_DISTANCE = 0.005
+DEFAULT_STOP_LOSS_MULTIPLIER = 1.5
+DEFAULT_TAKE_PROFIT_MULTIPLIER = 2.0
+
+# Position management
+PARTIAL_CLOSE_LEVELS = [0.25, 0.5, 0.75]
+POSITION_SIZE_PRECISION = 4
+MAX_LEVERAGE_BINANCE = 125
+MAX_LEVERAGE_DERIV = 100
+
+
+# ======================================
+# Technical Analysis Configuration
+# ======================================
+
+FIBONACCI_RATIOS = {
+    "0": 0.0, "23.6": 0.236, "38.2": 0.382, "50": 0.5, "61.8": 0.618,
+    "76.4": 0.764, "78.6": 0.786, "100": 1.0, "127.2": 1.272, "138.2": 1.382,
+    "150": 1.5, "161.8": 1.618, "200": 2.0, "223.6": 2.236, "261.8": 2.618,
+    "361.8": 3.618, "423.6": 4.236
+}
+
+SMA_PERIODS = [10, 20, 50, 100, 200]
+EMA_PERIODS = [9, 12, 26, 50, 200]
+RSI_PERIODS = [7, 14, 21]
+MACD_PARAMS = {"FAST": 12, "SLOW": 26, "SIGNAL": 9}
+BOLLINGER_BANDS_PARAMS = {"PERIOD": 20, "STD_DEV": 2}
+STOCHASTIC_PARAMS = {"K_PERIOD": 14, "K_SLOWING": 3, "D_PERIOD": 3}
 
 # ======================================
 # Notification Constants
 # ======================================
 
-# Notification types
+
+# ======================================
+# Machine Learning Configuration
+# ======================================
+
+class ModelType(enum.Enum):
+    """Machine learning model types."""
+    LINEAR_REGRESSION = "linear_regression"
+    LOGISTIC_REGRESSION = "logistic_regression"
+    RANDOM_FOREST = "random_forest"
+    GRADIENT_BOOSTING = "gradient_boosting"
+    SVM = "svm"
+    NEURAL_NETWORK = "neural_network"
+    LSTM = "lstm"
+    GRU = "gru"
+    CNN = "cnn"
+    XGBOOST = "xgboost"
+    LIGHTGBM = "lightgbm"
+    ENSEMBLE = "ensemble"
+
+
+class ScalingMethod(enum.Enum):
+    """Feature scaling methods."""
+    STANDARD = "standard"
+    MINMAX = "minmax"
+    ROBUST = "robust"
+    MAXABS = "maxabs"
+    NONE = "none"
+
+
+# ======================================
+# Notification Configuration
+# ======================================
+
 class NotificationType(enum.Enum):
+    """Notification types."""
     TRADE_ENTRY = "trade_entry"
     TRADE_EXIT = "trade_exit"
     STOP_LOSS_HIT = "stop_loss_hit"
     TAKE_PROFIT_HIT = "take_profit_hit"
     NEW_SIGNAL = "new_signal"
     PATTERN_DETECTED = "pattern_detected"
-    LOOPHOLE_DETECTED = "loophole_detected"
     SYSTEM_ERROR = "system_error"
     SYSTEM_WARNING = "system_warning"
-    MARKET_EVENT = "market_event"
-    STRATEGY_UPDATE = "strategy_update"
-    PERFORMANCE_REPORT = "performance_report"
 
 
-# Notification priority levels
 class NotificationPriority(enum.Enum):
+    """Notification priority levels."""
     LOW = 1
     MEDIUM = 2
     HIGH = 3
     CRITICAL = 4
 
 
-# Notification channels
 class NotificationChannel(enum.Enum):
+    """Notification channels."""
     INTERNAL = "internal"
     EMAIL = "email"
     SMS = "sms"
     PUSH = "push"
     WEBHOOK = "webhook"
-    VOICE = "voice"
     TELEGRAM = "telegram"
     SLACK = "slack"
     DISCORD = "discord"
@@ -768,22 +863,23 @@ DEFAULT_UI_CONFIG = {
 # ======================================
 # Deriv-specific Constants
 # ======================================
-MAX_RECONNECT_ATTEMPTS = 5
-INITIAL_RECONNECT_DELAY = 1.0  # seconds
-MAX_RECONNECT_DELAY = 60.0  # seconds
-DEFAULT_SUBSCRIPTION_TIMEOUT = 30.0  # seconds
-DEFAULT_PING_INTERVAL = 30.0  # seconds
-MARKET_ORDER_BOOK_DEPTH = 10
-DERIV_PRICE_REFRESH_RATE = 1.0  # seconds
+# Deriv-specific Configuration
+# ======================================
 
-# Deriv API endpoints
+MAX_RECONNECT_ATTEMPTS = 5
+INITIAL_RECONNECT_DELAY = 1.0
+MAX_RECONNECT_DELAY = 60.0
+DEFAULT_SUBSCRIPTION_TIMEOUT = 30.0
+DEFAULT_PING_INTERVAL = 30.0
+MARKET_ORDER_BOOK_DEPTH = 10
+DERIV_PRICE_REFRESH_RATE = 1.0
+
 DERIV_ENDPOINTS = {
     "websocket": "wss://ws.binaryws.com/websockets/v3",
     "oauth": "https://oauth.deriv.com",
-    "api": "https://api.deriv.com"
+    "api": "https://api.deriv.com",
 }
 
-# Deriv market categories
 DERIV_ASSET_CLASSES = {
     "forex": "forex",
     "indices": "indices",
@@ -827,59 +923,42 @@ SOCIAL_API_KEYS = {
     "discord": {
         "bot_token": ""
     }
+    "synthetic": "synthetic_index",
 }
 
-SOCIAL_QUERY_PARAMS = {
-    "crypto": ["bitcoin", "ethereum", "crypto", "altcoin", "defi", "nft"],
-    "forex": ["forex", "eur/usd", "usd/jpy", "gbp/usd", "currency"],
-    "stocks": ["stocks", "nasdaq", "dowjones", "s&p500", "nyse"],
-    "commodities": ["gold", "silver", "oil", "commodities"]
-}
 
-SOCIAL_UPDATE_INTERVALS = {
-    "twitter": 60,    # 1 minute
-    "reddit": 300,    # 5 minutes
-    "telegram": 120,  # 2 minutes
-    "discord": 120,   # 2 minutes
-    "stocktwits": 180, # 3 minutes
-    "tradingview": 300  # 5 minutes
-}
+# ======================================
+# Feature Engineering
+# ======================================
 
-NLP_MODELS = {
-    "sentiment": "ProsusAI/finbert",
-    "crypto_sentiment": "ElKulako/cryptobert",
-    "ner": "en_core_web_sm"
-}
+FEATURE_PRIORITY_LEVELS = ["high", "normal", "low"]
+DEFAULT_FEATURE_PARAMS = {}
 
-ASSET_KEYWORDS = {
-    "BTC/USD": ["bitcoin", "btc", "bitcoin/usd", "btcusd"],
-    "ETH/USD": ["ethereum", "eth", "ethereum/usd", "ethusd"],
-    "EUR/USD": ["euro", "eur/usd", "eurusd", "euro dollar"],
-    "GBP/USD": ["gbp", "pound", "cable", "gbp/usd", "gbpusd"],
-    "USD/JPY": ["yen", "jpy", "usdjpy", "dollar yen"]
-}
-# Define the interface for external usage
+
+# ======================================
+# Helper Lists for Runtime Use
+# ======================================
+
+EXCHANGE_TYPES = [ex.value for ex in Exchange]
+TIME_FRAMES = [tf.value for tf in Timeframe]
+ORDER_TYPES = [ot.value for ot in OrderType]
+ORDER_SIDES = [side.value for side in OrderSide]
+POSITION_SIDES = [ps.value for ps in PositionSide]
+ORDER_STATUSES = [ps.value for ps in OrderStatus]
+POSITION_STATUSES = [ps.value for ps in PositionStatus]
+SIGNAL_STRENGTHS = [ss.value for ss in SignalStrength]
+
+
+# ======================================
+# Export Interface
+# ======================================
+
 __all__ = [
     # System constants
-    'VERSION', 'SYSTEM_NAME', 'AUTHOR', 'LICENSE',
-    'ENV_PRODUCTION', 'ENV_DEVELOPMENT', 'ENV_TESTING',
-    'DEFAULT_CONFIG_PATH', 'DEFAULT_DATA_DIR', 'DEFAULT_LOG_DIR', 'DEFAULT_MODEL_DIR',
-    'SERVICE_NAMES', 'SERVICE_DEPENDENCIES', 'SERVICE_STARTUP_ORDER',
-    'DATABASE_POOL_MIN_SIZE', 'DATABASE_POOL_MAX_SIZE', 'DATABASE_MAX_QUERIES',
-    'DATABASE_CONNECTION_TIMEOUT', 'DATABASE_COMMAND_TIMEOUT',
-    'API_RATE_LIMIT_DEFAULT', 'API_RATE_LIMIT_TRADING', 'API_RATE_LIMIT_AUTH',
-    'WEBSOCKET_MAX_CONNECTIONS', 'WEBSOCKET_PING_INTERVAL', 'WEBSOCKET_PING_TIMEOUT',
-    'WEBSOCKET_CLOSE_TIMEOUT', 'HTTP_TIMEOUT_DEFAULT', 'HTTP_TIMEOUT_FEED',
-    'HTTP_TIMEOUT_LONG', 'HTTP_MAX_RETRIES', 'HTTP_RETRY_BACKOFF',
-    'TOKEN_EXPIRY_ACCESS', 'TOKEN_EXPIRY_REFRESH', 'PASSWORD_MIN_LENGTH',
-    'PASSWORD_HASH_ALGORITHM', 'PASSWORD_SALT_LENGTH', 'PASSWORD_HASH_ITERATIONS',
-    'CACHE_DEFAULT_TTL', 'CACHE_LONG_TTL', 'CACHE_VERY_LONG_TTL',
-    'DEFAULT_THREAD_POOL_SIZE', 'MAX_THREAD_POOL_SIZE',
-    'DEFAULT_PROCESS_POOL_SIZE', 'MAX_PROCESS_POOL_SIZE',
-    'MEMORY_WARNING_THRESHOLD', 'MEMORY_CRITICAL_THRESHOLD',
-    'LOG_LEVELS',
-    'FEATURE_PRIORITY_LEVELS',
-    'DEFAULT_FEATURE_PARAMS', # Added
+    "VERSION", "CONFIG_SCHEMA_VERSION", "SYSTEM_NAME", "AUTHOR", "LICENSE",
+    "ENV_PRODUCTION", "ENV_DEVELOPMENT", "ENV_TESTING",
+    "DEFAULT_CONFIG_PATH", "DEFAULT_DATA_DIR", "STORAGE_ROOT_PATH",
+    "DEFAULT_LOG_DIR", "DEFAULT_MODEL_DIR",
     
     # Exchange and trading enums
     'Exchange', 'AssetClass', 'Timeframe', 'OrderType', 'OrderSide',
@@ -889,18 +968,28 @@ __all__ = [
     'RiskLevel', 'FeeType','EXCHANGE_TYPES', 'TIME_FRAMES','ORDER_TYPES', 'ORDER_SIDES',
     'ORDER_TYPE', 'ORDER_STATUS', 'TIME_IN_FORCE',
     'POSITION_SIDES', 'ORDER_STATUSES', 'POSITION_STATUSES', 'POSITION_SIDE', 'POSITION_STATUS',
+
+
+    # Service configuration
+    "SERVICE_NAMES", "SERVICE_DEPENDENCIES", "SERVICE_STARTUP_ORDER",
+    "DATA_INGEST_METRICS_PREFIX",
+
     
-    # Feature and pattern enums
-    'IndicatorCategory', 'CandlestickPattern', 'ChartPattern', 'HarmonicPattern',
-    'FIBONACCI_RATIOS', 'SMA_PERIODS', 'EMA_PERIODS', 'RSI_PERIODS',
-    'MACD_PARAMS', 'BOLLINGER_BANDS_PARAMS', 'STOCHASTIC_PARAMS',
+    # Resource management
+    "DEFAULT_THREAD_POOL_SIZE", "MAX_THREAD_POOL_SIZE", "DEFAULT_PROCESS_POOL_SIZE",
+    "MAX_PROCESS_POOL_SIZE", "MARKET_DATA_MAX_WORKERS",
+    "MEMORY_WARNING_THRESHOLD", "MEMORY_CRITICAL_THRESHOLD",
+    "LOG_LEVELS", "DEFAULT_LOG_LEVEL",
     
-    # Machine learning enums
-    'ModelType', 'FeatureImportanceMethod', 'ScalingMethod',
-    'HyperparamOptMethod', 'CrossValidationStrategy',
+    # Network configuration
+    "API_RATE_LIMIT_DEFAULT", "API_RATE_LIMIT_TRADING", "API_RATE_LIMIT_AUTH",
+    "WEBSOCKET_MAX_CONNECTIONS", "WEBSOCKET_PING_INTERVAL", "WEBSOCKET_PING_TIMEOUT",
+    "WEBSOCKET_CLOSE_TIMEOUT", "HTTP_TIMEOUT_DEFAULT", "HTTP_TIMEOUT_FEED",
+    "HTTP_TIMEOUT_LONG", "HTTP_MAX_RETRIES", "HTTP_RETRY_BACKOFF",
     
-    # Loophole detection enums
-    'LoopholeType', 'ArbitrageType', 'InefficiencyPattern',
+    # Security configuration
+    "TOKEN_EXPIRY_ACCESS", "TOKEN_EXPIRY_REFRESH", "PASSWORD_MIN_LENGTH",
+    "PASSWORD_HASH_ALGORITHM", "PASSWORD_SALT_LENGTH", "PASSWORD_HASH_ITERATIONS",
     
     # Risk management enums
     'RiskControlMethod', 'PositionSizingMethod', 'ExecutionAlgorithm',
@@ -913,20 +1002,30 @@ __all__ = [
     'PARTIAL_CLOSE_LEVELS', 'DEFAULT_FIXED_STOP_PERCENTAGE',
     'DEFAULT_MIN_STOP_DISTANCE',
     'MAX_LEVERAGE_BINANCE', 'MAX_LEVERAGE_DERIV',
+    'POSITION_SIZE_PRECISION', 'MAX_LEVERAGE_BINANCE', 'MAX_LEVERAGE_DERIV',
+    'DEFAULT_GROWTH_FACTOR', 'PARTIAL_CLOSE_LEVELS',
+    'DEFAULT_FIXED_STOP_PERCENTAGE', 'DEFAULT_MIN_STOP_DISTANCE',
+
+    'DEFAULT_TRAILING_ACTIVATION_PERCENTAGE', 'DEFAULT_TRAILING_CALLBACK_RATE',
+    'MAX_STOP_LEVELS', 'DEFAULT_CHANDELIER_EXIT_MULTIPLIER',
+
+
+    # Database configuration
+    "DATABASE_POOL_MIN_SIZE", "DATABASE_POOL_MAX_SIZE", "DATABASE_MAX_QUERIES",
+    "DATABASE_CONNECTION_TIMEOUT", "DATABASE_COMMAND_TIMEOUT",
+
     
-    # Notification enums
-    'NotificationType', 'NotificationPriority', 'NotificationChannel',
+    # Cache configuration
+    "CACHE_DEFAULT_TTL", "CACHE_LONG_TTL", "CACHE_VERY_LONG_TTL",
     
-    # UI enums and constants
-    'UITheme', 'ChartType', 'DashboardLayout', 'DEFAULT_DASHBOARD_COMPONENTS',
-    'ExportFormat', 'DEFAULT_UI_CONFIG',
+    # Trading enums
+    "Exchange", "AssetClass", "Timeframe", "OrderType", "OrderSide", "PositionSide",
+    "OrderStatus", "PositionStatus", "TimeInForce", "SignalDirection", "SignalStrength",
+    "MarketRegime", "RiskLevel",
     
-    # Bayesian optimization constants
-    'BAYESIAN_OPT_KERNELS', 'DEFAULT_GP_KERNEL', 'ACQUISITION_FUNCTIONS'
-    # Deriv-specific constants
-    'MAX_RECONNECT_ATTEMPTS', 'INITIAL_RECONNECT_DELAY', 'MAX_RECONNECT_DELAY',
-    'DEFAULT_SUBSCRIPTION_TIMEOUT', 'DEFAULT_PING_INTERVAL', 'MARKET_ORDER_BOOK_DEPTH',
-    'DERIV_PRICE_REFRESH_RATE', 'DERIV_ENDPOINTS', 'DERIV_ASSET_CLASSES', 'DERIV_MARKETS',
+    # Trading platform configuration
+    "SUPPORTED_PLATFORMS", "SUPPORTED_ASSETS", "ASSET_TYPES", "STRATEGY_TYPES",
+    "EXECUTION_MODES", "SLIPPAGE_MODELS",
     
     # Social media constants
     'SOCIAL_PLATFORMS', 'SOCIAL_API_KEYS', 'SOCIAL_QUERY_PARAMS',
@@ -1476,11 +1575,25 @@ PARTIAL_CLOSE_LEVELS = [0.25, 0.5, 0.75]
 DEFAULT_FIXED_STOP_PERCENTAGE = 1.0
 DEFAULT_MIN_STOP_DISTANCE = 0.5
 
+DEFAULT_GROWTH_FACTOR = 1.05
+PARTIAL_CLOSE_LEVELS = [0.25, 0.5, 0.75]
+DEFAULT_FIXED_STOP_PERCENTAGE = 0.02
+DEFAULT_MIN_STOP_DISTANCE = 0.001
 MAX_POSITION_CORRELATION = 0.7  # Maximum allowed correlation between positions
 CORRELATION_LOOKBACK_PERIODS = 100  # Periods to look back for correlation calculation
 
 DEFAULT_ATR_PERIODS = 14  # Default periods for ATR calculation
 DEFAULT_ATR_MULTIPLIER = 2.0  # Default multiplier for ATR-based stops
+
+# Additional risk parameters
+DEFAULT_GROWTH_FACTOR = 1.2
+PARTIAL_CLOSE_LEVELS = [0.5, 0.75]
+DEFAULT_FIXED_STOP_PERCENTAGE = 1.0  # percent
+DEFAULT_MIN_STOP_DISTANCE = 0.005  # 0.5% of entry price
+DEFAULT_TRAILING_ACTIVATION_PERCENTAGE = 0.5
+DEFAULT_TRAILING_CALLBACK_RATE = 0.25
+MAX_STOP_LEVELS = 3
+DEFAULT_CHANDELIER_EXIT_MULTIPLIER = 3.0
 
 RECOVERY_STRATEGIES = {
     "REDUCE_POSITION_SIZE": "reduce_position_size",
@@ -1846,6 +1959,37 @@ EXCHANGE_NAMES = [
     "kraken",
     "deriv",
     "oanda"
+=======
+    # Risk management
+    "RiskControlMethod", "PositionSizingMethod", "ExecutionAlgorithm",
+    "DEFAULT_RISK_PERCENT_PER_TRADE", "DEFAULT_MAX_OPEN_TRADES", "DEFAULT_MAX_CORRELATED_TRADES",
+    "DEFAULT_MAX_DRAWDOWN_PERCENT", "DEFAULT_PROFIT_FACTOR_THRESHOLD", "DEFAULT_WIN_RATE_THRESHOLD",
+    "DEFAULT_TRAILING_STOP_ACTIVATION", "DEFAULT_KELLY_FRACTION", "DEFAULT_GROWTH_FACTOR",
+    "DEFAULT_FIXED_STOP_PERCENTAGE", "DEFAULT_MIN_STOP_DISTANCE",
+    "DEFAULT_STOP_LOSS_MULTIPLIER", "DEFAULT_TAKE_PROFIT_MULTIPLIER",
+    "PARTIAL_CLOSE_LEVELS", "POSITION_SIZE_PRECISION", "MAX_LEVERAGE_BINANCE", "MAX_LEVERAGE_DERIV",
+    
+    # Technical analysis
+    "FIBONACCI_RATIOS", "SMA_PERIODS", "EMA_PERIODS", "RSI_PERIODS",
+    "MACD_PARAMS", "BOLLINGER_BANDS_PARAMS", "STOCHASTIC_PARAMS",
+    
+    # Machine learning
+    "ModelType", "ScalingMethod",
+    
+    # Notifications
+    "NotificationType", "NotificationPriority", "NotificationChannel",
+    
+    # Deriv configuration
+    "MAX_RECONNECT_ATTEMPTS", "INITIAL_RECONNECT_DELAY", "MAX_RECONNECT_DELAY",
+    "DEFAULT_SUBSCRIPTION_TIMEOUT", "DEFAULT_PING_INTERVAL", "MARKET_ORDER_BOOK_DEPTH",
+    "DERIV_PRICE_REFRESH_RATE", "DERIV_ENDPOINTS", "DERIV_ASSET_CLASSES",
+    
+    # Feature engineering
+    "FEATURE_PRIORITY_LEVELS", "DEFAULT_FEATURE_PARAMS",
+    
+    # Helper lists
+    "EXCHANGE_TYPES", "TIME_FRAMES", "ORDER_TYPES", "ORDER_SIDES", "POSITION_SIDES",
+    "ORDER_STATUSES", "POSITION_STATUSES", "SIGNAL_STRENGTHS",
 ]
 
 FEED_TYPES = {
@@ -1967,16 +2111,20 @@ SignalType = {
     "TAKE_PROFIT": "take_profit"
 }
 
-# Order type enum
-OrderType = {
+# Order type mapping
+ORDER_TYPE_LEGACY_MAP = {
+=======
+ORDER_TYPE_DICT = {
     "MARKET": "market",
     "LIMIT": "limit",
     "STOP": "stop",
     "STOP_LIMIT": "stop_limit"
 }
 
-# Order side enum
-OrderSide = {
+# Order side mapping
+ORDER_SIDE_LEGACY_MAP = {
+
+ORDER_SIDE_DICT = {
     "BUY": "buy",
     "SELL": "sell"
 }
@@ -2068,3 +2216,4 @@ DERIV_ORDER_STATUS_MAP = {
 # Execution parameters
 MAX_SLIPPAGE_PERCENT = 0.5  # Maximum allowed slippage in percent
 MAX_RETRY_ATTEMPTS = 3      # Maximum number of retry attempts for failed orders
+
