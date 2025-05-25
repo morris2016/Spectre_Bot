@@ -33,9 +33,8 @@ import asyncio
 from decimal import Decimal, ROUND_DOWN, ROUND_UP
 
 from common.utils import (
-    safe_divide, calculate_risk_reward_ratio, 
-    calculate_expected_value, normalize_value,
-    get_optimal_scale_factor
+    safe_divide, calculate_risk_reward_ratio,
+    calculate_expected_value, normalize_value
 )
 from common.constants import (
     DEFAULT_MAX_RISK_PER_TRADE, DEFAULT_BASE_POSITION_SIZE,

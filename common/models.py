@@ -193,7 +193,7 @@ class Asset(Base, BaseMixin):
     base_asset = Column(String(10), nullable=True)
     quote_asset = Column(String(10), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
-    metadata = Column(JSON, nullable=True)
+    meta = Column(JSON, nullable=True)
     
     # Relationships
     signals = relationship("Signal", back_populates="asset")
@@ -216,7 +216,7 @@ class Signal(Base, BaseMixin):
     volume = Column(Float, nullable=True)
     timeframe = Column(Enum(TimeframeType), nullable=False)
     expiry = Column(DateTime, nullable=True)
-    metadata = Column(JSON, nullable=True)
+    meta = Column(JSON, nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     executed = Column(Boolean, default=False, nullable=False)
     executed_at = Column(DateTime, nullable=True)
@@ -281,7 +281,7 @@ class Order(Base, BaseMixin):
     fee_asset = Column(String(10), nullable=True)
     
     is_test = Column(Boolean, default=False, nullable=False)
-    metadata = Column(JSON, nullable=True)
+    meta = Column(JSON, nullable=True)
     
     executed_at = Column(DateTime, nullable=True)
     closed_at = Column(DateTime, nullable=True)
@@ -358,7 +358,7 @@ class PerformanceRecord(Base, BaseMixin):
     sharpe_ratio = Column(Float, nullable=True)
     sortino_ratio = Column(Float, nullable=True)
     
-    metadata = Column(JSON, nullable=True)
+    meta = Column(JSON, nullable=True)
     
     def __repr__(self):
         return f""
@@ -386,7 +386,7 @@ class MLModel(Base, BaseMixin):
     test_accuracy = Column(Float, nullable=True)
     
     is_active = Column(Boolean, default=True, nullable=False)
-    metadata = Column(JSON, nullable=True)
+    meta = Column(JSON, nullable=True)
     
     # Relationships
     asset = relationship("Asset")

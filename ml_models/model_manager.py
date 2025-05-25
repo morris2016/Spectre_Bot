@@ -25,9 +25,18 @@ import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator
 import joblib
-import h5py
-import tensorflow as tf
-import torch
+try:  # Optional dependencies
+    import h5py  # type: ignore
+except Exception:  # pragma: no cover - optional
+    h5py = None
+try:
+    import tensorflow as tf  # type: ignore
+except Exception:  # pragma: no cover - optional
+    tf = None
+try:
+    import torch  # type: ignore
+except Exception:  # pragma: no cover - optional
+    torch = None
 
 from common.utils import generate_uuid, create_directory_if_not_exists, compress_data
 from common.exceptions import (
@@ -113,8 +122,6 @@ class ModelManager:
             self.db_client = db_connector
         if self.db_client is None and "db_connection" in self.config:
             self.db_client = DatabaseClient(self.config["db_connection"])
-        if self.db_client and getattr(self.db_client, "pool", None) is None:
-=======
         if self.db_client is None:
             self.db_client = await get_db_client(**self._db_params)
         if getattr(self.db_client, "pool", None) is None:
