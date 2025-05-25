@@ -10,7 +10,6 @@ used throughout the QuantumSpectre Elite Trading System.
 import os
 import enum
 from pathlib import Path
-from typing import Dict, List, Any, Set, Optional, Union
 
 # System information
 VERSION = "1.0.0"
@@ -201,12 +200,13 @@ LOG_LEVELS = {
 # Feature Service specific constants
 FEATURE_PRIORITY_LEVELS = ["high", "normal", "low"]
 
-#======================================
-DEFAULT_FEATURE_PARAMS = {} # Default parameters for feature calculations
+# ======================================
+DEFAULT_FEATURE_PARAMS = {}  # Default parameters for feature calculations
 # Exchange and Trading Constants
-#======================================
+# ======================================
 
 # Supported exchanges
+
 class Exchange(enum.Enum):
     BINANCE = "binance"
     DERIV = "deriv"
@@ -215,6 +215,7 @@ class Exchange(enum.Enum):
 EXCHANGE_TYPES = [ex.value for ex in Exchange]
 
 # Supported asset classes
+
 class AssetClass(enum.Enum):
     CRYPTO = "crypto"
     FOREX = "forex"
@@ -250,13 +251,26 @@ class OrderType(enum.Enum):
 
 ORDER_TYPES = [ot.value for ot in OrderType]
 
+# Aliases for backward compatibility
+ORDER_TYPE = OrderType
+
 # Order sides
 class OrderSide(enum.Enum):
     BUY = "buy"
     SELL = "sell"
 ORDER_SIDES = [side.value for side in OrderSide]
 
-# Position types
+# Position side (alias for backward compatibility with PositionType)
+class PositionSide(enum.Enum):
+    LONG = "long"
+    SHORT = "short"
+
+POSITION_SIDES = [ps.value for ps in PositionSide]
+
+# Backward compatibility
+POSITION_SIDE = PositionSide
+
+# Position types (deprecated, use PositionSide)
 class PositionType(enum.Enum):
     LONG = "long"
     SHORT = "short"
@@ -273,6 +287,23 @@ class OrderStatus(enum.Enum):
     EXPIRED = "expired"
 ORDER_STATUSES = [ps.value for ps in OrderStatus]
 
+# Backwards compatibility
+ORDER_STATUS = OrderStatus
+
+
+# Position lifecycle statuses
+class PositionStatus(enum.Enum):
+    PENDING = "pending"
+    OPEN = "open"
+    PARTIALLY_CLOSED = "partially_closed"
+    CLOSED = "closed"
+    FAILED = "failed"
+
+POSITION_STATUSES = [ps.value for ps in PositionStatus]
+
+# Backward compatibility
+POSITION_STATUS = PositionStatus
+
 # Trigger types for stop and take profit orders
 class TriggerType(enum.Enum):
     PRICE = "price"           # Regular price based trigger
@@ -286,6 +317,8 @@ class TimeInForce(enum.Enum):
     IOC = "ioc"    # Immediate or Cancel
     FOK = "fok"    # Fill or Kill
     GTD = "gtd"    # Good Till Date
+
+TIME_IN_FORCE = TimeInForce
 
 
 # Trade direction for signals
@@ -351,9 +384,9 @@ class FeeType(enum.Enum):
     DEPOSIT = "deposit"
 
 
-#======================================
+# ======================================
 # Feature and Pattern Constants
-#======================================
+# ======================================
 
 # Technical indicator categories
 class IndicatorCategory(enum.Enum):
@@ -459,9 +492,9 @@ STOCHASTIC_PARAMS = {
     "D_PERIOD": 3
 }
 
-#======================================
+# ======================================
 # Machine Learning Constants
-#======================================
+# ======================================
 
 # ML model types
 class ModelType(enum.Enum):
@@ -517,9 +550,9 @@ class CrossValidationStrategy(enum.Enum):
     PURGED_K_FOLD = "purged_k_fold"  # Specific for financial data
 
 
-#======================================
+# ======================================
 # Loophole Detection Constants
-#======================================
+# ======================================
 
 # Loophole types
 class LoopholeType(enum.Enum):
@@ -567,9 +600,9 @@ class InefficiencyPattern(enum.Enum):
     VOLUME_SPIKE = "volume_spike"
 
 
-#======================================
+# ======================================
 # Risk Management Constants
-#======================================
+# ======================================
 
 # Risk control methods
 class RiskControlMethod(enum.Enum):
@@ -618,9 +651,9 @@ DEFAULT_WIN_RATE_THRESHOLD = 65.0  # Minimum win percentage
 DEFAULT_TRAILING_STOP_ACTIVATION = 1.0  # % profit to activate trailing stop
 DEFAULT_KELLY_FRACTION = 0.5  # Half Kelly for conservative sizing
 
-#======================================
+# ======================================
 # Notification Constants
-#======================================
+# ======================================
 
 # Notification types
 class NotificationType(enum.Enum):
@@ -659,9 +692,9 @@ class NotificationChannel(enum.Enum):
     DISCORD = "discord"
 
 
-#======================================
+# ======================================
 # User Interface Constants
-#======================================
+# ======================================
 
 # UI themes
 class UITheme(enum.Enum):
@@ -732,9 +765,9 @@ DEFAULT_UI_CONFIG = {
     "confirm_orders": True,
     "log_level_ui": "info"
 }
-#======================================
+# ======================================
 # Deriv-specific Constants
-#======================================
+# ======================================
 MAX_RECONNECT_ATTEMPTS = 5
 INITIAL_RECONNECT_DELAY = 1.0  # seconds
 MAX_RECONNECT_DELAY = 60.0  # seconds
@@ -771,9 +804,9 @@ DERIV_MARKETS = {
                   "VOLATILITY50", "VOLATILITY75", "VOLATILITY100"]
 }
 
-#======================================
+# ======================================
 # Social Media Constants
-#======================================
+# ======================================
 # Supported social media platforms
 SOCIAL_PLATFORMS = ["twitter", "reddit", "telegram", "discord", "stocktwits", "tradingview"]
 
@@ -850,9 +883,12 @@ __all__ = [
     
     # Exchange and trading enums
     'Exchange', 'AssetClass', 'Timeframe', 'OrderType', 'OrderSide',
-    'PositionType', 'OrderStatus', 'TriggerType', 'TimeInForce',
+    'PositionSide', 'PositionType', 'OrderStatus', 'PositionStatus',
+    'TriggerType', 'TimeInForce',
     'SignalDirection', 'SignalStrength', 'MarketRegime', 'StrategyType',
-    'RiskLevel', 'FeeType','EXCHANGE_TYPES', 'TIME_FRAMES','ORDER_TYPES', 'ORDER_SIDES', 'ORDER_STATUSES',
+    'RiskLevel', 'FeeType','EXCHANGE_TYPES', 'TIME_FRAMES','ORDER_TYPES', 'ORDER_SIDES',
+    'ORDER_TYPE', 'ORDER_STATUS', 'TIME_IN_FORCE',
+    'POSITION_SIDES', 'ORDER_STATUSES', 'POSITION_STATUSES', 'POSITION_SIDE', 'POSITION_STATUS',
     
     # Feature and pattern enums
     'IndicatorCategory', 'CandlestickPattern', 'ChartPattern', 'HarmonicPattern',
@@ -872,6 +908,11 @@ __all__ = [
     'DEFAULT_MAX_CORRELATED_TRADES', 'DEFAULT_MAX_DRAWDOWN_PERCENT',
     'DEFAULT_PROFIT_FACTOR_THRESHOLD', 'DEFAULT_WIN_RATE_THRESHOLD',
     'DEFAULT_TRAILING_STOP_ACTIVATION', 'DEFAULT_KELLY_FRACTION',
+    'DEFAULT_STOP_LOSS_MULTIPLIER', 'DEFAULT_TAKE_PROFIT_MULTIPLIER',
+    'POSITION_SIZE_PRECISION', 'DEFAULT_GROWTH_FACTOR',
+    'PARTIAL_CLOSE_LEVELS', 'DEFAULT_FIXED_STOP_PERCENTAGE',
+    'DEFAULT_MIN_STOP_DISTANCE',
+    'MAX_LEVERAGE_BINANCE', 'MAX_LEVERAGE_DERIV',
     
     # Notification enums
     'NotificationType', 'NotificationPriority', 'NotificationChannel',
@@ -1425,6 +1466,15 @@ EXPOSURE_LIMITS = {
 
 DEFAULT_MAX_RISK_PER_TRADE = 0.02  # 2% of account per trade
 DEFAULT_BASE_POSITION_SIZE = 0.01  # 1% of account as base position size
+MAX_LEVERAGE_BINANCE = 125
+MAX_LEVERAGE_DERIV = 100
+DEFAULT_STOP_LOSS_MULTIPLIER = 1.5
+DEFAULT_TAKE_PROFIT_MULTIPLIER = 2.0
+POSITION_SIZE_PRECISION = 4
+DEFAULT_GROWTH_FACTOR = 1.0
+PARTIAL_CLOSE_LEVELS = [0.25, 0.5, 0.75]
+DEFAULT_FIXED_STOP_PERCENTAGE = 1.0
+DEFAULT_MIN_STOP_DISTANCE = 0.5
 
 MAX_POSITION_CORRELATION = 0.7  # Maximum allowed correlation between positions
 CORRELATION_LOOKBACK_PERIODS = 100  # Periods to look back for correlation calculation
@@ -1448,7 +1498,7 @@ ACCOUNT_STATES = {
 }
 
 # Order and position constants
-ORDER_TYPE = {
+ORDER_TYPE_MAP = {
     "MARKET": "market",
     "LIMIT": "limit",
     "STOP": "stop",
@@ -1458,12 +1508,12 @@ ORDER_TYPE = {
     "TRAILING_STOP": "trailing_stop"
 }
 
-ORDER_SIDE = {
+ORDER_SIDE_MAP = {
     "BUY": "buy",
     "SELL": "sell"
 }
 
-ORDER_STATUS = {
+ORDER_STATUS_MAP = {
     "NEW": "new",
     "PARTIALLY_FILLED": "partially_filled",
     "FILLED": "filled",
@@ -1472,18 +1522,18 @@ ORDER_STATUS = {
     "EXPIRED": "expired"
 }
 
-POSITION_SIDE = {
+POSITION_SIDE_MAP = {
     "LONG": "long",
     "SHORT": "short"
 }
 
-PositionStatus = {
+POSITION_STATUS_MAP = {
     "OPEN": "open",
     "CLOSED": "closed",
     "PARTIALLY_CLOSED": "partially_closed"
 }
 
-TimeInForce = {
+TIME_IN_FORCE_MAP = {
     "GTC": "gtc",  # Good Till Canceled
     "IOC": "ioc",  # Immediate Or Cancel
     "FOK": "fok",  # Fill Or Kill

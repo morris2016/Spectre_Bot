@@ -184,6 +184,16 @@ class RiskLimitExceededError(RiskError):
     pass
 
 
+class RiskExceededError(RiskError):
+    """Raised when overall risk exposure is exceeded."""
+    pass
+
+
+class InsufficientBalanceError(RiskError):
+    """Raised when an account balance is insufficient to open a position."""
+    pass
+
+
 class BacktestError(QuantumSpectreError):
     """Base class for backtesting errors."""
     pass
@@ -736,7 +746,7 @@ class TimeSeriesConnectionError(Exception):
         self.message = message
         self.details = details
         super().__init__(self.message)
-        
+
     def __str__(self):
         if self.details:
             return f"{self.message}: {self.details}"
@@ -751,7 +761,7 @@ class TimeSeriesQueryError(Exception):
         self.query = query
         self.details = details
         super().__init__(self.message)
-        
+
     def __str__(self):
         result = self.message
         if self.query:
@@ -770,7 +780,7 @@ class TimeSeriesDataError(Exception):
         self.data_info = data_info
         self.details = details
         super().__init__(self.message)
-        
+
     def __str__(self):
         result = self.message
         if self.data_info:
@@ -789,7 +799,7 @@ class TimeSeriesConfigError(Exception):
         self.config_key = config_key
         self.details = details
         super().__init__(self.message)
-        
+
     def __str__(self):
         result = self.message
         if self.config_key:
@@ -807,8 +817,9 @@ __all__ = [
     'DatabaseQueryError', 'RedisError', 'RedisConnectionError', 'SecurityError',
     'APIKeyError', 'AuthenticationError', 'AuthorizationError', 'ExecutionError',
     'OrderError', 'OrderRejectedError', 'OrderTimeoutError', 'InsufficientFundsError',
+    'InsufficientBalanceError',
     'InvalidOrderError', 'OrderCancellationError', 'SlippageExceededError', 'NetworkError',
-    'RiskError', 'RiskLimitExceededError', 'BacktestError', 'ModelError',
+    'RiskError', 'RiskLimitExceededError', 'RiskExceededError', 'BacktestError', 'ModelError',
     'ModelTrainingError', 'ModelPredictionError', 'StrategyError', 'SignalGenerationError',
     'MonitoringError', 'AlertError', 'ResourceError', 'ResourceExhaustionError',
     'TimeoutError', 'ExchangeError', 'RateLimitError', 'FeedNotFoundError',
