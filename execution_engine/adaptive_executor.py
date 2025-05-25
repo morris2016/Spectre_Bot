@@ -871,43 +871,312 @@ class AdaptiveExecutor:
     
     async def _monitor_passive_order(self, order_id: str, signal: Dict[str, Any], context: ExecutionContext) -> None:
         """Monitor and potentially adjust a passive order."""
-        # Implementation would monitor the order and potentially adjust price
-        pass
+        check_interval = signal.get("monitor_interval", 15)
+        max_wait = signal.get("max_monitor_seconds", 300)
+        start_ts = time.time()
+        current_order_id = order_id
+
+        while time.time() - start_ts < max_wait:
+            await asyncio.sleep(check_interval)
+            try:
+                order = await self.order_manager.get_order_status(
+                    signal["exchange"], signal["asset"], current_order_id
+                )
+            except Exception as e:  # pragma: no cover - network issues
+                self.logger.warning("Passive order status check failed: %s", str(e))
+                continue
+
+            status = order.get("status")
+            if status in [OrderStatus.FILLED.value, OrderStatus.CANCELED.value, OrderStatus.REJECTED.value]:
+                return
+
+            market = await self.market_data_service.get_orderbook(signal["exchange"], signal["asset"])
+            tick = await self.order_manager.get_tick_size(signal["exchange"], signal["asset"])
+            if signal["order_side"] == OrderSide.BUY:
+                target_price = market["bids"][0]["price"] + tick
+            else:
+                target_price = market["asks"][0]["price"] - tick
+
+            current_price = float(order.get("price", target_price))
+            if abs(target_price - current_price) >= tick * 2:
+                await self.order_manager.cancel_order(signal["exchange"], signal["asset"], current_order_id)
+                qty = order.get("remaining_quantity", signal["quantity"])
+                new_req = {
+                    "exchange": signal["exchange"],
+                    "asset": signal["asset"],
+                    "order_side": signal["order_side"],
+                    "order_type": OrderType.LIMIT,
+                    "quantity": qty,
+                    "price": target_price,
+                    "time_in_force": TimeInForce.GTC,
+                }
+                result = await self.order_manager.place_order(new_req)
+                if result.get("status") == "success":
+                    current_order_id = result["order_id"]
+
+        # Timed out - cancel and execute aggressively for remainder
+        try:
+            await self.order_manager.cancel_order(signal["exchange"], signal["asset"], current_order_id)
+            order = await self.order_manager.get_order_status(
+                signal["exchange"], signal["asset"], current_order_id
+            )
+        except Exception:
+            order = {"remaining_quantity": signal["quantity"]}
+
+        remaining_qty = order.get("remaining_quantity", 0)
+        if remaining_qty > 0:
+            aggressive_signal = signal.copy()
+            aggressive_signal["quantity"] = remaining_qty
+            await self._execute_aggressive(aggressive_signal, context)
     
     async def _execute_twap_slices(self, parent_order: Dict[str, Any], slice_quantity: float, interval_seconds: float) -> None:
         """Execute TWAP order slices at regular intervals."""
-        # Implementation would execute order slices at regular intervals
-        pass
+        remaining = parent_order["quantity"]
+        dummy_ctx = ExecutionContext(
+            market_condition=MarketCondition.NORMAL,
+            order_book_depth={},
+            recent_trades=[],
+            volume_profile={},
+            volatility=0.0,
+            spread=0.0,
+            historical_slippage={},
+        )
+
+        while remaining > 0 and parent_order.get("status") == "active":
+            qty = min(slice_quantity, remaining)
+            order_sig = {
+                "exchange": parent_order["exchange"],
+                "asset": parent_order["asset"],
+                "order_side": parent_order["order_side"],
+                "quantity": qty,
+            }
+            result = await self._execute_aggressive(order_sig, dummy_ctx)
+            if result.get("status") == "success":
+                parent_order["child_orders"].append(result["order_id"])
+                parent_order["filled_quantity"] += qty
+                remaining -= qty
+            else:
+                self.logger.warning("TWAP slice failed: %s", result.get("error"))
+            if remaining <= 0:
+                break
+            await asyncio.sleep(interval_seconds)
+
+        parent_order["status"] = "completed"
     
     async def _execute_vwap_strategy(self, parent_order: Dict[str, Any]) -> None:
         """Execute VWAP strategy based on volume profile."""
-        # Implementation would execute based on volume profile
-        pass
+        profile = parent_order.get("volume_profile", [])
+        if not profile:
+            parent_order["status"] = "failed"
+            return
+
+        total_volume = sum(p["volume"] for p in profile)
+        dummy_ctx = ExecutionContext(
+            market_condition=MarketCondition.NORMAL,
+            order_book_depth={},
+            recent_trades=[],
+            volume_profile={},
+            volatility=0.0,
+            spread=0.0,
+            historical_slippage={},
+        )
+
+        for point in profile:
+            if parent_order.get("status") != "active":
+                break
+            weight = point["volume"] / total_volume if total_volume else 0
+            qty = parent_order["quantity"] * weight
+            order_sig = {
+                "exchange": parent_order["exchange"],
+                "asset": parent_order["asset"],
+                "order_side": parent_order["order_side"],
+                "quantity": qty,
+            }
+            result = await self._execute_aggressive(order_sig, dummy_ctx)
+            if result.get("status") == "success":
+                parent_order["child_orders"].append(result["order_id"])
+                parent_order["filled_quantity"] += qty
+            await asyncio.sleep(1)
+
+        parent_order["status"] = "completed"
     
     async def _execute_adaptive_strategy(self, parent_order: Dict[str, Any], context: ExecutionContext) -> None:
         """Execute remaining quantity adaptively."""
-        # Implementation would adapt execution based on market conditions
-        pass
+        remaining = parent_order.get("remaining_quantity", 0)
+        while remaining > 0 and parent_order.get("status") == "active":
+            algo = await self._select_best_algorithm(
+                {
+                    "asset": parent_order["asset"],
+                    "quantity": remaining,
+                    "order_side": parent_order["order_side"],
+                },
+                context,
+            )
+            if algo == ExecutionAlgorithm.PASSIVE:
+                exec_fn = self._execute_passive
+            else:
+                exec_fn = self._execute_aggressive
+
+            signal = {
+                "exchange": parent_order["exchange"],
+                "asset": parent_order["asset"],
+                "order_side": parent_order["order_side"],
+                "quantity": remaining,
+            }
+            result = await exec_fn(signal, context)
+            if result.get("status") == "success":
+                parent_order["child_orders"].append(result["order_id"])
+                parent_order["filled_quantity"] += remaining
+                remaining = 0
+            else:
+                self.logger.warning("Adaptive execution failed: %s", result.get("error"))
+                await asyncio.sleep(1)
+
+        parent_order["status"] = "completed"
     
     async def _execute_iceberg_strategy(self, parent_order: Dict[str, Any]) -> None:
         """Execute iceberg order by showing only small portions at a time."""
-        # Implementation would execute iceberg strategy
-        pass
+        visible_qty = parent_order["visible_quantity"]
+        total_qty = parent_order["total_quantity"]
+        remaining = total_qty
+        dummy_ctx = ExecutionContext(
+            market_condition=MarketCondition.NORMAL,
+            order_book_depth={},
+            recent_trades=[],
+            volume_profile={},
+            volatility=0.0,
+            spread=0.0,
+            historical_slippage={},
+        )
+
+        while remaining > 0 and parent_order.get("status") == "active":
+            qty = min(visible_qty, remaining)
+            signal = {
+                "exchange": parent_order["exchange"],
+                "asset": parent_order["asset"],
+                "order_side": parent_order["order_side"],
+                "quantity": qty,
+                "price": parent_order.get("price"),
+            }
+            result = await self._execute_passive(signal, dummy_ctx)
+            if result.get("status") == "success":
+                parent_order["child_orders"].append(result["order_id"])
+                parent_order["filled_quantity"] += qty
+                remaining -= qty
+            else:
+                self.logger.warning("Iceberg slice failed: %s", result.get("error"))
+                await asyncio.sleep(1)
+
+        parent_order["status"] = "completed"
     
     async def _execute_sniper_strategy(self, parent_order: Dict[str, Any]) -> None:
         """Execute sniper strategy by waiting for price targets."""
-        # Implementation would wait for price targets and execute
-        pass
+        target = parent_order["target_price"]
+        tolerance = parent_order.get("price_tolerance", 0.0)
+        max_wait = parent_order.get("max_wait_seconds", 3600)
+        start_ts = time.time()
+
+        dummy_ctx = ExecutionContext(
+            market_condition=MarketCondition.NORMAL,
+            order_book_depth={},
+            recent_trades=[],
+            volume_profile={},
+            volatility=0.0,
+            spread=0.0,
+            historical_slippage={},
+        )
+
+        while time.time() - start_ts < max_wait and parent_order.get("status") == "active":
+            price = await self.market_data_service.get_current_price(parent_order["exchange"], parent_order["asset"])
+            if price is None:
+                await asyncio.sleep(1)
+                continue
+
+            if parent_order["order_side"] == OrderSide.BUY:
+                hit = price <= target * (1 + tolerance)
+            else:
+                hit = price >= target * (1 - tolerance)
+
+            if hit:
+                signal = {
+                    "exchange": parent_order["exchange"],
+                    "asset": parent_order["asset"],
+                    "order_side": parent_order["order_side"],
+                    "quantity": parent_order["quantity"],
+                }
+                result = await self._execute_aggressive(signal, dummy_ctx)
+                if result.get("status") == "success":
+                    parent_order["child_orders"].append(result["order_id"])
+                    parent_order["filled_quantity"] = parent_order["quantity"]
+                parent_order["status"] = "completed"
+                return
+
+            await asyncio.sleep(1)
+
+        parent_order["status"] = "expired"
     
     async def _execute_liquidity_seeking_strategy(self, parent_order: Dict[str, Any]) -> None:
         """Execute liquidity seeking strategy by finding and utilizing liquidity pockets."""
-        # Implementation would search for and utilize liquidity
-        pass
+        min_liquidity = parent_order.get("min_liquidity_threshold", 0)
+        remaining = parent_order["quantity"]
+        dummy_ctx = ExecutionContext(
+            market_condition=MarketCondition.NORMAL,
+            order_book_depth={},
+            recent_trades=[],
+            volume_profile={},
+            volatility=0.0,
+            spread=0.0,
+            historical_slippage={},
+        )
+
+        while remaining > 0 and parent_order.get("status") == "active":
+            book = await self.market_data_service.get_orderbook(parent_order["exchange"], parent_order["asset"])
+            top_liquidity = sum(level["quantity"] for level in book["bids"][:5])
+            if top_liquidity >= min_liquidity:
+                signal = {
+                    "exchange": parent_order["exchange"],
+                    "asset": parent_order["asset"],
+                    "order_side": parent_order["order_side"],
+                    "quantity": remaining,
+                }
+                result = await self._execute_aggressive(signal, dummy_ctx)
+                if result.get("status") == "success":
+                    parent_order["child_orders"].append(result["order_id"])
+                    parent_order["filled_quantity"] += remaining
+                    remaining = 0
+                    break
+            await asyncio.sleep(5)
+
+        parent_order["status"] = "completed" if remaining == 0 else "partial"
     
     async def _execute_dark_pool_strategy(self, parent_order: Dict[str, Any]) -> None:
         """Execute dark pool strategy by seeking liquidity across venues."""
-        # Implementation would search across venues
-        pass
+        venues = parent_order.get("alternative_venues", [])
+        qty = parent_order["quantity"]
+        dummy_ctx = ExecutionContext(
+            market_condition=MarketCondition.NORMAL,
+            order_book_depth={},
+            recent_trades=[],
+            volume_profile={},
+            volatility=0.0,
+            spread=0.0,
+            historical_slippage={},
+        )
+
+        per_venue = qty / max(len(venues), 1)
+        for venue in venues:
+            signal = {
+                "exchange": venue,
+                "asset": parent_order["asset"],
+                "order_side": parent_order["order_side"],
+                "quantity": per_venue,
+            }
+            result = await self._execute_aggressive(signal, dummy_ctx)
+            if result.get("status") == "success":
+                parent_order["child_orders"].append(result["order_id"])
+                parent_order["filled_quantity"] += per_venue
+
+        parent_order["status"] = "completed"
     
     async def _execute_price_anomaly_pounce(self, signal: Dict[str, Any], context: ExecutionContext) -> Dict[str, Any]:
         """Execute strategy to exploit price anomaly loopholes."""
