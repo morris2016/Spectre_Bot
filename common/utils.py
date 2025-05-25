@@ -2210,6 +2210,8 @@ def calculate_risk_reward_ratio(risk: float, reward: float) -> float:
     return reward / risk
 
 
+def calculate_expectancy(win_rate: float,
+
 
 def calculate_expectancy(win_rate: float, avg_win: float, avg_loss: float) -> float:
 

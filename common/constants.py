@@ -209,10 +209,28 @@ class OrderType(enum.Enum):
     TRAILING_STOP = "trailing_stop"
 
 
+# Aliases for backward compatibility
+ORDER_TYPE = OrderType
+
+# Order sides
+
 class OrderSide(enum.Enum):
     """Order sides for trading."""
     BUY = "buy"
     SELL = "sell"
+
+# Position side (alias for backward compatibility with PositionType)
+class PositionSide(enum.Enum):
+    LONG = "long"
+    SHORT = "short"
+
+POSITION_SIDES = [ps.value for ps in PositionSide]
+
+# Backward compatibility
+POSITION_SIDE = PositionSide
+
+# Position types (deprecated, use PositionSide)
+class PositionType(enum.Enum):
 
 
 class PositionSide(enum.Enum):
@@ -231,6 +249,13 @@ class OrderStatus(enum.Enum):
     REJECTED = "rejected"
     EXPIRED = "expired"
 
+# Backwards compatibility
+ORDER_STATUS = OrderStatus
+
+
+# Position lifecycle statuses
+class PositionStatus(enum.Enum):
+
 
 class PositionStatus(enum.Enum):
     """Position status states."""
@@ -240,6 +265,17 @@ class PositionStatus(enum.Enum):
     CLOSED = "closed"
     FAILED = "failed"
 
+POSITION_STATUSES = [ps.value for ps in PositionStatus]
+
+# Backward compatibility
+POSITION_STATUS = PositionStatus
+
+# Trigger types for stop and take profit orders
+class TriggerType(enum.Enum):
+    PRICE = "price"           # Regular price based trigger
+    MARK_PRICE = "mark_price" # Mark price trigger (for futures)
+    INDEX_PRICE = "index_price" # Index price trigger
+
 
 class TimeInForce(enum.Enum):
     """Time in force options."""
@@ -247,6 +283,8 @@ class TimeInForce(enum.Enum):
     IOC = "ioc"  # Immediate or Cancel
     FOK = "fok"  # Fill or Kill
     GTD = "gtd"  # Good Till Date
+
+TIME_IN_FORCE = TimeInForce
 
 
 class SignalDirection(enum.Enum):
@@ -529,9 +567,19 @@ __all__ = [
     "DEFAULT_CONFIG_PATH", "DEFAULT_DATA_DIR", "STORAGE_ROOT_PATH",
     "DEFAULT_LOG_DIR", "DEFAULT_MODEL_DIR",
     
+    # Exchange and trading enums
+    'Exchange', 'AssetClass', 'Timeframe', 'OrderType', 'OrderSide',
+    'PositionSide', 'PositionType', 'OrderStatus', 'PositionStatus',
+    'TriggerType', 'TimeInForce',
+    'SignalDirection', 'SignalStrength', 'MarketRegime', 'StrategyType',
+    'RiskLevel', 'FeeType','EXCHANGE_TYPES', 'TIME_FRAMES','ORDER_TYPES', 'ORDER_SIDES',
+    'ORDER_TYPE', 'ORDER_STATUS', 'TIME_IN_FORCE',
+    'POSITION_SIDES', 'ORDER_STATUSES', 'POSITION_STATUSES', 'POSITION_SIDE', 'POSITION_STATUS',
+
     # Service configuration
     "SERVICE_NAMES", "SERVICE_DEPENDENCIES", "SERVICE_STARTUP_ORDER",
     "DATA_INGEST_METRICS_PREFIX",
+
     
     # Resource management
     "DEFAULT_THREAD_POOL_SIZE", "MAX_THREAD_POOL_SIZE", "DEFAULT_PROCESS_POOL_SIZE",
@@ -549,9 +597,19 @@ __all__ = [
     "TOKEN_EXPIRY_ACCESS", "TOKEN_EXPIRY_REFRESH", "PASSWORD_MIN_LENGTH",
     "PASSWORD_HASH_ALGORITHM", "PASSWORD_SALT_LENGTH", "PASSWORD_HASH_ITERATIONS",
     
+    # Risk management enums
+    'RiskControlMethod', 'PositionSizingMethod', 'ExecutionAlgorithm',
+    'DEFAULT_RISK_PERCENT_PER_TRADE', 'DEFAULT_MAX_OPEN_TRADES',
+    'DEFAULT_MAX_CORRELATED_TRADES', 'DEFAULT_MAX_DRAWDOWN_PERCENT',
+    'DEFAULT_PROFIT_FACTOR_THRESHOLD', 'DEFAULT_WIN_RATE_THRESHOLD',
+    'DEFAULT_TRAILING_STOP_ACTIVATION', 'DEFAULT_KELLY_FRACTION',
+    'DEFAULT_STOP_LOSS_MULTIPLIER', 'DEFAULT_TAKE_PROFIT_MULTIPLIER',
+    'POSITION_SIZE_PRECISION', 'MAX_LEVERAGE_BINANCE', 'MAX_LEVERAGE_DERIV',
+
     # Database configuration
     "DATABASE_POOL_MIN_SIZE", "DATABASE_POOL_MAX_SIZE", "DATABASE_MAX_QUERIES",
     "DATABASE_CONNECTION_TIMEOUT", "DATABASE_COMMAND_TIMEOUT",
+
     
     # Cache configuration
     "CACHE_DEFAULT_TTL", "CACHE_LONG_TTL", "CACHE_VERY_LONG_TTL",
@@ -565,6 +623,921 @@ __all__ = [
     "SUPPORTED_PLATFORMS", "SUPPORTED_ASSETS", "ASSET_TYPES", "STRATEGY_TYPES",
     "EXECUTION_MODES", "SLIPPAGE_MODELS",
     
+    # Social media constants
+    'SOCIAL_PLATFORMS', 'SOCIAL_API_KEYS', 'SOCIAL_QUERY_PARAMS',
+    'SOCIAL_UPDATE_INTERVALS', 'NLP_MODELS', 'ASSET_KEYWORDS',
+]
+
+# Markets and assets
+MARKETS_OF_INTEREST = [
+    "crypto",
+    "forex",
+    "equities",
+    "commodities",
+    "indices"
+]
+
+# Assets of interest
+ASSETS_OF_INTEREST = [
+    "BTC/USD",
+    "ETH/USD",
+    "XRP/USD",
+    "ADA/USD",
+    "SOL/USD",
+    "BNB/USD",
+    "USDT/USD",
+    "USDC/USD",
+    "EUR/USD",
+    "GBP/USD",
+    "JPY/USD",
+    "GOLD/USD",
+    "SILVER/USD",
+    "OIL/USD",
+    "SP500/USD",
+    "NASDAQ/USD",
+    "DOW/USD"
+]
+
+# News sources configuration
+NEWS_SOURCES = [
+    {"name": "Bloomberg", "url": "https://www.bloomberg.com", "weight": 0.9},
+    {"name": "Reuters", "url": "https://www.reuters.com", "weight": 0.9},
+    {"name": "Wall Street Journal", "url": "https://www.wsj.com", "weight": 0.85},
+    {"name": "Financial Times", "url": "https://www.ft.com", "weight": 0.85},
+    {"name": "CNBC", "url": "https://www.cnbc.com", "weight": 0.8},
+    {"name": "Yahoo Finance", "url": "https://finance.yahoo.com", "weight": 0.75},
+    {"name": "Investopedia", "url": "https://www.investopedia.com", "weight": 0.7},
+    {"name": "CoinDesk", "url": "https://www.coindesk.com", "weight": 0.75},
+    {"name": "CoinTelegraph", "url": "https://cointelegraph.com", "weight": 0.7}
+]
+
+# Dark web forums to monitor
+DARK_WEB_FORUMS = [
+    {
+        "name": "CryptoTalk",
+        "url": "cryptotalk_forum.onion",
+        "priority": "high",
+        "categories": ["trading", "exploits", "leaks", "general"]
+    },
+    {
+        "name": "DarknetMarkets",
+        "url": "darknet_markets_forum.onion",
+        "priority": "medium",
+        "categories": ["marketplace", "reviews", "security"]
+    },
+    {
+        "name": "HackForums",
+        "url": "hackforums_darkweb.onion",
+        "priority": "high",
+        "categories": ["hacking", "data breaches", "exploits", "general"]
+    },
+    {
+        "name": "BlockchainUnderground",
+        "url": "blockchain_underground.onion",
+        "priority": "high",
+        "categories": ["cryptocurrency", "trading", "mining", "security"]
+    },
+    {
+        "name": "TradingSecrets",
+        "url": "trading_secrets_forum.onion",
+        "priority": "medium",
+        "categories": ["insider info", "market manipulation", "trading strategies"]
+    }
+]
+# Dark web feed configuration
+DARK_WEB_FEED_CONFIG = {
+    "scan_interval": 3600,  # 1 hour in seconds
+    "max_posts_per_scan": 100,
+    "min_credibility_score": 0.5,
+    "target_keywords": [
+        "crypto hack", "exchange hack", "stolen coins", "vulnerability", 
+        "zero day", "data leak", "market manipulation", "insider trading"
+    ],
+    "high_priority_keywords": [
+        "exchange hack", "stolen coins", "zero day"
+    ]
+}
+
+# Market impact phrases for sentiment analysis
+MARKET_IMPACT_PHRASES = {
+    "positive": [
+        "bullish", "rally", "surge", "jump", "soar", "gain", "rise", "climb",
+        "outperform", "beat expectations", "exceeded forecast", "record high",
+        "strong growth", "upgrade", "positive outlook", "buy rating", "recovery",
+        "momentum", "breakthrough", "innovative", "partnership", "acquisition",
+        "strategic investment", "dividend increase", "stock buyback", "expansion"
+    ],
+    "negative": [
+        "bearish", "plunge", "crash", "tumble", "slump", "drop", "fall", "decline",
+        "underperform", "miss expectations", "below forecast", "record low",
+        "weak growth", "downgrade", "negative outlook", "sell rating", "recession",
+        "slowdown", "layoffs", "cost-cutting", "bankruptcy", "debt concerns",
+        "investigation", "lawsuit", "regulatory issues", "dividend cut", "loss"
+    ],
+    "uncertainty": [
+        "volatile", "uncertainty", "unclear", "mixed signals", "cautious",
+        "monitoring", "watching closely", "potential impact", "reviewing options",
+        "reassessing", "under consideration", "evaluating", "pending decision",
+        "regulatory review", "awaiting approval", "conditional", "tentative",
+        "experimental", "trial", "testing", "preliminary", "proposed", "expected"
+    ]
+}
+DARK_WEB_SITES = [
+    {
+        "name": "SecureCrypto Forum",
+        "type": "forum",
+        "priority": "high",
+        "entry_points": ["secure_crypto_hash123.onion"],
+        "requires_auth": True
+    },
+    {
+        "name": "DarkLeaks",
+        "type": "marketplace",
+        "priority": "medium",
+        "entry_points": ["darkleaks_data224.onion"],
+        "requires_auth": False
+    },
+    {
+        "name": "Shadow Intel",
+        "type": "intelligence",
+        "priority": "high",
+        "entry_points": ["shadow_intel876.onion"],
+        "requires_auth": True
+    },
+    {
+        "name": "BlackMarket",
+        "type": "marketplace",
+        "priority": "medium",
+        "entry_points": ["black_market_crypto553.onion"],
+        "requires_auth": True
+    },
+    {
+        "name": "Hack Archives",
+        "type": "forum",
+        "priority": "low",
+        "entry_points": ["hack_archives991.onion"],
+        "requires_auth": False
+    }
+]
+
+# Dark web markets to monitor
+DARK_WEB_MARKETS = [
+    {
+        "name": "CryptoMarket",
+        "url": "crypto_market_xyz.onion",
+        "priority": "high",
+        "categories": ["cryptocurrency", "accounts", "data"]
+    },
+    {
+        "name": "BlackMarket",
+        "url": "black_market_xyz.onion",
+        "priority": "medium",
+        "categories": ["cryptocurrency", "accounts", "cards"]
+    },
+    {
+        "name": "DarkTrade",
+        "url": "dark_trade_xyz.onion",
+        "priority": "high",
+        "categories": ["cryptocurrency", "accounts", "data", "exploits"]
+    },
+    {
+        "name": "ShadowSales",
+        "url": "shadow_sales_xyz.onion",
+        "priority": "medium",
+        "categories": ["cryptocurrency", "accounts", "services"]
+    },
+    {
+        "name": "UndergroundMarket",
+        "url": "underground_market_xyz.onion",
+        "priority": "low",
+        "categories": ["cryptocurrency", "accounts", "data", "services"]
+    }
+]
+
+
+# Keywords to determine relevance of dark web content
+DARK_WEB_RELEVANCE_KEYWORDS = {
+    "high_priority": [
+        "exchange hack", "zero day", "exploit", "stolen coins", "private key",
+        "data breach", "leaked database", "insider trading", "market manipulation",
+        "pump and dump scheme", "flash crash", "database dump"
+    ],
+    "medium_priority": [
+        "ransomware", "malware", "phishing", "scam", "vulnerability",
+        "sensitive data", "backdoor", "credential", "kyc data", "trading bot",
+        "algorithm", "trading strategy", "market making", "arbitrage", "high frequency"
+    ],
+    "low_priority": [
+        "cryptocurrency", "blockchain", "bitcoin", "ethereum", "trading",
+        "wallet", "exchange", "defi", "nft", "mining", "token", "ico",
+        "altcoin", "whale", "liquidity", "volatility"
+    ]
+}
+
+# Dark web scanning settings
+DARK_WEB_SCAN_INTERVAL = 3600  # 1 hour in seconds
+
+# Sentiment analysis constants
+SENTIMENT_SOURCE_WEIGHTS = {
+    "news": 1.0,
+    "social_media": 0.8,
+    "forum": 0.6,
+    "blog": 0.7,
+    "analyst_report": 1.2,
+    "company_announcement": 1.3,
+    "regulatory_filing": 1.5,
+    "dark_web": 0.5
+}
+
+# Volume analysis constants
+VOLUME_ZONE_SIGNIFICANCE = {
+    "high": 0.8,
+    "medium": 0.5,
+    "low": 0.2
+}
+
+# User agent strings for web requests
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:90.0) Gecko/20100101 Firefox/90.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 Edg/91.0.864.59",
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1"
+]
+# Dark web scanning settings
+DARK_WEB_SCAN_INTERVAL = 3600  # 1 hour in seconds
+SCAN_THREAD_COUNT = 5  # Number of threads for scanning
+
+# Sentiment analysis constants
+SENTIMENT_SOURCE_WEIGHTS = {
+    "news": 1.0,
+    "social_media": 0.8,
+    "forum": 0.6,
+    "blog": 0.7,
+    "analyst_report": 1.2,
+    "company_announcement": 1.3,
+    "regulatory_filing": 1.5,
+    "dark_web": 0.5
+}
+SENTIMENT_IMPACT_WINDOW = {
+    "breaking_news": 24,  # hours
+    "regular_news": 48,
+    "social_media": 12,
+    "analyst_report": 72,
+    "earnings_report": 120,
+    "regulatory_announcement": 168
+}
+
+# Sentiment entities for tracking
+SENTIMENT_ENTITIES = [
+    "market", "economy", "company", "sector", "industry", "product", 
+    "regulation", "policy", "central_bank", "interest_rates", "inflation",
+    "growth", "recession", "earnings", "revenue", "profit", "loss", 
+    "merger", "acquisition", "ipo", "bankruptcy", "scandal", "lawsuit"
+]
+
+# Technical indicator parameters
+TECHNICAL_INDICATOR_PARAMS = {
+    "sma": {"windows": [5, 10, 20, 50, 100, 200]},
+    "ema": {"windows": [5, 10, 20, 50, 100, 200]},
+    "rsi": {"window": 14, "overbought": 70, "oversold": 30},
+    "macd": {"fast": 12, "slow": 26, "signal": 9},
+    "bollinger_bands": {"window": 20, "num_std_dev": 2},
+    "stochastic": {"k_period": 14, "d_period": 3, "slowing": 3},
+    "adx": {"window": 14, "threshold": 25},
+    "atr": {"window": 14},
+    "cci": {"window": 20},
+    "obv": {},
+    "ichimoku": {
+        "tenkan_period": 9,
+        "kijun_period": 26,
+        "senkou_b_period": 52,
+        "chikou_period": 26
+    }
+}
+
+# Volatility indicator parameters
+VOLATILITY_INDICATOR_PARAMS = {
+    "atr": {"window": 14},
+    "bollinger_bandwidth": {"window": 20, "num_std_dev": 2},
+    "historical_volatility": {"window": 20, "trading_periods": 252},
+    "keltner_channels": {"ema_period": 20, "atr_period": 10, "atr_multiplier": 2},
+    "true_range": {},
+    "average_true_range_percent": {"window": 14}
+}
+
+# Volume analysis constants
+VOLUME_PROFILE_BINS = 20  # Number of bins for volume profile calculation
+VOLUME_ZONE_SIGNIFICANCE = {
+    "high": 0.8,
+    "medium": 0.5,
+    "low": 0.2
+}
+
+# If ASSETS is also required, add it:
+ASSETS = [
+    'BTC/USDT',
+    'ETH/USDT',
+    'BNB/USDT',
+    # Add other assets as needed
+]
+# Sentiment analysis constants
+SENTIMENT_DECAY_FACTOR = 0.9  # Decay factor for sentiment over time
+
+# Volume analysis constants
+VOLUME_PROFILE_BINS = 20  # Number of bins for volume profile calculation
+# Maximum number of regimes to consider
+MAX_REGIMES = 5
+# General retry configurations
+MAX_RETRIES = 3
+RETRY_DELAY = 1.0  # Initial delay in seconds
+# Define regime scan interval (in seconds)
+REGIME_SCAN_INTERVAL = 3600  # Default to hourly scans
+REGIME_LOOKBACK_PERIODS = 90  # Number of periods to look back for regime detection
+# Default logging level
+DEFAULT_LOG_LEVEL = "INFO"
+
+DEFAULT_EXCHANGE_CONFIGS = {
+    "binance": {
+        "enabled": True,
+        "rate_limit": 1200,
+        "mode": "paper",
+        "assets": SUPPORTED_ASSETS["binance"]
+    },
+    "deriv": {
+        "enabled": True,
+        "rate_limit": 60,
+        "mode": "paper",
+        "assets": SUPPORTED_ASSETS["deriv"]
+    }
+}
+
+# Intelligence module configuration
+INTELLIGENCE_MODULES = [
+    "pattern_recognition",
+    "loophole_detection",
+    "adaptive_learning"
+]
+
+DEFAULT_MODULE_CONFIG = {
+    "enabled": True,
+    "priority": "normal",
+    "max_threads": 4,
+    "max_memory_mb": 1024,
+    "cache_ttl_seconds": 300
+}
+
+# Additional constants needed by intelligence/app.py
+PATTERN_RECOGNITION_TIMEFRAMES = ["1m", "5m", "15m", "1h", "4h", "1d"]
+LOOPHOLE_DETECTION_INTERVAL = 300  # seconds
+ASSET_BLACKLIST = []
+ADAPTIVE_LEARNING_SCHEDULE = {
+    "interval_minutes": 60,
+    "full_retrain_hours": 24
+}
+DEFAULT_SERVICE_TIMEOUT = 60  # seconds
+MARKET_REGIMES = ["trending_bullish", "trending_bearish", "ranging", "volatile", "choppy", "breakout", "reversal"]
+SIGNAL_CONFIDENCE_LEVELS = {
+    "VERY_LOW": 1,
+    "LOW": 2,
+    "MEDIUM": 3,
+    "HIGH": 4,
+    "VERY_HIGH": 5,
+    "EXCEPTIONAL": 6
+}
+
+# Bayesian optimization kernels for adaptive learning
+BAYESIAN_OPT_KERNELS = {
+    "RBF": "rbf",
+    "MATERN": "matern",
+    "RATIONAL_QUADRATIC": "rational_quadratic",
+    "EXP_SINE_SQUARED": "exp_sine_squared",
+    "DOT_PRODUCT": "dot_product",
+    "CONSTANT": "constant",
+    "WHITE": "white"
+}
+
+# Default Gaussian Process kernel for adaptive learning
+DEFAULT_GP_KERNEL = "matern"
+
+# Acquisition functions for Bayesian optimization
+ACQUISITION_FUNCTIONS = {
+    "UCB": "upper_confidence_bound",
+    "EI": "expected_improvement",
+    "PI": "probability_improvement",
+    "LCB": "lower_confidence_bound",
+    "RANDOM": "random"
+}
+
+# Default acquisition function for Bayesian optimization
+DEFAULT_ACQUISITION = "EI"
+
+# Compression settings
+COMPRESSION_LEVEL = 9  # Maximum compression level (0-9)
+
+# Pattern recognition constants
+PATTERN_COMPLETION_THRESHOLD = 0.75  # Threshold for pattern completion (0.0-1.0)
+PATTERN_STRENGTH_LEVELS = {
+    "WEAK": 0.3,
+    "MODERATE": 0.5,
+    "STRONG": 0.7,
+    "VERY_STRONG": 0.9
+}
+MIN_PATTERN_BARS = 5  # Minimum number of bars for pattern detection
+MAX_PATTERN_BARS = 100  # Maximum number of bars for pattern detection
+
+# Support and resistance constants
+SUPPORT_RESISTANCE_METHODS = [
+    "price_levels",
+    "moving_average",
+    "fibonacci",
+    "pivot_points",
+    "volume_profile",
+    "fractal",
+    "regression"
+]
+ZONE_CONFIDENCE_LEVELS = {
+    "LOW": 0.3,
+    "MEDIUM": 0.6,
+    "HIGH": 0.85,
+    "VERY_HIGH": 0.95
+}
+ZONE_TYPES = [
+    "support",
+    "resistance",
+    "dynamic_support",
+    "dynamic_resistance",
+    "demand",
+    "supply"
+]
+
+# Optimization constants
+OPTIMIZATION_DIRECTION = {
+    "MAXIMIZE": 1,
+    "MINIMIZE": -1
+}
+DEFAULT_PARAM_BOUNDS = {
+    "continuous": (0.0, 1.0),
+    "integer": (1, 100),
+    "categorical": None
+}
+MAX_PARALLEL_EVALUATIONS = 8
+GP_RANDOM_RESTARTS = 5
+
+# Platform constants
+PLATFORMS = ["windows", "linux", "macos"]
+
+# Data retention policies
+MARKET_DATA_RETENTION_POLICY = {
+    "1m": 7,    # 7 days for 1-minute data
+    "5m": 30,   # 30 days for 5-minute data
+    "15m": 60,  # 60 days for 15-minute data
+    "1h": 180,  # 180 days for 1-hour data
+    "4h": 365,  # 365 days for 4-hour data
+    "1d": 1825, # 5 years for daily data
+    "1w": 3650  # 10 years for weekly data
+}
+
+# Intelligence module constants
+INTELLIGENCE_MODULES = [
+    "pattern_recognition",
+    "loophole_detection",
+    "adaptive_learning"
+]
+
+DEFAULT_MODULE_CONFIG = {
+    "enabled": True,
+    "priority": "normal",
+    "max_threads": 4,
+    "max_memory_mb": 1024,
+    "cache_ttl_seconds": 300
+}
+
+PATTERN_RECOGNITION_TIMEFRAMES = ["1m", "5m", "15m", "1h", "4h", "1d"]
+
+# Signal types and directions
+SIGNAL_TYPES = {
+    "ENTRY": "entry",
+    "EXIT": "exit",
+    "STOP_LOSS": "stop_loss",
+    "TAKE_PROFIT": "take_profit",
+    "TRAILING_STOP": "trailing_stop",
+    "POSITION_SIZE": "position_size",
+    "RISK_ADJUSTMENT": "risk_adjustment"
+}
+
+POSITION_DIRECTION = {
+    "LONG": "long",
+    "SHORT": "short",
+    "NEUTRAL": "neutral"
+}
+
+# Risk management constants
+RISK_MANAGER_UPDATE_INTERVAL = 60  # seconds
+CIRCUIT_BREAKER_THRESHOLDS = {
+    "VOLATILITY": 3.0,  # Standard deviations above normal
+    "DRAWDOWN": 0.15,   # 15% drawdown
+    "LOSS_STREAK": 5,   # 5 consecutive losses
+    "PROFIT_DEVIATION": 0.3  # 30% deviation from expected profit
+}
+
+DRAWDOWN_PROTECTION_LEVELS = {
+    "WARNING": 0.10,    # 10% drawdown
+    "REDUCE_RISK": 0.15, # 15% drawdown
+    "STOP_TRADING": 0.20 # 20% drawdown
+}
+
+MAX_ALLOWED_DRAWDOWN = 0.25  # 25% maximum allowed drawdown
+
+EXPOSURE_LIMITS = {
+    "MAX_PER_ASSET": 0.20,      # 20% of portfolio per asset
+    "MAX_PER_SECTOR": 0.40,     # 40% of portfolio per sector
+    "MAX_CORRELATED_ASSETS": 0.60, # 60% of portfolio in correlated assets
+    "MAX_LEVERAGE": 3.0         # 3x maximum leverage
+}
+
+DEFAULT_MAX_RISK_PER_TRADE = 0.02  # 2% of account per trade
+DEFAULT_BASE_POSITION_SIZE = 0.01  # 1% of account as base position size
+MAX_LEVERAGE_BINANCE = 125
+MAX_LEVERAGE_DERIV = 100
+DEFAULT_STOP_LOSS_MULTIPLIER = 1.5
+DEFAULT_TAKE_PROFIT_MULTIPLIER = 2.0
+POSITION_SIZE_PRECISION = 4
+
+MAX_POSITION_CORRELATION = 0.7  # Maximum allowed correlation between positions
+CORRELATION_LOOKBACK_PERIODS = 100  # Periods to look back for correlation calculation
+
+DEFAULT_ATR_PERIODS = 14  # Default periods for ATR calculation
+DEFAULT_ATR_MULTIPLIER = 2.0  # Default multiplier for ATR-based stops
+
+RECOVERY_STRATEGIES = {
+    "REDUCE_POSITION_SIZE": "reduce_position_size",
+    "INCREASE_WIN_RATE": "increase_win_rate",
+    "REDUCE_TRADING_FREQUENCY": "reduce_trading_frequency",
+    "SWITCH_STRATEGY": "switch_strategy",
+    "PAUSE_TRADING": "pause_trading"
+}
+
+ACCOUNT_STATES = {
+    "HEALTHY": "healthy",
+    "WARNING": "warning",
+    "CRITICAL": "critical",
+    "RECOVERY": "recovery"
+}
+
+# Order and position constants
+ORDER_TYPE_MAP = {
+    "MARKET": "market",
+    "LIMIT": "limit",
+    "STOP": "stop",
+    "STOP_LIMIT": "stop_limit",
+    "TAKE_PROFIT": "take_profit",
+    "TAKE_PROFIT_LIMIT": "take_profit_limit",
+    "TRAILING_STOP": "trailing_stop"
+}
+
+ORDER_SIDE_MAP = {
+    "BUY": "buy",
+    "SELL": "sell"
+}
+
+ORDER_STATUS_MAP = {
+    "NEW": "new",
+    "PARTIALLY_FILLED": "partially_filled",
+    "FILLED": "filled",
+    "CANCELED": "canceled",
+    "REJECTED": "rejected",
+    "EXPIRED": "expired"
+}
+
+POSITION_SIDE_MAP = {
+    "LONG": "long",
+    "SHORT": "short"
+}
+
+POSITION_STATUS_MAP = {
+    "OPEN": "open",
+    "CLOSED": "closed",
+    "PARTIALLY_CLOSED": "partially_closed"
+}
+
+TIME_IN_FORCE_MAP = {
+    "GTC": "gtc",  # Good Till Canceled
+    "IOC": "ioc",  # Immediate Or Cancel
+    "FOK": "fok",  # Fill Or Kill
+    "GTD": "gtd"   # Good Till Date
+}
+
+# Execution engine constants
+EXECUTION_COOLDOWN_MS = 100  # Milliseconds between execution attempts
+MAX_EXECUTION_TIME_MS = 5000  # Maximum execution time in milliseconds
+MAX_RETRY_ATTEMPTS = 3  # Maximum number of retry attempts for execution
+
+TICK_SIZE_MAPPING = {
+    "BTC/USD": 0.5,
+    "ETH/USD": 0.05,
+    "EUR/USD": 0.00001,
+    "GBP/USD": 0.00001,
+    "USD/JPY": 0.001,
+    "DEFAULT": 0.00001
+}
+
+LIQUIDITY_THRESHOLDS = {
+    "LOW": 10000,
+    "MEDIUM": 100000,
+    "HIGH": 1000000
+}
+
+ORDER_BOOK_LEVELS = 10  # Number of order book levels to track
+
+# Machine learning constants
+ML_MODEL_TYPES = {
+    "CLASSIFICATION": "classification",
+    "REGRESSION": "regression",
+    "REINFORCEMENT": "reinforcement",
+    "UNSUPERVISED": "unsupervised",
+    "ENSEMBLE": "ensemble"
+}
+
+FEATURE_IMPORTANCE_METHODS = {
+    "PERMUTATION": "permutation",
+    "SHAP": "shap",
+    "FEATURE_IMPORTANCE": "feature_importance"
+}
+
+MODEL_SAVE_PATH = "./models"
+TRADING_CUTOFFS = {
+    "MIN_CONFIDENCE": 0.65,
+    "MIN_ACCURACY": 0.60,
+    "MIN_SHARPE": 0.5
+}
+
+MODEL_REGISTRY_CONFIG = {
+    "path": "./models/registry",
+    "backup_frequency": 24,  # hours
+    "max_versions": 5
+}
+
+FEATURE_IMPORTANCE_CONFIG = {
+    "n_permutations": 10,
+    "n_repeats": 3,
+    "random_state": 42
+}
+
+DEFAULT_LOOKBACK_PERIODS = 100
+DEFAULT_CONFIDENCE_LEVELS = {
+    "LOW": 0.3,
+    "MEDIUM": 0.5,
+    "HIGH": 0.7,
+    "VERY_HIGH": 0.9
+}
+
+DEFAULT_MODEL_TYPES = ["gradient_boosting", "random_forest", "neural_network"]
+DEFAULT_PAIR_CORR_THRESHOLD = 0.7
+
+REWARD_FUNCTIONS = {
+    "SHARPE": "sharpe",
+    "SORTINO": "sortino",
+    "PROFIT": "profit",
+    "CALMAR": "calmar"
+}
+
+# Genetic algorithm constants
+GENETIC_POPULATION_SIZE = 50
+GENETIC_GENERATIONS = 30
+
+# GPU settings
+GPU_MEMORY_LIMIT = 0.8  # 80% of GPU memory
+GPU_MEMORY_GROWTH = True
+DEFAULT_GPU_ID = 0
+
+# Strategy constants
+RISK_LEVELS = {
+    "VERY_LOW": 1,
+    "LOW": 2,
+    "MEDIUM": 3,
+    "HIGH": 4,
+    "VERY_HIGH": 5
+}
+
+TREND_FOLLOWING_CONFIG = {
+    "fast_period": 20,
+    "slow_period": 50,
+    "signal_period": 9,
+    "atr_period": 14,
+    "atr_multiplier": 2.0
+}
+
+DIRECTIONAL_BIAS_THRESHOLD = 0.6
+FILTER_STRENGTH_LEVELS = {
+    "WEAK": 0.3,
+    "MODERATE": 0.5,
+    "STRONG": 0.7,
+    "VERY_STRONG": 0.9
+}
+
+SWING_TRADING_CONFIG = {
+    "swing_detection_periods": 20,
+    "min_swing_size": 0.01,
+    "max_swing_lookback": 100
+}
+
+MAX_SCALP_DURATION = 60 * 60  # 1 hour in seconds
+
+# Monitoring constants
+MONITORING_CONFIG = {
+    "log_level": "info",
+    "metrics_interval": 60,  # seconds
+    "health_check_interval": 300,  # seconds
+    "alert_channels": ["console", "email"]
+}
+
+SERVICE_STATUS = {
+    "STARTING": "starting",
+    "RUNNING": "running",
+    "DEGRADED": "degraded",
+    "STOPPED": "stopped",
+    "ERROR": "error"
+}
+
+DASHBOARD_SECTIONS = [
+    "overview",
+    "performance",
+    "risk",
+    "signals",
+    "positions",
+    "system"
+]
+
+METRICS_CATEGORIES = {
+    "PERFORMANCE": "performance",
+    "RISK": "risk",
+    "SYSTEM": "system",
+    "TRADING": "trading"
+}
+
+TRADING_METRIC_THRESHOLDS = {
+    "win_rate": {
+        "warning": 0.4,
+        "critical": 0.3
+    },
+    "profit_factor": {
+        "warning": 1.2,
+        "critical": 1.0
+    },
+    "drawdown": {
+        "warning": 0.15,
+        "critical": 0.25
+    }
+}
+
+METRIC_TYPES = {
+    "COUNTER": "counter",
+    "GAUGE": "gauge",
+    "HISTOGRAM": "histogram",
+    "SUMMARY": "summary"
+}
+
+PERFORMANCE_METRICS = [
+    "win_rate",
+    "profit_factor",
+    "sharpe_ratio",
+    "sortino_ratio",
+    "max_drawdown",
+    "average_profit",
+    "average_loss"
+]
+
+SYSTEM_METRICS = [
+    "cpu_usage",
+    "memory_usage",
+    "disk_usage",
+    "network_latency",
+    "request_count",
+    "error_count"
+]
+
+METRIC_PRIORITIES = {
+    "HIGH": "high",
+    "MEDIUM": "medium",
+    "LOW": "low"
+}
+
+LOG_PATTERNS = {
+    "ERROR": r"(?i)(error|exception|fail|traceback)",
+    "WARNING": r"(?i)(warning|warn|deprecated)",
+    "CRITICAL": r"(?i)(critical|fatal|crash)"
+}
+
+# Alerting constants
+ALERT_LEVELS = {
+    "INFO": "info",
+    "WARNING": "warning",
+    "ERROR": "error",
+    "CRITICAL": "critical"
+}
+
+ALERT_TYPES = {
+    "SYSTEM": "system",
+    "TRADING": "trading",
+    "SECURITY": "security",
+    "PERFORMANCE": "performance"
+}
+
+ALERT_CHANNELS = {
+    "CONSOLE": "console",
+    "EMAIL": "email",
+    "SMS": "sms",
+    "WEBHOOK": "webhook",
+    "PUSH": "push"
+}
+
+# Loophole detection constants
+INEFFICIENCY_DETECTION_THRESHOLDS = {
+    "price_deviation": 0.02,  # 2% price deviation
+    "volume_spike": 3.0,      # 3x normal volume
+    "bid_ask_spread": 0.01,   # 1% bid-ask spread
+    "order_book_imbalance": 3.0  # 3x imbalance
+}
+
+MAX_INEFFICIENCY_AGE = 3600  # Maximum age of inefficiency in seconds
+
+MIN_PROFITABLE_SPREAD_PERCENT = 0.5  # 0.5% minimum profitable spread
+MIN_LIQUIDITY_REQUIREMENTS = {
+    "BTC/USD": 5.0,    # 5 BTC minimum liquidity
+    "ETH/USD": 50.0,   # 50 ETH minimum liquidity
+    "EUR/USD": 100000, # 100K EUR minimum liquidity
+    "DEFAULT": 1000    # Default minimum liquidity
+}
+
+# Exchange fee structures
+EXCHANGE_FEE_STRUCTURES = {
+    "binance": {
+        "maker": 0.001,  # 0.1% maker fee
+        "taker": 0.001,  # 0.1% taker fee
+        "withdrawal": {
+            "BTC": 0.0005,
+            "ETH": 0.005,
+            "USDT": 25.0,
+            "DEFAULT": 0.01
+        }
+    },
+    "deriv": {
+        "maker": 0.0,    # 0% maker fee
+        "taker": 0.0025, # 0.25% taker fee
+        "withdrawal": {
+            "BTC": 0.0008,
+            "ETH": 0.01,
+            "DEFAULT": 0.02
+        }
+    }
+}
+
+# Default confidence threshold for pattern detection
+DEFAULT_CONFIDENCE_THRESHOLD = 0.65
+
+# Genetic algorithm parameters
+GENETIC_MUTATION_RATE = 0.05
+GENETIC_CROSSOVER_RATE = 0.7
+GENETIC_POPULATION_SIZE = 100
+GENETIC_ELITE_SIZE = 5
+GENETIC_MAX_GENERATIONS = 50
+GENETIC_SELECTION_PRESSURE = 1.5
+GENETIC_ELITISM_RATE = 0.1
+GENETIC_TOURNAMENT_SIZE = 3
+MAX_THREADS = 8
+MIN_FITNESS = 0.0
+
+# Network constants
+NETWORK_IDS = {
+    "ETHEREUM": 1,
+    "BINANCE_SMART_CHAIN": 56,
+    "POLYGON": 137,
+    "ARBITRUM": 42161,
+    "OPTIMISM": 10,
+    "AVALANCHE": 43114
+}
+
+# HTTP constants
+HTTP_SUCCESS_CODES = [200, 201, 202, 203, 204, 205, 206]
+HTTP_RETRY_CODES = [408, 429, 500, 502, 503, 504]
+HTTP_FATAL_CODES = [400, 401, 403, 404, 405, 406, 409, 410]
+
+# WebSocket constants
+WS_DEFAULT_PING_INTERVAL = 30  # seconds
+WS_DEFAULT_PING_TIMEOUT = 10   # seconds
+
+# Feed constants
+EXCHANGE_NAMES = [
+    "binance",
+    "coinbase",
+    "kraken",
+    "deriv",
+    "oanda"
+=======
     # Risk management
     "RiskControlMethod", "PositionSizingMethod", "ExecutionAlgorithm",
     "DEFAULT_RISK_PERCENT_PER_TRADE", "DEFAULT_MAX_OPEN_TRADES", "DEFAULT_MAX_CORRELATED_TRADES",
