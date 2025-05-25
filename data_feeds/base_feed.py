@@ -11,11 +11,11 @@ import time
 import asyncio
 import logging
 from abc import ABC, abstractmethod
-from typing import Dict, List, Any, Optional, Set
 
 from common.logger import get_logger
 from common.exceptions import FeedError, FeedConnectionError, FeedDisconnectedError
 from common.metrics import MetricsCollector
+from common.event_bus import EventBus
 from dataclasses import dataclass, field
 from typing import Dict, List, Any, Optional, Set, Callable, Union
 
@@ -23,7 +23,7 @@ from typing import Dict, List, Any, Optional, Set, Callable, Union
 class BaseFeed(ABC):
     """Base class for all data feeds."""
     
-    def __init__(self, config, loop=None, redis_client=None):
+    def __init__(self, config, loop=None, redis_client=None, event_bus: Optional[EventBus] = None):
         """
         Initialize the data feed.
         
@@ -35,6 +35,7 @@ class BaseFeed(ABC):
         self.config = config
         self.loop = loop or asyncio.get_event_loop()
         self.redis_client = redis_client
+        self.event_bus = event_bus or EventBus.get_instance()
         self.logger = get_logger(self.__class__.__name__)
         
         # Feed state
@@ -168,6 +169,10 @@ class BaseFeed(ABC):
                 await self.redis_client.publish(channel, data)
                 self.metrics.increment("data.published")
                 self.data_stats["published"] += 1
+
+            # Publish to EventBus
+            if self.event_bus:
+                await self.event_bus.publish(channel, data)
             
             # Update metrics
             self.metrics.increment("data.received")
@@ -235,7 +240,7 @@ class BaseDataFeed(BaseFeed):
     specific to data feeds used for trading analysis and signal generation.
     """
     
-    def __init__(self, name, config):
+    def __init__(self, name, config, event_bus: Optional[EventBus] = None):
         """
         Initialize the data feed.
         
@@ -243,7 +248,7 @@ class BaseDataFeed(BaseFeed):
             name: Feed name
             config: System configuration
         """
-        super().__init__(config)
+        super().__init__(config, event_bus=event_bus)
         self.name = name
         self.feed_type = "data"
         
@@ -317,6 +322,17 @@ class FeedOptions:
     
     # Additional options
     extra: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class MarketData:
+    """Simple OHLCV data container."""
+    timestamp: float
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: float
 
 
 class DataProcessor:

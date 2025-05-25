@@ -11,6 +11,7 @@ trading decisions.
 import asyncio
 import time
 import logging
+import json
 import numpy as np
 from typing import Dict, List, Any, Optional, Tuple, Set, Union
 from concurrent.futures import ThreadPoolExecutor
@@ -424,9 +425,25 @@ class MasterCouncil(BaseCouncil):
         """
         Save the current council weights to the database.
         """
-        # This would be implemented to persist weights between restarts
-        # Using the StrategyPerformance model from data_storage
-        pass
+        if not hasattr(self, "_db"):
+            from common.db_client import get_db_client
+
+            self._db = await get_db_client()
+            await self._db.execute(
+                """
+                CREATE TABLE IF NOT EXISTS council_weights (
+                    timestamp REAL,
+                    weights TEXT
+                )
+                """
+            )
+            await self._db.commit()
+
+        await self._db.execute(
+            "INSERT INTO council_weights (timestamp, weights) VALUES (?, ?)",
+            (time.time(), json.dumps(self.council_weights)),
+        )
+        await self._db.commit()
     
     async def get_council_performance(self) -> Dict[str, Any]:
         """
@@ -704,5 +721,19 @@ class MasterCouncil(BaseCouncil):
         """
         Process any pending operations in the council.
         """
-        # Implemented for any background operations needed
-        pass
+        try:
+            now = time.time()
+            max_age = self.config.get("max_signal_age", 3600)
+
+            assets_to_remove: List[str] = []
+            for asset, tf_map in list(self.active_signals.items()):
+                for tf, signal in list(tf_map.items()):
+                    if now - signal.get("timestamp", now) > max_age:
+                        del tf_map[tf]
+                if not tf_map:
+                    assets_to_remove.append(asset)
+
+            for asset in assets_to_remove:
+                del self.active_signals[asset]
+        except Exception as e:
+            self.logger.error(f"Error processing pending operations: {str(e)}")

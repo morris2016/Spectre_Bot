@@ -1,3 +1,4 @@
+pytest
 argon2-cffi
 asyncpg
 bcrypt
