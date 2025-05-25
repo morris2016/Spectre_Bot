@@ -867,6 +867,7 @@ DEFAULT_FEATURE_PARAMS = {}
 
 EXCHANGE_TYPES = [ex.value for ex in Exchange]
 TIME_FRAMES = [tf.value for tf in Timeframe]
+TIMEFRAMES = TIME_FRAMES
 ORDER_TYPES = [ot.value for ot in OrderType]
 ORDER_SIDES = [side.value for side in OrderSide]
 POSITION_SIDES = [ps.value for ps in PositionSide]
@@ -891,7 +892,7 @@ __all__ = [
     'PositionSide', 'PositionType', 'OrderStatus', 'PositionStatus',
     'TriggerType', 'TimeInForce',
     'SignalDirection', 'SignalStrength', 'MarketRegime', 'StrategyType',
-    'RiskLevel', 'FeeType','EXCHANGE_TYPES', 'TIME_FRAMES','ORDER_TYPES', 'ORDER_SIDES',
+    'RiskLevel', 'FeeType','EXCHANGE_TYPES', 'TIME_FRAMES', 'TIMEFRAMES', 'ORDER_TYPES', 'ORDER_SIDES',
     'ORDER_TYPE', 'ORDER_STATUS', 'TIME_IN_FORCE',
     'POSITION_SIDES', 'ORDER_STATUSES', 'POSITION_STATUSES', 'POSITION_SIDE', 'POSITION_STATUS',
 
