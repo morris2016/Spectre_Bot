@@ -212,6 +212,9 @@ class OrderType(enum.Enum):
 # Aliases for backward compatibility
 ORDER_TYPE = OrderType
 
+# Aliases for backward compatibility
+ORDER_TYPE = OrderType
+
 # Order sides
 
 class OrderSide(enum.Enum):
@@ -270,6 +273,23 @@ POSITION_STATUSES = [ps.value for ps in PositionStatus]
 # Backward compatibility
 POSITION_STATUS = PositionStatus
 
+# Backwards compatibility
+ORDER_STATUS = OrderStatus
+
+
+# Position lifecycle statuses
+class PositionStatus(enum.Enum):
+    PENDING = "pending"
+    OPEN = "open"
+    PARTIALLY_CLOSED = "partially_closed"
+    CLOSED = "closed"
+    FAILED = "failed"
+
+POSITION_STATUSES = [ps.value for ps in PositionStatus]
+
+# Backward compatibility
+POSITION_STATUS = PositionStatus
+
 # Trigger types for stop and take profit orders
 class TriggerType(enum.Enum):
     PRICE = "price"           # Regular price based trigger
@@ -283,6 +303,8 @@ class TimeInForce(enum.Enum):
     IOC = "ioc"  # Immediate or Cancel
     FOK = "fok"  # Fill or Kill
     GTD = "gtd"  # Good Till Date
+
+TIME_IN_FORCE = TimeInForce
 
 TIME_IN_FORCE = TimeInForce
 
@@ -605,6 +627,11 @@ __all__ = [
     'DEFAULT_TRAILING_STOP_ACTIVATION', 'DEFAULT_KELLY_FRACTION',
     'DEFAULT_STOP_LOSS_MULTIPLIER', 'DEFAULT_TAKE_PROFIT_MULTIPLIER',
     'POSITION_SIZE_PRECISION', 'MAX_LEVERAGE_BINANCE', 'MAX_LEVERAGE_DERIV',
+    'DEFAULT_GROWTH_FACTOR', 'PARTIAL_CLOSE_LEVELS',
+    'DEFAULT_FIXED_STOP_PERCENTAGE', 'DEFAULT_MIN_STOP_DISTANCE',
+    'DEFAULT_TRAILING_ACTIVATION_PERCENTAGE', 'DEFAULT_TRAILING_CALLBACK_RATE',
+    'MAX_STOP_LEVELS', 'DEFAULT_CHANDELIER_EXIT_MULTIPLIER',
+
 
     # Database configuration
     "DATABASE_POOL_MIN_SIZE", "DATABASE_POOL_MAX_SIZE", "DATABASE_MAX_QUERIES",
@@ -1173,6 +1200,16 @@ CORRELATION_LOOKBACK_PERIODS = 100  # Periods to look back for correlation calcu
 DEFAULT_ATR_PERIODS = 14  # Default periods for ATR calculation
 DEFAULT_ATR_MULTIPLIER = 2.0  # Default multiplier for ATR-based stops
 
+# Additional risk parameters
+DEFAULT_GROWTH_FACTOR = 1.2
+PARTIAL_CLOSE_LEVELS = [0.5, 0.75]
+DEFAULT_FIXED_STOP_PERCENTAGE = 1.0  # percent
+DEFAULT_MIN_STOP_DISTANCE = 0.005  # 0.5% of entry price
+DEFAULT_TRAILING_ACTIVATION_PERCENTAGE = 0.5
+DEFAULT_TRAILING_CALLBACK_RATE = 0.25
+MAX_STOP_LEVELS = 3
+DEFAULT_CHANDELIER_EXIT_MULTIPLIER = 3.0
+
 RECOVERY_STRATEGIES = {
     "REDUCE_POSITION_SIZE": "reduce_position_size",
     "INCREASE_WIN_RATE": "increase_win_rate",
@@ -1569,3 +1606,225 @@ EXCHANGE_NAMES = [
     "EXCHANGE_TYPES", "TIME_FRAMES", "ORDER_TYPES", "ORDER_SIDES", "POSITION_SIDES",
     "ORDER_STATUSES", "POSITION_STATUSES", "SIGNAL_STRENGTHS",
 ]
+
+FEED_TYPES = {
+    "MARKET_DATA": "market_data",
+    "NEWS": "news",
+    "SOCIAL": "social",
+    "ONCHAIN": "onchain",
+    "DARK_WEB": "dark_web",
+    "REGIME": "regime"
+}
+
+FEED_STATUS = {
+    "CONNECTED": "connected",
+    "DISCONNECTED": "disconnected",
+    "RECONNECTING": "reconnecting",
+    "ERROR": "error"
+}
+
+# Data constants
+DATA_SOURCES = {
+    "EXCHANGE": "exchange",
+    "DATABASE": "database",
+    "FILE": "file",
+    "API": "api",
+    "SIMULATION": "simulation"
+}
+
+SYSTEM_COMPONENT_TYPES = {
+    "SERVICE": "service",
+    "DATABASE": "database",
+    "CACHE": "cache",
+    "API": "api",
+    "UI": "ui"
+}
+
+# Voting and confidence constants
+VOTE_THRESHOLDS = {
+    "STRONG_CONSENSUS": 0.8,
+    "CONSENSUS": 0.6,
+    "MAJORITY": 0.5,
+    "PLURALITY": 0.4
+}
+
+COUNCIL_WEIGHTS = {
+    "MASTER": 1.0,
+    "ASSET": 0.8,
+    "REGIME": 0.9,
+    "TIMEFRAME": 0.7
+}
+
+CONFIDENCE_LEVELS = {
+    "VERY_LOW": 0.2,
+    "LOW": 0.4,
+    "MEDIUM": 0.6,
+    "HIGH": 0.8,
+    "VERY_HIGH": 0.95
+}
+
+MIN_CONFIDENCE_THRESHOLD = 0.5
+
+# Scenario constants
+VOLATILITY_LEVELS = {
+    "VERY_LOW": 0.5,
+    "LOW": 0.75,
+    "NORMAL": 1.0,
+    "HIGH": 1.5,
+    "VERY_HIGH": 2.0,
+    "EXTREME": 3.0
+}
+
+SCENARIO_TYPES = {
+    "HISTORICAL": "historical",
+    "SYNTHETIC": "synthetic",
+    "STRESS_TEST": "stress_test",
+    "MONTE_CARLO": "monte_carlo",
+    "CUSTOM": "custom"
+}
+
+# Voice advisor constants
+VOICE_ADVISOR_MODES = {
+    "CONCISE": "concise",
+    "DETAILED": "detailed",
+    "TECHNICAL": "technical",
+    "BEGINNER": "beginner"
+}
+
+# Window size constants
+DEFAULT_WINDOW_SIZES = {
+    "VERY_SHORT": 5,
+    "SHORT": 20,
+    "MEDIUM": 50,
+    "LONG": 100,
+    "VERY_LONG": 200
+}
+
+# Feature transformer constants
+FEATURE_TRANSFORMERS = {
+    "NORMALIZER": "normalizer",
+    "SCALER": "scaler",
+    "ENCODER": "encoder",
+    "FILTER": "filter",
+    "AGGREGATOR": "aggregator"
+}
+
+# Signal confidence constants
+SignalConfidence = {
+    "VERY_LOW": 0.2,
+    "LOW": 0.4,
+    "MEDIUM": 0.6,
+    "HIGH": 0.8,
+    "VERY_HIGH": 0.95
+}
+
+# Signal type enum
+SignalType = {
+    "ENTRY": "entry",
+    "EXIT": "exit",
+    "STOP_LOSS": "stop_loss",
+    "TAKE_PROFIT": "take_profit"
+}
+
+# Order type mapping
+ORDER_TYPE_DICT = {
+    "MARKET": "market",
+    "LIMIT": "limit",
+    "STOP": "stop",
+    "STOP_LIMIT": "stop_limit"
+}
+
+# Order side mapping
+ORDER_SIDE_DICT = {
+    "BUY": "buy",
+    "SELL": "sell"
+}
+
+# Asset classes
+ASSET_CLASSES = {
+    "CRYPTO": "crypto",
+    "FOREX": "forex",
+    "STOCKS": "stocks",
+    "INDICES": "indices",
+    "COMMODITIES": "commodities",
+    "FUTURES": "futures",
+    "OPTIONS": "options"
+}
+
+# Data processing constants
+MARKET_DATA_CHUNK_SIZE = 1000  # Number of candles to process in one chunk
+
+# Signal strength constants
+SIGNAL_STRENGTHS = {
+    "VERY_WEAK": 0.2,
+    "WEAK": 0.4,
+    "MODERATE": 0.6,
+    "STRONG": 0.8,
+    "VERY_STRONG": 0.95
+}
+
+# Data processing worker constants
+MARKET_DATA_MAX_WORKERS = 8
+
+# User roles for authentication and authorization
+USER_ROLES = {
+    "ADMIN": "admin",
+    "TRADER": "trader",
+    "ANALYST": "analyst",
+    "VIEWER": "viewer",
+    "SYSTEM": "system",
+    "API": "api"
+}
+
+# Data priority levels for processing
+DATA_PRIORITY_LEVELS = {
+    "CRITICAL": 0,
+    "HIGH": 1,
+    "NORMAL": 2,
+    "LOW": 3,
+    "BACKGROUND": 4
+}
+
+# Exchange-specific order types
+BINANCE_ORDER_TYPES = {
+    "MARKET": "MARKET",
+    "LIMIT": "LIMIT",
+    "STOP_LOSS": "STOP_LOSS",
+    "STOP_LOSS_LIMIT": "STOP_LOSS_LIMIT",
+    "TAKE_PROFIT": "TAKE_PROFIT",
+    "TAKE_PROFIT_LIMIT": "TAKE_PROFIT_LIMIT",
+    "LIMIT_MAKER": "LIMIT_MAKER"
+}
+
+DERIV_ORDER_TYPES = {
+    "MARKET": "MARKET",
+    "LIMIT": "LIMIT",
+    "STOP": "STOP",
+    "STOP_LIMIT": "STOP_LIMIT"
+}
+
+# Order status mappings
+BINANCE_ORDER_STATUS_MAP = {
+    "NEW": OrderStatus.NEW.value,
+    "PARTIALLY_FILLED": OrderStatus.PARTIALLY_FILLED.value,
+    "FILLED": OrderStatus.FILLED.value,
+    "CANCELED": OrderStatus.CANCELED.value,
+    "PENDING_CANCEL": OrderStatus.PENDING_CANCEL.value,
+    "REJECTED": OrderStatus.REJECTED.value,
+    "EXPIRED": OrderStatus.EXPIRED.value
+}
+
+DERIV_ORDER_STATUS_MAP = {
+    "open": OrderStatus.NEW.value,
+    "pending": OrderStatus.NEW.value,
+    "filled": OrderStatus.FILLED.value,
+    "partially_filled": OrderStatus.PARTIALLY_FILLED.value,
+    "cancelled": OrderStatus.CANCELED.value,
+    "rejected": OrderStatus.REJECTED.value,
+    "expired": OrderStatus.EXPIRED.value
+}
+
+# Execution parameters
+MAX_SLIPPAGE_PERCENT = 0.5  # Maximum allowed slippage in percent
+MAX_RETRY_ATTEMPTS = 3      # Maximum number of retry attempts for failed orders
+

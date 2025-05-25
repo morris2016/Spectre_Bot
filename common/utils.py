@@ -42,6 +42,8 @@ import enum
 from pathlib import Path
 from functools import wraps
 from contextlib import suppress, asynccontextmanager, contextmanager
+import inspect  # Add this to the imports at the top
+from common.constants import OrderSide, OrderType, TimeInForce
 from typing import (
     Dict,
     List,
@@ -2185,13 +2187,7 @@ def calculate_risk_reward_ratio(risk: float, reward: float) -> float:
         return 0
     return reward / risk
 
-
 def calculate_expectancy(win_rate: float,
-
-
-def calculate_expectancy(win_rate: float, avg_win: float, avg_loss: float) -> float:
-
-  def calculate_expectancy(win_rate: float,
                         avg_win: float,
                         avg_loss: float) -> float:
 
@@ -2246,6 +2242,8 @@ def calculate_expected_value(trades: List[Union[float, Dict[str, float]]]) -> fl
     avg_loss = sum(losses) / len(losses) if losses else 0.0
     return calculate_expectancy(win_rate, avg_win, avg_loss)
 
+
+def calculate_kelly_criterion(win_rate: float, 
 
 def calculate_kelly_criterion(win_rate: float,
                              avg_win_loss_ratio: float) -> float:
@@ -2623,6 +2621,9 @@ def obfuscate_sensitive_data(
         's3': s3
     }
 
+# Backward compatibility alias
+pivot_points = calculate_pivot_points
+
 
 def pivot_points(high: float, low: float, close: float) -> Dict[str, float]:
     """Alias for calculate_pivot_points for backward compatibility."""
@@ -2630,10 +2631,6 @@ def pivot_points(high: float, low: float, close: float) -> Dict[str, float]:
 
     """Alias for :func:`calculate_pivot_points`."""
     return calculate_pivot_points(high, low, close)
-
-# Backward compatibility alias
-# Backwards compatibility alias
-
 
 # Backward compatibility alias
 def pivot_points(high: float, low: float, close: float) -> Dict[str, float]:
@@ -4735,6 +4732,62 @@ def normalize_quantity(
     return max(normalized, min_quantity)
 
 
+__all__ = [
+    # Time utilities
+    'timestamp_ms', 'current_timestamp', 'current_timestamp_micros', 'current_timestamp_nanos',
+    'timestamp_to_datetime', 'datetime_to_timestamp', 'parse_datetime',
+    'format_datetime', 'timeframe_to_seconds', 'timeframe_to_timedelta',
+    'round_timestamp', 'generate_timeframes', 'parse_timeframe', 'validate_timeframe',
+    'get_higher_timeframes', 'TimestampUtils',
+    
+    # Data handling and trading utilities
+    'calculate_price_precision', 'calculate_quantity_precision',
+    'round_to_precision', 'convert_timeframe', 'calculate_order_cost',
+    'calculate_order_risk', 'normalize_price', 'normalize_quantity',
+    'parse_decimal', 'safe_divide', 'round_to_tick', 'round_to_tick_size', 'calculate_change_percent',
+    'normalize_value', 'moving_average', 'exponential_moving_average', 'rolling_window',
+    
+    # String and format
+    'camel_to_snake', 'snake_to_camel', 'format_number', 'format_currency', 'truncate_string',
+    'pluralize',
+    
+    # JSON and data structures
+    'EnhancedJSONEncoder', 'JsonEncoder', 'json_dumps', 'json_loads', 'deep_update', 'deep_get',
+    'flatten_dict', 'unflatten_dict', 'dict_to_object', 'dict_to_namedtuple', 'group_by', 'chunks',
+    'filter_none_values', 'find_duplicate_items', 'merge_lists',
+    
+    # Security and validation
+    'generate_secure_random_string', 'generate_uuid', 'generate_hmac_signature',
+    'is_valid_url', 'is_valid_email', 'sanitize_filename', 'validate_required_keys',
+    'mask_sensitive_data', 'hash_content', 'generate_uid',
+    
+    # Network and system
+    'get_host_info', 'is_port_open', 'rate_limit', 'rate_limited', 'retry', 'timer',
+    'retry_with_backoff', 'exponential_backoff', 'time_execution', 'calculate_checksum',
+    
+    # Async utilities
+    'ensure_future', 'create_task_name',
+    
+    # Thread-safe utilities
+    'AtomicCounter', 'SafeDict',
+    
+    # Trading-specific
+    'calculate_order_size', 'calculate_position_value', 'calculate_pip_value', 'calculate_arbitrage_profit',
+    'calculate_position_size', 'calculate_volatility', 'calculate_correlation', 'calculate_drawdown',
+    'calculate_liquidation_price', 'calculate_risk_reward', 'calculate_win_rate',
+    'calculate_risk_reward_ratio', 'calculate_confidence_score', 'normalize_probability',
+    'weighted_average', 'time_weighted_average', 'validate_signal', 'calculate_expectancy',
+    'calculate_kelly_criterion', 'calculate_sharpe_ratio', 'calculate_sortino_ratio',
+    'calculate_max_drawdown', 'calculate_calmar_ratio', 'z_score',
+    'is_price_consolidating', 'is_breaking_out', 'calculate_pivot_points',
+    'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',
+    'calculate_distance', 'calculate_distance_percentage', 'memoize',
+    'is_higher_timeframe', 'threaded_calculation', 'create_batches',
+    'create_directory', 'create_directory_if_not_exists',
+    'UuidUtils', 'HashUtils', 'SecurityUtils',
+    'OrderSide', 'OrderType', 'TimeInForce',
+    'ClassRegistry', 'AsyncService', 'Signal', 'SignalBus'
+]
 
 
 class SecurityUtils:

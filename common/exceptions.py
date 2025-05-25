@@ -554,6 +554,39 @@ class ExecutionError(QuantumSpectreError):
     """Base class for execution engine errors."""
     pass
 
+class PositionError(ExecutionError):
+    """Raised for position management errors."""
+    pass
+
+class PositionExecutionError(PositionError):
+    """Raised when executing a position fails."""
+    pass
+
+class InvalidPositionStateError(PositionError):
+    """Raised when a position is in an invalid state."""
+    pass
+
+class InsufficientBalanceError(PositionError):
+    """Raised when the account balance is insufficient."""
+    pass
+
+class MarginCallError(PositionError):
+    """Raised when a margin call is triggered."""
+    pass
+
+class PositionLiquidationError(PositionError):
+    """Raised when a position is forcibly liquidated."""
+    pass
+
+class RiskExceededError(RiskError):
+    """Raised when a trade exceeds defined risk parameters."""
+    pass
+
+class ModelRegistrationError(ModelError):
+    """Raised when an ML model cannot be registered."""
+    pass
+
+
 
 class OrderError(ExecutionError):
     """Base class for order-related errors."""
@@ -666,6 +699,10 @@ class MaxDrawdownExceededError(RiskLimitExceededError):
 
 class DrawdownLimitExceededException(RiskLimitExceededError):
     """Raised when a drawdown limit is exceeded."""
+    pass
+
+class MaxDrawdownExceededError(RiskLimitExceededError):
+    """Raised when the maximum allowed drawdown is exceeded."""
     pass
 
 
@@ -1071,6 +1108,53 @@ class ReportGenerationError(QuantumSpectreError):
 # ======================================
 
 __all__ = [
+    'QuantumSpectreError', 'ConfigurationError', 'ServiceError', 'ServiceStartupError',
+    'ServiceShutdownError', 'SystemCriticalError', 'DataError', 'DataIngestionError',
+    'DataProcessorError', 'ProcessorNotFoundError', 'SourceNotFoundError', 'DataValidationError',
+    'FeedError', 'FeedConnectionError', 'BlockchainConnectionError', 'FeedDisconnectedError',
+    'FeedTimeoutError', 'FeedRateLimitError', 'DatabaseError', 'DatabaseConnectionError',
+    'DatabaseQueryError', 'RedisError', 'RedisConnectionError', 'SecurityError',
+    'APIKeyError', 'AuthenticationError', 'AuthorizationError', 'ExecutionError',
+    'OrderError', 'OrderRejectedError', 'OrderTimeoutError', 'InsufficientFundsError',
+    'InvalidOrderError', 'OrderCancellationError', 'SlippageExceededError', 'NetworkError',
+    'RiskError', 'RiskLimitExceededError', 'BacktestError', 'ModelError',
+    'ModelTrainingError', 'ModelPredictionError', 'StrategyError', 'SignalGenerationError',
+    'MonitoringError', 'AlertError', 'ResourceError', 'ResourceExhaustionError',
+    'TimeoutError', 'ExchangeError', 'RateLimitError', 'FeedNotFoundError',
+    'FeedInitializationError', 'FeedAuthenticationError', 'DataSourceError',
+    'FeedSubscriptionError', 'FeedDataError', 'ParsingError', 'DataFeedConnectionError',
+    'ModelLoadError', 'DataParsingError', 'CredentialError', 'SecurityViolationError',
+    'RegimeDetectionError', 'NewsFeedError', 'NewsParsingError', 'NewsSourceUnavailableError',
+    'FeatureNotFoundError', 'FeatureCalculationError', 'FeatureServiceError',
+    'InvalidTimeframeError', 'InvalidParameterError', 'AlertDeliveryError',
+    'AlertConfigurationError', 'RiskManagerError', 'PositionSizingError', 'StopLossError',
+    'PositionError', 'PositionExecutionError', 'InvalidPositionStateError',
+    'InsufficientBalanceError', 'MarginCallError', 'PositionLiquidationError',
+    'RiskExceededError', 'ModelRegistrationError',
+    'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError',
+    'ArbitrageOpportunityExpiredError', 'DrawdownLimitExceededException', 'MaxDrawdownExceededError',
+    'RiskManagementException', 'ModelVersionError', 'LogAnalysisError',
+    'InsufficientDataError', 'EncodingError', 'MetricCollectionError',
+    'ServiceConnectionError', 'DataStoreError', 'InvalidDataError', 'TrainingError',
+    'ArbitrageValidationError', 'PredictionError', 'AnalysisError', 'RecoveryStrategyError',
+    'OptimizationError', 'CorrelationCalculationError', 'SamplingError', 'DataQualityError',
+    'HardwareError', 'EnsembleConfigError', 'ServiceUnavailableError', 'ModelNotSupportedError',
+    'InvalidFeatureFormatError', 'StrategyExecutionError', 'AdaptationError', 'InferenceError',
+    'CircuitBreakerTrippedException', 'PatternRecognitionError', 'PatternNotFoundError',
+    'DataAlignmentError', 'RESTClientError', 'RequestError', 'DataTransformationError',
+    'CapitalManagementError', 'MicrostructureAnalysisError', 'MigrationError',
+    'ModelValidationError', 'WebSocketError', 'SubscriptionError', 'DataFetchError',
+    'BacktestConfigError', 'BacktestDataError', 'BacktestStrategyError', 'AssetCouncilError',
+    'BrainNotFoundError', 'CouncilError', 'DecisionError', 'PerformanceTrackerError',
+    'InvalidStrategyError', 'SimulationError', 'SentimentAnalysisError', 'RegimeCouncilError',
+    'ReportGenerationError', 'OperationNotPermittedError', 'BacktestScenarioError',
+    'DataNotFoundError', 'VoiceAdvisorError', 'TTSEngineError', 'VotingError',
+    'PermissionDeniedError', 'WeightingSystemError', 'FeedCoordinationError',
+    'DataInsufficientError', 'InvalidAssetError', 'InvalidTimeRangeError',
+    'InvalidFeatureDefinitionError', 'FeatureTimeoutError',
+    'TimeSeriesConnectionError', 'TimeSeriesQueryError', 'TimeSeriesDataError',
+    'TimeSeriesConfigError'
+
     # Base exceptions
     "QuantumSpectreError", "SystemCriticalError", "ConfigurationError", "TimeoutError",
     "NetworkError", "InvalidParameterError", "CalculationError", "AnalysisError", "OptimizationError",

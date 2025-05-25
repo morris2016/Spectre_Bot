@@ -41,7 +41,6 @@ class BrainConfig:
     """Base configuration for strategy brains."""
     pass
 
-
     # Memory windows for performance tracking
     short_memory: int = 50
     long_memory: int = 500

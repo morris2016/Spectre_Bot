@@ -131,6 +131,32 @@ def feature_calculation(f):
     return wrapper
 
 
+def atr(data: pd.DataFrame, period: int = 14) -> pd.Series:
+    """Simple Average True Range calculation."""
+    high = data['high']
+    low = data['low']
+    close = data['close']
+    prev_close = close.shift()
+    tr = pd.concat([
+        high - low,
+        (high - prev_close).abs(),
+        (low - prev_close).abs(),
+    ], axis=1).max(axis=1)
+    return tr.rolling(period).mean()
+
+
+def fibonacci_levels(high: float, low: float) -> Dict[str, float]:
+    """Calculate basic Fibonacci retracement levels."""
+    diff = high - low
+    return {
+        '0.236': high - diff * 0.236,
+        '0.382': high - diff * 0.382,
+        '0.500': high - diff * 0.5,
+        '0.618': high - diff * 0.618,
+        '0.786': high - diff * 0.786,
+    }
+
+
 class FeatureExtractor:
     """
     Advanced feature extraction engine for market data analysis.
