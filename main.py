@@ -9,50 +9,54 @@ It orchestrates the startup, operation, and graceful shutdown of all system comp
 
 import os
 import sys
-import time
 import signal
 import argparse
 import asyncio
 import logging
 import traceback
-from typing import Dict, List, Set, Any, Optional
+from typing import Any
 from concurrent.futures import ThreadPoolExecutor
 import multiprocessing as mp
 import nltk
 import ssl
+import importlib
 
 # Internal imports
 from config import Config, load_config
 from common.logger import setup_logging, get_logger
 from common.constants import (
     SERVICE_NAMES, SERVICE_DEPENDENCIES, SERVICE_STARTUP_ORDER,
-    LOG_LEVELS, DEFAULT_CONFIG_PATH, VERSION, SYSTEM_NAME
+    LOG_LEVELS, DEFAULT_CONFIG_PATH, VERSION
 )
 from common.metrics import MetricsCollector
-from common.exceptions import (
-    ConfigurationError, ServiceStartupError, ServiceShutdownError,
-    SystemCriticalError
-)
-from common.async_utils import run_with_timeout, cancel_all_tasks
+from common.exceptions import ConfigurationError, ServiceStartupError, SystemCriticalError
+from common.async_utils import run_with_timeout
 from common.redis_client import RedisClient
 from common.db_client import DatabaseClient, get_db_client
 from common.security import SecureCredentialManager
 
 # Service imports
-from data_ingest.app import DataIngestService
-from data_feeds.app import DataFeedService
-from feature_service.app import FeatureService
-from intelligence.app import IntelligenceService
-from ml_models.app import MLModelService
-from strategy_brains.app import StrategyBrainService
-from brain_council.app import BrainCouncilService
-from execution_engine.app import ExecutionEngineService
-from risk_manager.app import RiskManagerService
-from backtester.app import BacktesterService
-from monitoring.app import MonitoringService
-from api_gateway.app import APIGatewayService
-from ui.app import UIService
-from voice_assistant.app import VoiceAssistantService
+
+# Service modules are imported lazily to avoid loading optional dependencies
+# when only a subset of services is started. This allows the UI to boot even
+# if heavy ML libraries are missing.
+
+SERVICE_CLASS_PATHS = {
+    "data_ingest": ("data_ingest.app", "DataIngestService"),
+    "data_feeds": ("data_feeds.app", "DataFeedService"),
+    "feature_service": ("feature_service.app", "FeatureService"),
+    "intelligence": ("intelligence.app", "IntelligenceService"),
+    "ml_models": ("ml_models.app", "MLModelService"),
+    "strategy_brains": ("strategy_brains.app", "StrategyBrainService"),
+    "brain_council": ("brain_council.app", "BrainCouncilService"),
+    "execution_engine": ("execution_engine.app", "ExecutionEngineService"),
+    "risk_manager": ("risk_manager.app", "RiskManagerService"),
+    "backtester": ("backtester.app", "BacktesterService"),
+    "monitoring": ("monitoring.app", "MonitoringService"),
+    "api_gateway": ("api_gateway.app", "APIGatewayService"),
+    "ui_server": ("ui.app", "UIService"),
+    "voice_assistant": ("voice_assistant.app", "VoiceAssistantService"),
+}
 
 # Global variables
 # Module-level logger used throughout the application
@@ -68,13 +72,14 @@ redis_client = None
 db_client = None
 credentials_manager = None
 
+
 class ServiceManager:
     """Manages the lifecycle of all system services."""
 
     def __init__(self, config: Config, event_loop: asyncio.AbstractEventLoop):
         """
         Initialize the service manager.
-        
+
         Args:
             config: System configuration object
             event_loop: Main asyncio event loop
@@ -99,43 +104,43 @@ class ServiceManager:
         """
         global services
         self.logger.info("Starting QuantumSpectre Elite services...")
-        
-        # First, instantiate all service objects
-        service_classes = {
-            "data_ingest": DataIngestService,
-            "data_feeds": DataFeedService,
-            "feature_service": FeatureService,
-            "intelligence": IntelligenceService,
-            "ml_models": MLModelService,
-            "strategy_brains": StrategyBrainService,
-            "brain_council": BrainCouncilService,
-            "execution_engine": ExecutionEngineService,
-            "risk_manager": RiskManagerService,
-            "backtester": BacktesterService,
-            "monitoring": MonitoringService,
-            "api_gateway": APIGatewayService,
-            "ui_server": UIService,
-            "voice_assistant": VoiceAssistantService
-        }
+
+        # First, instantiate all service objects lazily using importlib
+        service_classes = {}
+        for name, (module_path, class_name) in SERVICE_CLASS_PATHS.items():
+            if not self.config.services.get(name, {}).get("enabled", True):
+                self.logger.info(f"Service {name} is disabled in configuration")
+                continue
+            try:
+                module = importlib.import_module(module_path)
+                service_class = getattr(module, class_name)
+                service_classes[name] = service_class
+            except Exception as exc:
+                self.logger.error(
+                    f"Failed to import service {name} from {module_path}: {exc}"
+                )
+                if self.config.services.get(name, {}).get("required", True):
+                    raise ServiceStartupError(
+                        f"Cannot import required service {name}: {exc}"
+                    )
 
         # Create service instances but don't start them yet
         for name, service_class in service_classes.items():
-            if self.config.services.get(name, {}).get("enabled", True):
-                self.logger.info(f"Instantiating {name} service")
-                try:
-                    self.services[name] = service_class(
-                        config=self.config,
-                        loop=self.loop,
-                        redis_client=redis_client,
-                        db_client=db_client
-                    )
-                    self.service_statuses[name] = "instantiated"
-                except Exception as e:
-                    self.logger.error(f"Failed to instantiate {name} service: {str(e)}")
-                    self.logger.error(traceback.format_exc())
-                    raise ServiceStartupError(f"Failed to instantiate {name} service: {str(e)}")
-            else:
-                self.logger.info(f"Service {name} is disabled in configuration")
+            self.logger.info(f"Instantiating {name} service")
+            try:
+                self.services[name] = service_class(
+                    config=self.config,
+                    loop=self.loop,
+                    redis_client=redis_client,
+                    db_client=db_client
+                )
+                self.service_statuses[name] = "instantiated"
+            except Exception as exc:
+                self.logger.error(f"Failed to instantiate {name} service: {exc}")
+                self.logger.error(traceback.format_exc())
+                raise ServiceStartupError(
+                    f"Failed to instantiate {name} service: {exc}"
+                )
 
         # Start services in dependency order
         for service_name in SERVICE_STARTUP_ORDER:
@@ -155,26 +160,26 @@ class ServiceManager:
     async def _start_service_with_dependencies(self, service_name: str):
         """
         Start a service and ensure all its dependencies are started first.
-        
+
         Args:
             service_name: Name of the service to start
         """
         # Avoid duplicate startups
         if self.service_statuses.get(service_name) == "running":
             return
-            
+
         # Check if we're already in the process of starting this service
         if self.service_statuses.get(service_name) == "starting":
             self.logger.warning(f"Circular dependency detected for {service_name}")
             raise ConfigurationError(f"Circular dependency detected for {service_name}")
-            
+
         self.service_statuses[service_name] = "starting"
-        
+
         # Start dependencies first
         for dependency in SERVICE_DEPENDENCIES.get(service_name, []):
             if dependency in self.services:
                 await self._start_service_with_dependencies(dependency)
-                
+
         # Now start the actual service
         service = self.services[service_name]
         self.logger.info(f"Starting {service_name} service")
@@ -190,10 +195,10 @@ class ServiceManager:
                     error_message=f"{service_name} service failed to start within {start_timeout} seconds"
                 )
                 self.logger.debug(f"Service {service_name} started successfully")
-            
+
             self.service_statuses[service_name] = "running"
             self.logger.info(f"{service_name} service started successfully")
-            
+
             # Start a monitoring task for the service
             self.service_tasks[service_name] = asyncio.create_task(
                 self._monitor_service(service_name, service)
@@ -207,7 +212,7 @@ class ServiceManager:
     async def _monitor_service(self, service_name: str, service: Any):
         """
         Monitor a service for any failures and attempt recovery if needed.
-        
+
         Args:
             service_name: Name of the service to monitor
             service: Service instance
@@ -217,11 +222,11 @@ class ServiceManager:
                 # Wait for the service's internal task to complete or fail
                 if hasattr(service, "task") and service.task is not None:
                     await service.task
-                    
+
                 # If we get here, the service task completed unexpectedly
                 if not self.shutdown_in_progress:
                     self.logger.warning(f"{service_name} service task completed unexpectedly")
-                    
+
                     if self.config.services.get(service_name, {}).get("auto_restart", True):
                         self.logger.info(f"Attempting to restart {service_name} service")
                         try:
@@ -235,7 +240,7 @@ class ServiceManager:
                     else:
                         self.logger.warning(f"Auto-restart disabled for {service_name}, not restarting")
                         self.service_statuses[service_name] = "stopped"
-                        
+
             except asyncio.CancelledError:
                 # Task was cancelled, this is normal during shutdown
                 break
@@ -243,20 +248,20 @@ class ServiceManager:
                 if not self.shutdown_in_progress:
                     self.logger.error(f"Error in {service_name} service: {str(e)}")
                     self.logger.error(traceback.format_exc())
-                    
+
                     # Update status
                     self.service_statuses[service_name] = "error"
-                    
+
                     # Try to restart if configured to do so
                     if self.config.services.get(service_name, {}).get("auto_restart", True):
                         retry_count = 0
                         max_retries = self.config.services.get(service_name, {}).get("max_restart_attempts", 3)
                         retry_delay = self.config.services.get(service_name, {}).get("restart_delay", 5)
-                        
+
                         while retry_count < max_retries and not self.shutdown_in_progress:
                             retry_count += 1
                             self.logger.info(f"Attempting to restart {service_name} service (attempt {retry_count}/{max_retries})")
-                            
+
                             try:
                                 # Make sure it's stopped first
                                 await service.stop()
@@ -268,11 +273,11 @@ class ServiceManager:
                             except Exception as restart_error:
                                 self.logger.error(f"Failed to restart {service_name} service: {str(restart_error)}")
                                 await asyncio.sleep(retry_delay)
-                                
+
                         if retry_count >= max_retries and self.service_statuses[service_name] != "running":
                             self.logger.error(f"Failed to restart {service_name} service after {max_retries} attempts")
                             self.service_statuses[service_name] = "failed"
-                            
+
                             # Check if this is a critical service
                             if self.config.services.get(service_name, {}).get("critical", False):
                                 self.logger.critical(f"Critical service {service_name} failed, initiating system shutdown due to {service_name} failure")
@@ -280,7 +285,7 @@ class ServiceManager:
                                 self.loop.call_soon_threadsafe(lambda: asyncio.create_task(self.shutdown("Critical service failure")))
                     else:
                         self.logger.warning(f"Auto-restart disabled for {service_name}, not restarting")
-                
+
                 # If we've handled the error but the service isn't critical,
                 # continue monitoring in case manual restart occurs
                 if not self.shutdown_in_progress:
@@ -292,7 +297,7 @@ class ServiceManager:
     def _start_health_check(self, service_name: str):
         """
         Start a health check task for a service.
-        
+
         Args:
             service_name: Name of the service to health check
         """
@@ -306,7 +311,7 @@ class ServiceManager:
     async def _run_health_checks(self, service_name: str, service: Any, interval: int):
         """
         Run periodic health checks for a service.
-        
+
         Args:
             service_name: Name of the service
             service: Service instance
@@ -319,11 +324,11 @@ class ServiceManager:
                 if not result:
                     self.logger.warning(f"Health check failed for {service_name} service")
                     self.metrics.increment(f"health_check_failure.{service_name}")
-                    
+
                     # If service reports unhealthy multiple times, try restarting it
                     consecutive_failures = self.metrics.get(f"health_check_failure.{service_name}.consecutive", 0) + 1
                     self.metrics.set(f"health_check_failure.{service_name}.consecutive", consecutive_failures)
-                    
+
                     max_failures = self.config.services.get(service_name, {}).get("max_health_failures", 3)
                     if consecutive_failures >= max_failures:
                         self.logger.warning(f"{service_name} service health check failed {consecutive_failures} times, attempting restart")
@@ -341,44 +346,44 @@ class ServiceManager:
                     self.metrics.set(f"health_check_failure.{service_name}.consecutive", 0)
             except Exception as e:
                 self.logger.error(f"Error running health check for {service_name} service: {str(e)}")
-                
+
             await asyncio.sleep(interval)
 
     async def shutdown(self, reason: str = "Shutdown requested"):
         """
         Shutdown all services in reverse dependency order.
-        
+
         Args:
             reason: Reason for the shutdown
         """
         global is_shutting_down
-        
+
         # Avoid multiple shutdowns
         if self.shutdown_in_progress:
             return
-            
+
         self.shutdown_in_progress = True
         is_shutting_down = True
-        
+
         self.logger.info(f"Shutting down all services. Reason: {reason}")
-        
+
         # Cancel all health check tasks
         for service_name, task in self.health_check_tasks.items():
             if not task.done():
                 task.cancel()
-                
+
         # Cancel all service monitoring tasks
         for service_name, task in self.service_tasks.items():
             if not task.done():
                 task.cancel()
-                
+
         # Shutdown in reverse dependency order
         for service_name in reversed(SERVICE_STARTUP_ORDER):
             if service_name in self.services:
                 service = self.services[service_name]
                 self.logger.info(f"Stopping {service_name} service")
                 self.logger.debug(f"Calling stop() method for {service_name}")
-                
+
                 try:
                     shutdown_timeout = self.config.services.get(service_name, {}).get("shutdown_timeout", 30)
                     await run_with_timeout(
@@ -393,14 +398,14 @@ class ServiceManager:
                 except Exception as e:
                     self.logger.error(f"Error stopping {service_name} service: {str(e)}")
                     self.service_statuses[service_name] = "error"
-                    
+
         self.logger.info("All services stopped")
         self.shutdown_complete.set()
 
 def setup_argument_parser():
     """
     Set up command-line argument parser.
-    
+
     Returns:
         Configured argument parser.
     """
@@ -408,65 +413,65 @@ def setup_argument_parser():
         description=f"QuantumSpectre Elite Trading System v{VERSION}",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
-    
+
     parser.add_argument(
         "-c", "--config",
         default=DEFAULT_CONFIG_PATH,
         help="Path to configuration file"
     )
-    
+
     parser.add_argument(
         "-l", "--log-level",
         choices=LOG_LEVELS.keys(),
         default="info",
         help="Set the logging level"
     )
-    
+
     parser.add_argument(
         "--log-file",
         help="Path to log file (if not specified, logs to console only)"
     )
-    
+
     parser.add_argument(
         "--service",
         choices=SERVICE_NAMES + ["all"],
         default="all",
         help="Specific service to run (default: all services)"
     )
-    
+
     parser.add_argument(
         "--debug",
         action="store_true",
         help="Enable debug mode with additional logging"
     )
-    
+
     parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Validate configuration without starting services"
     )
-    
+
     parser.add_argument(
         "--version",
         action="version",
         version=f"QuantumSpectre Elite Trading System v{VERSION}",
         help="Show version information and exit"
     )
-    
+
     return parser
 
 async def initialize_db(config: Config) -> DatabaseClient:
     """
     Initialize the database connection.
-    
+
     Args:
         config: System configuration object
-        
+
     Returns:
         Initialized database client
     """
     logger.info("Initializing database connection...")
-    
+
     try:
         db_config = config.database
         db_client = await get_db_client(
@@ -480,15 +485,15 @@ async def initialize_db(config: Config) -> DatabaseClient:
             ssl=db_config.get("ssl", False),
             timeout=db_config.get("timeout", 30)
         )
-        
+
         # Run migrations if needed
         if config.system.get("auto_migrate", True):
             logger.info("Running database migrations...")
             await db_client.run_migrations()
-            
+
         logger.info("Database connection initialized successfully")
         return db_client
-        
+
     except Exception as e:
         logger.error(f"Failed to initialize database connection: {str(e)}")
         logger.error(traceback.format_exc())
@@ -497,15 +502,15 @@ async def initialize_db(config: Config) -> DatabaseClient:
 async def initialize_redis(config: Config) -> RedisClient:
     """
     Initialize the Redis connection.
-    
+
     Args:
         config: System configuration object
-        
+
     Returns:
         Initialized Redis client
     """
     logger.info("Initializing Redis connection...")
-    
+
     try:
         redis_config = config.redis
         redis_client = RedisClient(
@@ -517,13 +522,13 @@ async def initialize_redis(config: Config) -> RedisClient:
             timeout=redis_config.get("timeout", 10),
             max_connections=redis_config.get("max_connections", 50)
         )
-        
+
         # Initialize the connection
         await redis_client.initialize()
-        
+
         logger.info("Redis connection initialized successfully")
         return redis_client
-        
+
     except Exception as e:
         logger.error(f"Failed to initialize Redis connection: {str(e)}")
         logger.error(traceback.format_exc())
@@ -532,15 +537,15 @@ async def initialize_redis(config: Config) -> RedisClient:
 async def initialize_credentials(config: Config) -> SecureCredentialManager:
     """
     Initialize the secure credential manager.
-    
+
     Args:
         config: System configuration object
-        
+
     Returns:
         Initialized credential manager
     """
     logger.info("Initializing secure credential manager...")
-    
+
     try:
         security_config = config.security
         cred_manager = SecureCredentialManager(
@@ -550,13 +555,13 @@ async def initialize_credentials(config: Config) -> SecureCredentialManager:
             storage_path=security_config.get("storage_path", "./credentials"),
             auto_generate=security_config.get("auto_generate", True)
         )
-        
+
         # Initialize the manager
         await cred_manager.initialize()
-        
+
         logger.info("Secure credential manager initialized successfully")
         return cred_manager
-        
+
     except Exception as e:
         logger.error(f"Failed to initialize secure credential manager: {str(e)}")
         logger.error(traceback.format_exc())
@@ -569,14 +574,14 @@ def setup_nltk_data():
     and handles SSL certificate issues that might occur.
     """
     logger.info("Setting up NLTK data...")
-    
+
     # Required NLTK packages
     required_packages = [
         'vader_lexicon',  # For sentiment analysis
         'punkt',          # For sentence tokenization
         'stopwords',      # For stopword filtering
     ]
-    
+
     # Handle SSL certificate issues that might occur
     try:
         _create_unverified_https_context = ssl._create_unverified_context
@@ -584,11 +589,11 @@ def setup_nltk_data():
         pass
     else:
         ssl._create_default_https_context = _create_unverified_https_context
-    
+
     # Try to load packages from local data directory first
     nltk_data_dir = os.path.expanduser("~/.nltk_data")
     nltk.data.path.insert(0, nltk_data_dir)
-    
+
     # Check each package
     for package in required_packages:
         try:
@@ -602,7 +607,7 @@ def setup_nltk_data():
             except Exception as e:
                 logger.error(f"Failed to download NLTK package '{package}': {str(e)}")
                 logger.warning(f"System will continue without NLTK package '{package}', some NLP features may be limited")
-    
+
     logger.info("NLTK setup complete")
 
 async def startup():
@@ -610,81 +615,81 @@ async def startup():
     Main system startup sequence.
     """
     global logger, config, metrics_collector, redis_client, db_client, credentials_manager, service_event_loop
-    
+
     try:
         # Parse command-line arguments
         parser = setup_argument_parser()
         args = parser.parse_args()
-        
+
         # Set up logging system
         log_level = LOG_LEVELS[args.log_level]
         if args.debug:
             log_level = logging.DEBUG
-            
+
         setup_logging(log_level, log_file=args.log_file)
         logger = get_logger("main")
-        
+
         logger.info(f"Starting QuantumSpectre Elite Trading System v{VERSION}")
         logger.info(f"Process ID: {os.getpid()}")
-        
+
         # Set up NLTK data
         setup_nltk_data()
-        
+
         # Load configuration
         config_path = args.config
         logger.info(f"Loading configuration from {config_path}")
         config = load_config(config_path)
         logger.debug(f"Loaded configuration: {config}")
-        
+
         # Validate configuration
         logger.info("Validating configuration...")
         config.validate()
-        
+
         # If dry run, exit here
         if args.dry_run:
             logger.info("Configuration validation successful (dry run)")
             return 0
-            
+
         # Initialize metrics collector
         metrics_collector = MetricsCollector("system")
-        
+
         # Initialize event loop
         if service_event_loop is None:
             service_event_loop = asyncio.get_event_loop()
-            
+
         # Initialize secure credential manager
         credentials_manager = await initialize_credentials(config)
         logger.info("Credential manager initialized successfully")
-        
+
         # Initialize Redis client
         redis_client = await initialize_redis(config)
         logger.info("Redis client initialized successfully")
-        
+
         # Initialize database client
         db_client = await initialize_db(config)
         logger.info("Database client initialized successfully")
-        
+
         # Create service manager
         service_manager = ServiceManager(config, service_event_loop)
         logger.debug(f"ServiceManager created; services configured: {list(config.services.keys())}")
-        
+
         # Register signal handlers for graceful shutdown
         for sig in (signal.SIGINT, signal.SIGTERM):
             service_event_loop.add_signal_handler(
                 sig,
                 lambda s=sig: asyncio.create_task(handle_shutdown_signal(s, service_manager))
             )
-            
+
         # Start all services
         await service_manager.start_services()
         logger.debug(f"Services started: {list(service_manager.services.keys())}")
-        
+
         # Wait for shutdown signal
         await service_manager.shutdown_complete.wait()
-        
+
         logger.info("Clean shutdown complete")
         return 0
-        
+
     except ConfigurationError as e:
         logger.error(f"Configuration error: {str(e)}")
         return 1
@@ -702,7 +707,7 @@ async def startup():
 async def handle_shutdown_signal(signal_num, service_manager):
     """
     Handle OS shutdown signals gracefully.
-    
+
     Args:
         signal_num: Signal number
         service_manager: Service manager instance
@@ -716,15 +721,15 @@ def main():
     Entry point for the application.
     """
     global executor, service_event_loop
-    
+
     # Create thread pool executor for background tasks
     mp.set_start_method('spawn', force=True)
     executor = ThreadPoolExecutor(max_workers=os.cpu_count())
-    
+
     # Set up event loop
     service_event_loop = asyncio.new_event_loop()
     asyncio.set_event_loop(service_event_loop)
-    
+
     try:
         exit_code = service_event_loop.run_until_complete(startup())
         sys.exit(exit_code)

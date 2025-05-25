@@ -36,6 +36,7 @@ from feature_service.features.volatility import VolatilityFeatures
 from strategy_brains.base_brain import BaseBrain
 from ml_models.models.deep_learning import create_deep_policy_network
 from ml_models.hardware.gpu import optimize_for_gpu, get_gpu_memory_usage
+from ml_models.rl import DQNAgent
 
 logger = get_logger("ReinforcementBrain")
 
@@ -428,7 +429,7 @@ class TradingEnvironment(gym.Env):
         pass
 
 
-class DQNAgent:
+class LegacyDQNAgent:
     """
     Deep Q-Network Agent for reinforcement learning-based trading.
     """
@@ -1109,15 +1110,15 @@ class ReinforcementBrain(BaseBrain):
         
         # Initialize the agent based on model type
         if self.config['model_type'] == 'dqn':
-            # For discrete actions
+            flat_state = state_shape[0] * state_shape[1]
             self.agent = DQNAgent(
-                state_size=state_shape,
-                action_size=self.env.action_space.n,
+                state_dim=flat_state,
+                action_dim=self.env.action_space.n,
                 learning_rate=self.config['learning_rate'],
                 gamma=self.config['gamma'],
-                epsilon=self.config['epsilon'],
-                epsilon_min=self.config['epsilon_min'],
-                epsilon_decay=self.config['epsilon_decay'],
+                epsilon_start=self.config['epsilon'],
+                epsilon_end=self.config['epsilon_min'],
+                epsilon_decay=1000,
                 batch_size=self.config['batch_size'],
                 memory_size=self.config['memory_size']
             )
@@ -1217,7 +1218,7 @@ class ReinforcementBrain(BaseBrain):
             # Run one episode
             while not done:
                 # Select action
-                action = self.agent.act(state, training=True)
+                action = self.agent.select_action(state, test_mode=False)
                 
                 # Take action
                 next_state, reward, terminated, truncated, info = self.env.step(action)
@@ -1225,7 +1226,7 @@ class ReinforcementBrain(BaseBrain):
                 
                 # Store in replay memory
                 if self.config['model_type'] == 'dqn':
-                    self.agent.remember(state, action, reward, next_state, done)
+                    self.agent.store_transition(state, action, reward, next_state, done)
                 else:
                     # Reshape action for memory if using DDPG
                     if not isinstance(action, np.ndarray):
@@ -1239,7 +1240,7 @@ class ReinforcementBrain(BaseBrain):
                 
                 # Train if we have enough samples
                 if len(self.agent.memory) > self.config['replay_start_size']:
-                    loss = self.agent.replay()
+                    loss = self.agent.update_model()
                     if isinstance(loss, dict):
                         metrics['losses'].append(loss.get('critic_loss', 0))
                     else:
@@ -1326,7 +1327,7 @@ class ReinforcementBrain(BaseBrain):
         done = False
         while not done:
             # Select action (without exploration)
-            action = self.agent.act(state, training=False)
+            action = self.agent.select_action(state, test_mode=True)
 
             # Take action
             next_state, reward, terminated, truncated, info = analysis_env.step(action)
@@ -1416,13 +1417,13 @@ class ReinforcementBrain(BaseBrain):
                     next_state[-1] = current_features[self.feature_data.columns].values
                     
                     # Store in replay memory
-                    self.agent.remember(self.current_state, self.last_action, reward, next_state, False)
+                    self.agent.store_transition(self.current_state, self.last_action, reward, next_state, False)
                     
                     # Periodically train if we have enough samples
                     self.step_counter += 1
                     if (self.step_counter % self.config['training_frequency'] == 0 and 
                         len(self.agent.memory) > self.config['replay_start_size']):
-                        loss = self.agent.replay()
+                        loss = self.agent.update_model()
                         self.training_steps += 1
                         
                         # Save model periodically
@@ -1435,7 +1436,7 @@ class ReinforcementBrain(BaseBrain):
             
             # Generate prediction for new data
             if self.current_state is not None:
-                action = self.agent.act(self.current_state, training=False)
+                action = self.agent.select_action(self.current_state, test_mode=True)
                 
                 # Convert action to signal
                 if self.config['action_type'] == 'discrete':

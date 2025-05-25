@@ -21,6 +21,7 @@ from .utils import (
     Signal,
     SignalBus
 )
+from .event_bus import EventBus
 from .constants import (
     TIME_FRAMES, 
     EXCHANGE_TYPES, 
@@ -92,5 +93,6 @@ __all__ = [
     'ClassRegistry',
     'AsyncService',
     'Signal',
-    'SignalBus'
+    'SignalBus',
+    'EventBus'
 ]

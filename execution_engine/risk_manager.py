@@ -29,9 +29,9 @@ from common.utils import (
     calculate_liquidation_price,
 )
 from common.constants import (
-    PositionStatus, OrderType, PositionSide, TimeInForce, 
+    PositionStatus, OrderType, PositionSide, TimeInForce,
     DEFAULT_STOP_LOSS_MULTIPLIER, DEFAULT_TAKE_PROFIT_MULTIPLIER,
-    PARTIAL_CLOSE_LEVELS
+    DEFAULT_MAX_RISK_PER_TRADE, PARTIAL_CLOSE_LEVELS
 )
 from common.metrics import MetricsCollector
 from common.exceptions import (
@@ -115,7 +115,7 @@ class Position:
             
         total_pnl = self.realized_pnl + self.unrealized_pnl
         return total_pnl / self.risk_amount
-        
+
     def get_duration(self) -> Optional[timedelta]:
         """Calculate the position duration."""
         if self.entry_time is None:
@@ -1560,10 +1560,10 @@ class PositionManager:
             
         total_seconds = sum(d.total_seconds() for d in durations)
         avg_seconds = total_seconds / len(durations)
-        
+
         hours, remainder = divmod(avg_seconds, 3600)
         minutes, seconds = divmod(remainder, 60)
-        
+
         return f"{int(hours)}:{int(minutes):02d}:{int(seconds):02d}"
 
 
@@ -1576,3 +1576,23 @@ class RiskManager:
     async def validate_trade(self, *args: Any, **kwargs: Any) -> bool:
         """Validate a trade request. Always returns True for now."""
         return True
+
+    """Minimal risk manager placeholder."""
+
+    def __init__(self, *args, **kwargs) -> None:
+        self.active_positions: Dict[str, Position] = {}
+
+    def evaluate_trade(self, *args, **kwargs) -> bool:
+        """Evaluate whether a trade can be taken."""
+        return True
+
+    """Basic risk management helper."""
+
+    def __init__(self, max_risk_per_trade: float = DEFAULT_MAX_RISK_PER_TRADE):
+        self.max_risk_per_trade = max_risk_per_trade
+
+    def check_risk(self, equity: float, risk_amount: float) -> bool:
+        """Return True if the risk amount does not exceed allowed percentage."""
+        if equity <= 0:
+            return False
+        return risk_amount <= equity * self.max_risk_per_trade
