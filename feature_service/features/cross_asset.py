@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""Cross asset analysis utilities."""
-
-from typing import Optional
-
-"""Cross-Asset Feature Calculations.
+"""Cross asset analysis utilities.
 
 Utilities for analyzing relationships between two assets, including rolling
 correlation and cointegration tests.
@@ -22,9 +18,6 @@ def _align_series(
     data1: pd.DataFrame,
     data2: pd.DataFrame,
     column: str,
-) -> Optional[tuple[pd.Series, pd.Series]]:
-    """Align two series on the same length and return them."""
-
 ) -> Optional[Tuple[pd.Series, pd.Series]]:
     """Return aligned series for the specified column."""
     if column not in data1.columns or column not in data2.columns:
@@ -45,8 +38,6 @@ def compute_pair_correlation(
     data2: pd.DataFrame,
     column: str = "close",
 ) -> float:
-    """Compute Pearson correlation for two assets."""
-
     """Compute Pearson correlation for two aligned asset series."""
     series = _align_series(data1, data2, column)
     if series is None:
@@ -62,7 +53,6 @@ def cointegration_score(
     data2: pd.DataFrame,
     column: str = "close",
 ) -> float:
-    """Return Engle-Granger cointegration test p-value."""
     """Return the Engle-Granger cointegration p-value for two assets."""
     series = _align_series(data1, data2, column)
     if series is None:

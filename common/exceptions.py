@@ -227,6 +227,11 @@ class InsufficientBalanceError(OrderError):
     """Raised when an account balance is too low to execute an action."""
     """Raised when account balance is too low for an operation."""
 
+class RiskError(QuantumSpectreError):
+    """Base class for risk management errors."""
+    pass
+
+
 class InsufficientBalanceError(RiskError):
     """Raised when account balance is insufficient for a trade."""
 class PositionError(ExecutionError):
@@ -247,8 +252,6 @@ class PositionError(ExecutionError):
     """Raised for invalid operations on a trading position."""
 
     pass
-
-
 
 
 class RiskLimitExceededError(RiskError):
@@ -364,6 +367,11 @@ class HyperparameterOptimizationError(ModelError):
     pass
 
 
+class ResourceError(QuantumSpectreError):
+    """Base class for resource-related errors."""
+    pass
+
+
 class GPUNotAvailableError(ResourceError):
     """Raised when GPU resources are requested but not available."""
     pass
@@ -393,9 +401,6 @@ class AlertError(MonitoringError):
     pass
 
 
-class ResourceError(QuantumSpectreError):
-    """Base class for resource-related errors."""
-    pass
 class ResourceExhaustionError(ResourceError):
     """Raised when a system resource (e.g., memory, disk, GPU) is exhausted."""
     pass

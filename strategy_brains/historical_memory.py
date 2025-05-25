@@ -2,8 +2,6 @@
 """Historical Memory mixin for strategy brains."""
 
 from collections import deque
-
-
 from typing import Deque, List
 
 import random
