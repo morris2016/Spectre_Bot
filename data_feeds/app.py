@@ -14,6 +14,8 @@ import asyncio
 import logging
 from typing import Dict, List, Any, Optional
 
+from common.event_bus import EventBus
+
 from common.logger import get_logger
 from common.metrics import MetricsCollector
 from common.exceptions import (
@@ -28,7 +30,7 @@ from data_feeds.deriv_feed import DerivFeed
 class DataFeedService:
     """Service for managing data feeds from various sources."""
     
-    def __init__(self, config, loop=None, redis_client=None, db_client=None):
+    def __init__(self, config, loop=None, redis_client=None, db_client=None, event_bus: Optional[EventBus] = None):
         """
         Initialize the data feed service.
         
@@ -43,6 +45,7 @@ class DataFeedService:
         self.redis_client = redis_client
         self.db_client = db_client
         self.logger = get_logger("DataFeedService")
+        self.event_bus = event_bus or EventBus.get_instance()
         
         # Feed state
         self.feeds = {}
@@ -118,7 +121,8 @@ class DataFeedService:
                 binance_feed = BinanceFeed(
                     config=feed_configs.get("binance", {}),
                     loop=self.loop,
-                    redis_client=self.redis_client
+                    redis_client=self.redis_client,
+                    event_bus=self.event_bus
                 )
                 self.feeds["binance"] = binance_feed
             except Exception as e:
@@ -132,7 +136,8 @@ class DataFeedService:
                 deriv_feed = DerivFeed(
                     config=feed_configs.get("deriv", {}),
                     loop=self.loop,
-                    redis_client=self.redis_client
+                    redis_client=self.redis_client,
+                    event_bus=self.event_bus
                 )
                 self.feeds["deriv"] = deriv_feed
             except Exception as e:
@@ -236,6 +241,6 @@ def create_app(config: Dict[str, Any]) -> DataFeedService:
         asyncio.set_event_loop(loop)
     
     # Initialize service
-    service = DataFeedService(config, loop=loop)
+    service = DataFeedService(config, loop=loop, event_bus=EventBus.get_instance())
     
     return service
