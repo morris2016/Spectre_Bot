@@ -703,6 +703,7 @@ class InsufficientLiquidityError(ExecutionError):
 
 
 class InsufficientBalanceError(ExecutionError):
+
     """Raised when account balance is too low to execute an order."""
     pass
 
@@ -1231,6 +1232,7 @@ __all__ = [
     'InsufficientBalanceError', 'RiskExceededError', 'PositionError', 'PositionExecutionError',
     'ModelRegistrationError', 'InvalidModelStateError',
     'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError',
+
     'ModelRegistrationError', 'InvalidModelStateError',
     'PositionError', 'InsufficientBalanceError', 'RiskExceededError',
 
@@ -1241,6 +1243,7 @@ __all__ = [
     'InsufficientBalanceError', 'PositionError', 'RiskExceededError',
     'ModelRegistrationError', 'ModelNotFoundError', 'DashboardError', 'InsufficientLiquidityError',
     'MarketDataError', 'CalculationError',
+
     'ArbitrageOpportunityExpiredError', 'DrawdownLimitExceededException',
     'MaxDrawdownExceededError',
     'RiskManagementException', 'ModelVersionError', 'LogAnalysisError',

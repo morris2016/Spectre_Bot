@@ -9,9 +9,8 @@ system components.
 
 import logging
 import importlib
-from typing import Callable, Dict, List, Any
+from typing import Any, Callable, Dict, List
 
-from typing import Dict, List, Any, Callable
 from pathlib import Path
 
 # Version information
@@ -244,3 +243,4 @@ __all__ = [
     "register_hook",
     "register_plugin"
 ]
+

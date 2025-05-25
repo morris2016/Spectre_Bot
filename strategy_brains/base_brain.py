@@ -40,7 +40,7 @@ class TradeDirection(Enum):
 class BrainConfig:
     """Base configuration for strategy brains."""
     pass
-    
+
 
     # Memory windows for performance tracking
     short_memory: int = 50
