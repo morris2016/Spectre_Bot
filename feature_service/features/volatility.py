@@ -995,6 +995,13 @@ class VolatilityFeatures(BaseFeature):
     # Add more volatility indicator calculation methods as needed
 
 
+class VolatilityAnalyzer:
+    """Lightweight wrapper exposing common volatility indicators."""
+
+    def atr(self, data: pd.DataFrame, period: int = 14) -> pd.Series:
+        return ta.atr(high=data['high'], low=data['low'], close=data['close'], length=period)
+
+
 def calculate_atr(high: Union[pd.Series, List[float]], low: Union[pd.Series, List[float]],
                   close: Union[pd.Series, List[float]], period: int = 14) -> pd.Series:
     """Standalone Average True Range calculation."""

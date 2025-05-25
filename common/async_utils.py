@@ -728,7 +728,26 @@ def timed_cache(ttl_seconds=300):
                     
             return result
             
-        return wrapper
+    return wrapper
+
+
+async def create_task_with_retry(
+    coro: Callable[..., Coroutine[Any, Any, R]],
+    *args: Any,
+    retries: int = 3,
+    delay: float = 1.0,
+    **kwargs: Any,
+) -> R:
+    """Run a coroutine with retry logic."""
+    attempt = 0
+    while True:
+        try:
+            return await coro(*args, **kwargs)
+        except Exception:
+            attempt += 1
+            if attempt > retries:
+                raise
+            await asyncio.sleep(delay * attempt)
         
     return decorator
 

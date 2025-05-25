@@ -47,7 +47,7 @@ import pkgutil
 import io
 import gzip
 import enum
-from typing import Dict, List, Any, Optional, Union, Callable, Tuple, Generator, Set, Type
+from typing import Dict, List, Any, Optional, Union, Callable, Tuple, Generator, Set, Type, Sequence
 from pathlib import Path
 from functools import wraps
 from contextlib import suppress, asynccontextmanager, contextmanager
@@ -2518,6 +2518,10 @@ def calculate_pivot_points(high: float, low: float, close: float) -> Dict[str, f
     }
 
 
+def pivot_points(high: float, low: float, close: float) -> Dict[str, float]:
+    """Alias for :func:`calculate_pivot_points`."""
+    return calculate_pivot_points(high, low, close)
+
 # Backward compatibility alias
 # Backwards compatibility alias
 
@@ -3409,6 +3413,36 @@ def create_directory_if_not_exists(path: str) -> str:
     """Create directory if it does not already exist."""
     return create_directory(path, exist_ok=True)
 
+
+ASSET_PRECISION_MAP = {
+    'BTC': 8,
+    'ETH': 8,
+    'USDT': 2,
+}
+
+
+def get_asset_precision(symbol: str) -> int:
+    """Return decimal precision for a trading symbol."""
+    return ASSET_PRECISION_MAP.get(symbol.upper(), 2)
+
+
+def calculate_zscore(data: Sequence[float]) -> float:
+    """Calculate the z-score of the latest data point."""
+    series = np.asarray(data, dtype=float)
+    return (series[-1] - series.mean()) / (series.std() + 1e-10)
+
+
+def detect_outliers(data: Sequence[float], threshold: float = 3.0) -> List[int]:
+    """Return indices of values beyond ``threshold`` standard deviations."""
+    series = np.asarray(data, dtype=float)
+    mean = series.mean()
+    std = series.std() + 1e-10
+    return [i for i, x in enumerate(series) if abs(x - mean) > threshold * std]
+
+
+def exponential_backoff(attempt: int, base_delay: float = 1.0, max_delay: float = 60.0) -> float:
+    """Calculate exponential backoff delay."""
+    return min(base_delay * (2 ** attempt), max_delay)
 
 def safe_nltk_download(resource: str, quiet: bool = True) -> bool:
     """Check for an NLTK resource without downloading.
@@ -4598,6 +4632,12 @@ __all__ = [
     'calculate_kelly_criterion', 'calculate_sharpe_ratio', 'calculate_sortino_ratio',
     'calculate_max_drawdown', 'calculate_calmar_ratio', 'z_score',
     'is_price_consolidating', 'is_breaking_out', 'calculate_pivot_points', 'pivot_points',
+    'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',
+    'calculate_distance', 'calculate_distance_percentage', 'memoize',
+    'is_higher_timeframe', 'threaded_calculation', 'create_batches',
+    'create_directory', 'create_directory_if_not_exists', 'get_asset_precision',
+    'calculate_zscore', 'detect_outliers', 'exponential_backoff',
+
     'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',
     'calculate_distance', 'calculate_distance_percentage', 'memoize',
     'is_higher_timeframe', 'threaded_calculation', 'create_batches',

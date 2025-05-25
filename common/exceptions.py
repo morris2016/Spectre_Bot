@@ -67,6 +67,11 @@ class DataValidationError(DataError):
     pass
 
 
+class MarketDataError(DataError):
+    """Raised when market data retrieval fails or is invalid."""
+    pass
+
+
 class FeedError(QuantumSpectreError):
     """Base class for feed-related errors."""
     pass
@@ -191,6 +196,11 @@ class InsufficientFundsError(OrderError):
     pass
 
 
+class InsufficientBalanceError(OrderError):
+    """Raised when the account balance is too low to execute an action."""
+    pass
+
+
 class PositionError(ExecutionError):
     """Base class for position-related errors."""
     pass
@@ -260,6 +270,11 @@ class RiskLimitExceededError(RiskError):
 
 
 class RiskExceededError(RiskError):
+    """Raised when a proposed trade exceeds defined risk parameters."""
+    pass
+
+
+
     """Raised when calculated risk exceeds configured maximum."""
     pass
 
@@ -295,9 +310,6 @@ class InvalidPositionStateError(PositionError):
 class MaxDrawdownExceededError(RiskError):
     """Raised when maximum drawdown is exceeded."""
     pass
-
-
-
 
 
 class BacktestError(QuantumSpectreError):
@@ -553,6 +565,11 @@ class InvalidTimeframeError(QuantumSpectreError):
 
 class InvalidParameterError(QuantumSpectreError):
     """Raised when an invalid parameter is provided to a function or method."""
+    pass
+
+
+class CalculationError(QuantumSpectreError):
+    """Raised when a numerical calculation fails."""
     pass
 # --- Auto-generated missing exceptions ---
 
@@ -1158,11 +1175,16 @@ __all__ = [
     'QuantumSpectreError', 'ConfigurationError', 'ServiceError', 'ServiceStartupError',
     'ServiceShutdownError', 'SystemCriticalError', 'DataError', 'DataIngestionError',
     'DataProcessorError', 'ProcessorNotFoundError', 'SourceNotFoundError', 'DataValidationError',
+    'MarketDataError',
     'FeedError', 'FeedConnectionError', 'BlockchainConnectionError', 'FeedDisconnectedError',
     'FeedTimeoutError', 'FeedRateLimitError', 'DatabaseError', 'DatabaseConnectionError',
     'DatabaseQueryError', 'RedisError', 'RedisConnectionError', 'SecurityError',
     'APIKeyError', 'AuthenticationError', 'AuthorizationError', 'ExecutionError',
     'OrderError', 'OrderRejectedError', 'OrderTimeoutError', 'InsufficientFundsError',
+    'InsufficientBalanceError',
+    'InvalidOrderError', 'OrderCancellationError', 'SlippageExceededError', 'NetworkError',
+    'RiskError', 'RiskLimitExceededError', 'RiskExceededError', 'BacktestError', 'ModelError',
+    'ModelTrainingError', 'ModelPredictionError', 'StrategyError', 'SignalGenerationError',
     'InsufficientBalanceError', 'PositionError', 'PositionExecutionError',
     'InvalidPositionStateError', 'ModelRegistrationError', 'InvalidModelStateError',
     'InsufficientBalanceError', 'PositionError',
@@ -1200,7 +1222,7 @@ __all__ = [
     'ModelLoadError', 'ModelSaveError', 'DataParsingError', 'CredentialError', 'SecurityViolationError',
     'RegimeDetectionError', 'NewsFeedError', 'NewsParsingError', 'NewsSourceUnavailableError',
     'FeatureNotFoundError', 'FeatureCalculationError', 'FeatureServiceError',
-    'InvalidTimeframeError', 'InvalidParameterError', 'AlertDeliveryError',
+    'InvalidTimeframeError', 'InvalidParameterError', 'CalculationError', 'AlertDeliveryError',
     'AlertConfigurationError', 'RiskManagerError', 'PositionSizingError', 'StopLossError',
 
     'PositionError', 'PositionExecutionError', 'InvalidPositionStateError', 'InsufficientBalanceError',
