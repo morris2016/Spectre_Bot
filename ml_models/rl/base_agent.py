@@ -5,7 +5,11 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from typing import Any
-import torch
+
+try:
+    import torch
+except ImportError:  # pragma: no cover - optional dependency
+    torch = None  # type: ignore
 
 
 class BaseAgent(ABC):
@@ -29,9 +33,13 @@ class BaseAgent(ABC):
         """Update internal model and return loss."""
 
     def save_model(self, path: str) -> None:
+        if torch is None:
+            raise RuntimeError("PyTorch is required to save RL agents")
         torch.save(self, path)
 
     def load_model(self, path: str) -> None:
+        if torch is None:
+            raise RuntimeError("PyTorch is required to load RL agents")
         loaded = torch.load(path)
         self.__dict__.update(loaded.__dict__)
 

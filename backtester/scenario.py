@@ -25,6 +25,14 @@ from common.exceptions import BacktestScenarioError, DataNotFoundError
 from common.constants import TIMEFRAMES, MARKET_REGIMES, VOLATILITY_LEVELS, SCENARIO_TYPES
 from common.utils import create_unique_id, load_json_file, save_json_file
 from data_storage.models.market_data import MarketRegime
+from dataclasses import dataclass
+
+
+@dataclass
+class Scenario:
+    """Minimal scenario definition for test compatibility."""
+    scenario_type: str
+    parameters: dict
 
 logger = logging.getLogger(__name__)
 
