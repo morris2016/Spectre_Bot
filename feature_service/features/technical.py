@@ -847,7 +847,6 @@ def calculate_stochastic(high: pd.Series, low: pd.Series, close: pd.Series, k_pe
     })
     return df
 
-
 __all__ = [
     'TechnicalFeatures', 'calculate_technical_features',
     'calculate_rsi', 'calculate_macd',
