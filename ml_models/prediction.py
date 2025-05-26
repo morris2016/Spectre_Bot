@@ -24,7 +24,10 @@ import joblib
 from collections import defaultdict
 
 # ML Libraries
-import tensorflow as tf
+try:
+    import tensorflow as tf  # type: ignore
+except Exception:  # pragma: no cover - optional dependency
+    tf = None  # type: ignore
 import torch
 import torch.nn as nn
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler

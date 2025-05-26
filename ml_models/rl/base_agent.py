@@ -3,12 +3,12 @@
 
 from __future__ import annotations
 
-import abc
+from abc import ABC, abstractmethod
 from typing import Any
 import torch
 
 
-class BaseAgent(abc.ABC):
+class BaseAgent(ABC):
     """Abstract base class for RL agents."""
 
     def __init__(self, state_dim: int, action_dim: int, config: dict | None = None):
@@ -16,15 +16,15 @@ class BaseAgent(abc.ABC):
         self.action_dim = action_dim
         self.config = config or {}
 
-    @abc.abstractmethod
+    @abstractmethod
     def select_action(self, state: Any) -> int:
         """Select an action given a state."""
 
-    @abc.abstractmethod
+    @abstractmethod
     def store_transition(self, state: Any, action: int, reward: float, next_state: Any, done: bool) -> None:
         """Store experience in replay buffer."""
 
-    @abc.abstractmethod
+    @abstractmethod
     def update_model(self) -> float | None:
         """Update internal model and return loss."""
 
@@ -34,9 +34,6 @@ class BaseAgent(abc.ABC):
     def load_model(self, path: str) -> None:
         loaded = torch.load(path)
         self.__dict__.update(loaded.__dict__)
-
-from abc import ABC, abstractmethod
-from typing import Any
 
 
 class RLAgent(ABC):
