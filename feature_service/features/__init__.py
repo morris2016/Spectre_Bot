@@ -334,3 +334,17 @@ __all__ = [
     'pattern',
     'cross_asset'
 ]
+
+from .volume import (
+    analyze_volume_profile,
+    detect_volume_climax,
+    calculate_volume_profile,
+)
+from .pattern import detect_patterns
+
+__all__.extend([
+    'analyze_volume_profile',
+    'detect_volume_climax',
+    'calculate_volume_profile',
+    'detect_patterns',
+])
