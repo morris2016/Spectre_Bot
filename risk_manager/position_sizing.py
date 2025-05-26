@@ -1191,4 +1191,9 @@ def get_position_sizer(name: str, *args, **kwargs) -> BasePositionSizer:
         raise ValueError(f"Unknown position sizer: {name}")
     return cls(*args, **kwargs)
 
-__all__ = ["BasePositionSizer", "get_position_sizer"]
+
+class PositionSizer(PositionSizing):
+    """Alias for backward compatibility."""
+    pass
+
+__all__ = ["BasePositionSizer", "get_position_sizer", "PositionSizer"]
