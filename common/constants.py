@@ -1982,6 +1982,13 @@ DATA_SOURCES = {
     "SIMULATION": "simulation"
 }
 
+
+class DataSourcePreference(enum.Enum):
+    """Preferred order for fetching historical data."""
+
+    DB_FIRST = "db_first"
+    FEED_FIRST = "feed_first"
+
 SYSTEM_COMPONENT_TYPES = {
     "SERVICE": "service",
     "DATABASE": "database",

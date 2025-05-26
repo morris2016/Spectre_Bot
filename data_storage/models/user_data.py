@@ -35,6 +35,37 @@ from common.constants import (
 from common.exceptions import ModelValidationError
 from data_storage.models.market_data import Base, TimestampMixin, Auditable, SoftDeleteMixin
 
+
+@dataclass
+class UserPreferences:
+    """Data class representing user risk preferences and trading profile."""
+
+    user_id: str
+    risk_profile: str
+    max_drawdown_threshold: float
+    risk_per_trade: float
+    leverage_preference: float
+    recovery_aggressiveness: float
+    auto_compound: bool
+    capital_allocation_strategy: str
+    created_at: float
+    updated_at: float
+
+
+@dataclass
+class UserCapitalSettings:
+    """Data class representing user capital management configuration."""
+
+    user_id: str
+    max_position_size_percentage: float
+    min_position_size: float
+    kelly_criterion_modifier: float
+    max_correlated_exposure: float
+    reserve_percentage: float
+    profit_distribution: Dict[str, float]
+    created_at: float
+    updated_at: float
+
 # User preference category enum
 class PreferenceCategory(enum.Enum):
     """Categories for user preferences."""
@@ -943,6 +974,7 @@ class Position(Base, TimestampMixin):
     leverage = Column(Float, nullable=True)
     notes = Column(Text, nullable=True)
     position_metadata = Column(JSONB, nullable=True)  # Renamed from metadata to avoid conflict
+
     
     # Relationships
     user = relationship("User")

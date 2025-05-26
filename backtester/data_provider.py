@@ -18,7 +18,7 @@ import pandas as pd
 from concurrent.futures import ThreadPoolExecutor
 
 from common.logger import get_logger
-from common.constants import TIME_FRAMES, DATA_SOURCES
+from common.constants import TIME_FRAMES, DataSourcePreference
 from common.exceptions import (
     DataSourceError, DataInsufficientError, InvalidAssetError
 )
@@ -113,7 +113,7 @@ class BacktestDataProvider:
         include_orderbook: bool = False,
         include_ticks: bool = False,
         include_sentiment: bool = False,
-        data_source: str = DATA_SOURCES.DB_FIRST
+        data_source: str = DataSourcePreference.DB_FIRST
     ) -> bool:
         """
         Load historical data for the specified assets, timeframes, and date range.
@@ -230,7 +230,7 @@ class BacktestDataProvider:
         timeframe: str, 
         start_date: datetime.datetime,
         end_date: datetime.datetime,
-        data_source: str = DATA_SOURCES.DB_FIRST
+        data_source: str = DataSourcePreference.DB_FIRST
     ) -> pd.DataFrame:
         """
         Load OHLCV data for a specific asset and timeframe.
@@ -259,7 +259,7 @@ class BacktestDataProvider:
         # Try different data sources based on preference
         df = None
         
-        if data_source == DATA_SOURCES.DB_FIRST:
+        if data_source == DataSourcePreference.DB_FIRST:
             # Try database first
             try:
                 df = await self.time_series_db.get_ohlcv(
@@ -309,7 +309,7 @@ class BacktestDataProvider:
                         f"Feed retrieval failed for {asset} {timeframe}: {str(e)}"
                     )
         
-        elif data_source == DATA_SOURCES.FEED_FIRST:
+        elif data_source == DataSourcePreference.FEED_FIRST:
             # Try feed client first
             try:
                 feed_client = self._get_feed_for_asset(asset)
@@ -409,7 +409,7 @@ class BacktestDataProvider:
         asset: str, 
         start_date: datetime.datetime,
         end_date: datetime.datetime,
-        data_source: str = DATA_SOURCES.DB_FIRST
+        data_source: str = DataSourcePreference.DB_FIRST
     ) -> Dict[pd.Timestamp, pd.DataFrame]:
         """
         Load order book snapshots for a specific asset.
@@ -433,7 +433,7 @@ class BacktestDataProvider:
         # Try different data sources based on preference
         orderbooks = None
         
-        if data_source == DATA_SOURCES.DB_FIRST:
+        if data_source == DataSourcePreference.DB_FIRST:
             # Try database first
             try:
                 orderbooks = await self.time_series_db.get_orderbook_snapshots(
@@ -479,7 +479,7 @@ class BacktestDataProvider:
                         f"Feed retrieval failed for {asset} orderbooks: {str(e)}"
                     )
         
-        elif data_source == DATA_SOURCES.FEED_FIRST:
+        elif data_source == DataSourcePreference.FEED_FIRST:
             # Try feed client first
             try:
                 feed_client = self._get_feed_for_asset(asset)
@@ -541,7 +541,7 @@ class BacktestDataProvider:
         asset: str, 
         start_date: datetime.datetime,
         end_date: datetime.datetime,
-        data_source: str = DATA_SOURCES.DB_FIRST
+        data_source: str = DataSourcePreference.DB_FIRST
     ) -> pd.DataFrame:
         """
         Load tick data for a specific asset.
@@ -565,7 +565,7 @@ class BacktestDataProvider:
         # Try different data sources based on preference
         ticks = None
         
-        if data_source == DATA_SOURCES.DB_FIRST:
+        if data_source == DataSourcePreference.DB_FIRST:
             # Try database first
             try:
                 ticks = await self.time_series_db.get_ticks(
@@ -611,7 +611,7 @@ class BacktestDataProvider:
                         f"Feed retrieval failed for {asset} ticks: {str(e)}"
                     )
         
-        elif data_source == DATA_SOURCES.FEED_FIRST:
+        elif data_source == DataSourcePreference.FEED_FIRST:
             # Try feed client first
             try:
                 feed_client = self._get_feed_for_asset(asset)
@@ -689,7 +689,7 @@ class BacktestDataProvider:
         asset: str, 
         start_date: datetime.datetime,
         end_date: datetime.datetime,
-        data_source: str = DATA_SOURCES.DB_FIRST
+        data_source: str = DataSourcePreference.DB_FIRST
     ) -> pd.DataFrame:
         """
         Load sentiment data for a specific asset.
@@ -1355,4 +1355,8 @@ class BacktestDataProvider:
         self.sentiment_cache = {}
         self.data_loaded = False
         self.logger.info("Cache cleared")
+
+
+# Backwards compatibility
+DataProvider = BacktestDataProvider
 
