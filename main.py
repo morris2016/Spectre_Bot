@@ -30,6 +30,7 @@ import ssl
 import socket
 import importlib
 import socket
+from common.utils import safe_nltk_download
 
 # Internal imports
 from config import Config, load_config
@@ -633,46 +634,15 @@ def setup_nltk_data():
     nltk_data_dir = os.path.expanduser("~/.nltk_data")
     nltk.data.path.insert(0, nltk_data_dir)
 
-    # Helper to download packages with a short timeout to avoid hangs in offline environments
-    def download_nltk_package(name: str, timeout: int = 10) -> bool:
-        """Attempt to download an NLTK package with a timeout."""
-        original_timeout = socket.getdefaulttimeout()
-        socket.setdefaulttimeout(timeout)
-        try:
-            success = nltk.download(name, quiet=True, raise_on_error=False, halt_on_error=False)
-            if success:
-                logger.info(f"Successfully downloaded NLTK package '{name}'")
-                return True
-            logger.error(f"Failed to download NLTK package '{name}'")
-            return False
-        except Exception as e:
-            logger.error(f"Failed to download NLTK package '{name}': {str(e)}")
-            return False
-        finally:
-            socket.setdefaulttimeout(original_timeout)
-
-    # Check each package
+    # Check that required NLTK resources are available locally without attempting network downloads
     for package in required_packages:
-        try:
-            nltk.data.find(f'tokenizers/{package}' if package == 'punkt' else f'corpora/{package}')
-            logger.debug(f"NLTK package '{package}' found locally")
-        except LookupError:
-            logger.warning(f"NLTK package '{package}' not found locally, attempting to download")
-
-            try:
-                downloaded = nltk.download(package, quiet=True)
-                if downloaded:
-                    logger.info(f"Successfully downloaded NLTK package '{package}'")
-                else:
-                    logger.error(f"Failed to download NLTK package '{package}'")
-                    logger.warning(
-                        f"System will continue without NLTK package '{package}', some NLP features may be limited"
-                    )
-            except Exception as e:
-                logger.error(f"Failed to download NLTK package '{package}': {str(e)}")
-                logger.warning(
-                    f"System will continue without NLTK package '{package}', some NLP features may be limited"
-                )
+        resource = f"tokenizers/{package}" if package == 'punkt' else f"corpora/{package}"
+        if safe_nltk_download(resource):
+            logger.debug(f"NLTK package '{package}' available")
+        else:
+            logger.warning(
+                f"NLTK package '{package}' not available; some NLP features may be limited"
+            )
 
     logger.info("NLTK setup complete")
 

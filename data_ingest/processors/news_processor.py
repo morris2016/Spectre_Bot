@@ -94,10 +94,11 @@ class NewsDataProcessor(DataProcessor):
             import nltk
             from nltk.sentiment.vader import SentimentIntensityAnalyzer
             
-            # Download required NLTK data
-            nltk.download('vader_lexicon', quiet=True)
-            nltk.download('punkt', quiet=True)
-            nltk.download('stopwords', quiet=True)
+            # Ensure required NLTK data is available without network downloads
+            from common.utils import safe_nltk_download
+            safe_nltk_download('vader_lexicon')
+            safe_nltk_download('tokenizers/punkt')
+            safe_nltk_download('stopwords')
             
             # Initialize sentiment analyzer
             self.nlp = {
