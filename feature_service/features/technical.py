@@ -859,7 +859,8 @@ def calculate_stochastic(high: pd.Series, low: pd.Series, close: pd.Series, k_pe
 
 
 def calculate_obv(close: pd.Series, volume: pd.Series) -> pd.Series:
-    """Standalone On-Balance Volume calculation."""
+    """Calculate On-Balance Volume."""
+
     obv = pd.Series(index=close.index, dtype=float)
     obv.iloc[0] = 0
     for i in range(1, len(close)):
@@ -872,8 +873,8 @@ def calculate_obv(close: pd.Series, volume: pd.Series) -> pd.Series:
     return obv
 
 
-def detect_divergence(price: pd.Series, indicator: pd.Series, secondary: pd.Series | None = None,
-                      volume: pd.Series | None = None, lookback: int = 14) -> pd.DataFrame:
+def detect_divergence(price: pd.Series, indicator: pd.Series, lookback: int = 14) -> pd.Series:
+
     """Basic divergence detection between price and an indicator."""
     diff_price = price.diff()
     diff_ind = indicator.diff()

@@ -118,16 +118,16 @@ class PPOAgent(RLAgent):
             self.states.append(state)
             self.actions.append(action)
             return action
+        probs = self.policy(np.asarray(state))
+        if test_mode:
+            action = int(np.argmax(probs))
         else:
-            probs = self.policy(np.asarray(state))
-            if test_mode:
-                action = int(np.argmax(probs))
-            else:
-                action = int(np.random.choice(len(probs), p=probs))
-            self.log_probs.append(np.log(probs[action]))
-            self.states.append(np.asarray(state))
-            self.actions.append(action)
-            return action
+            action = int(np.random.choice(len(probs), p=probs))
+        self.log_probs.append(np.log(probs[action]))
+        self.states.append(np.asarray(state))
+        self.actions.append(action)
+        return action
+
 
     def store_reward(self, reward: float, done: bool) -> None:
         self.rewards.append(reward)

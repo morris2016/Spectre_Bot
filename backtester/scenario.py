@@ -30,7 +30,8 @@ from dataclasses import dataclass
 
 @dataclass
 class Scenario:
-    """Minimal scenario definition for test compatibility."""
+    """Minimal scenario definition for unit tests."""
+
     scenario_type: str
     parameters: dict
 
