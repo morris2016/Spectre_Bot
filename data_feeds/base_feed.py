@@ -37,6 +37,7 @@ class BaseFeed(ABC):
         self.redis_client = redis_client
         self.event_bus = event_bus or EventBus.get_instance()
         self.logger = get_logger(self.__class__.__name__)
+        self.event_bus = event_bus or EventBus.get_instance()
         
         # Feed state
         self.running = False
@@ -170,6 +171,8 @@ class BaseFeed(ABC):
                 self.metrics.increment("data.published")
                 self.data_stats["published"] += 1
 
+            # Publish over the event bus
+            await self.event_bus.publish(channel, data)
             # Publish to EventBus
             if self.event_bus:
                 await self.event_bus.publish(channel, data)

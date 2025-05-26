@@ -59,6 +59,7 @@ from common.metrics import (
 from common.redis_client import RedisClient
 
 from data_feeds.base_feed import BaseFeed, FeedOptions, DataProcessor
+from common.event_bus import EventBus
 from data_ingest.processor import normalize_instrument_id
 
 # Set up logger
@@ -830,7 +831,7 @@ class DerivFeed(BaseFeed):
     trading results.
     """
     
-    def __init__(self, credentials: DerivCredentials, options: Optional[DerivFeedOptions] = None):
+    def __init__(self, credentials: DerivCredentials, options: Optional[DerivFeedOptions] = None, event_bus: Optional[EventBus] = None):
         """
         Initialize the Deriv feed with the provided credentials and options.
         
@@ -841,7 +842,7 @@ class DerivFeed(BaseFeed):
         self.credentials = credentials
         self.options = options or DerivFeedOptions()
         
-        super().__init__(name="deriv", options=self.options)
+        super().__init__(name="deriv", options=self.options, event_bus=event_bus)
         
         # Platform and market state trackers
         self.connections = {}

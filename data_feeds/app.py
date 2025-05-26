@@ -14,6 +14,8 @@ import asyncio
 import logging
 from typing import Dict, List, Any, Optional
 
+from common.event_bus import EventBus
+
 from common.logger import get_logger
 from common.metrics import MetricsCollector
 from common.event_bus import EventBus
@@ -45,6 +47,7 @@ class DataFeedService:
         self.db_client = db_client
         self.event_bus = event_bus or EventBus.get_instance()
         self.logger = get_logger("DataFeedService")
+        self.event_bus = event_bus or EventBus.get_instance()
         
         # Feed state
         self.feeds = {}
