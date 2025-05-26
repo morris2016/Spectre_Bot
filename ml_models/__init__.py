@@ -21,9 +21,19 @@ __version__ = '1.0.0'
 
 # Import core components to make them available at package level
 from ml_models.model_manager import ModelManager
-from ml_models.training import ModelTrainer
-from ml_models.prediction import PredictionEngine
+try:
+    from ml_models.prediction import PredictionEngine
+except Exception as exc:  # pragma: no cover - optional dependency
+    PredictionEngine = None  # type: ignore
+    logger.warning("PredictionEngine unavailable: %s", exc)
 from ml_models.feature_importance import FeatureImportanceAnalyzer
+
+try:
+    from ml_models.training import ModelTrainer
+except Exception as exc:  # pragma: no cover - optional dependency
+    ModelTrainer = None  # type: ignore
+    logger.warning("ModelTrainer unavailable: %s", exc)
+
 from ml_models.rl.trainer import RLTradingAgent
 from ml_models.rl import RLAgent, DQNAgent, PPOAgent
 

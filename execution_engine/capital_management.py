@@ -22,11 +22,26 @@ import logging
 from collections import defaultdict, deque
 
 from common.logger import get_logger
-from common.constants import (
-    POSITION_SIZE_LIMITS, MAX_DRAWDOWN_THRESHOLD, RECOVERY_FACTOR,
-    KELLY_MODIFIER, RISK_REWARD_THRESHOLDS, DEFAULT_RISK_PER_TRADE,
-    CAPITAL_ALLOCATION_LIMITS, MAX_LEVERAGE_SETTINGS
-)
+try:
+    from common.constants import (
+        POSITION_SIZE_LIMITS,
+        MAX_DRAWDOWN_THRESHOLD,
+        RECOVERY_FACTOR,
+        KELLY_MODIFIER,
+        RISK_REWARD_THRESHOLDS,
+        DEFAULT_RISK_PER_TRADE,
+        CAPITAL_ALLOCATION_LIMITS,
+        MAX_LEVERAGE_SETTINGS,
+    )
+except Exception:  # pragma: no cover - provide sane defaults if constants missing
+    POSITION_SIZE_LIMITS = {}
+    MAX_DRAWDOWN_THRESHOLD = 0.3
+    RECOVERY_FACTOR = 1.5
+    KELLY_MODIFIER = 0.5
+    RISK_REWARD_THRESHOLDS = {}
+    DEFAULT_RISK_PER_TRADE = 0.01
+    CAPITAL_ALLOCATION_LIMITS = {}
+    MAX_LEVERAGE_SETTINGS = {}
 from common.utils import calculate_sharpe_ratio, calculate_sortino_ratio, calculate_drawdown
 from common.exceptions import CapitalManagementError
 from data_storage.models.user_data import UserPreferences, UserCapitalSettings

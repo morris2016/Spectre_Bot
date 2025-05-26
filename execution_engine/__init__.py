@@ -118,7 +118,7 @@ from execution_engine.order_manager import OrderManager
 from execution_engine.position_manager import PositionManager
 from execution_engine.risk_manager import RiskManager
 from execution_engine.adaptive_executor import AdaptiveExecutor
-from execution_engine.microstructure import Microstructure
+from execution_engine.microstructure import MicrostructureAnalyzer as Microstructure
 from execution_engine.capital_management import CapitalManagement
 from execution_engine.app import ExecutionEngine
 

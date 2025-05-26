@@ -17,7 +17,7 @@ from common.exceptions import FeedError, FeedConnectionError, FeedDisconnectedEr
 from common.metrics import MetricsCollector
 from common.event_bus import EventBus
 from dataclasses import dataclass, field
-from typing import Dict, List, Any, Optional, Set, Callable, Union
+from typing import Callable, Dict, List, Optional, Set, Tuple, Union, Any
 
 
 class BaseFeed(ABC):
@@ -333,6 +333,26 @@ class MarketData:
     low: float
     close: float
     volume: float
+
+
+@dataclass
+class OrderBookData:
+    """Simplified order book snapshot used for microstructure analysis."""
+    timestamp: float
+    bids: List[Tuple[float, float]]
+    asks: List[Tuple[float, float]]
+    update_id: Optional[str] = None
+
+
+@dataclass
+class TradeData:
+    """Trade information container used by execution components."""
+    timestamp: float
+    price: float
+    quantity: float
+    is_buyer_maker: bool
+    trade_id: Optional[str] = None
+    side: Optional[str] = None
 
 
 class DataProcessor:
