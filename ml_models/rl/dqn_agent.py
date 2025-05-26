@@ -4,11 +4,6 @@
 from __future__ import annotations
 
 import random
-from collections import deque
-=======
-from __future__ import annotations
-
-import random
 from collections import deque, namedtuple
 from typing import Any
 
@@ -20,42 +15,7 @@ import torch.optim as optim
 from .base_agent import BaseAgent
 
 
-class DQNAgent(BaseAgent):
-    """Deep Q-Network agent."""
-
-    def __init__(self, state_dim: int, action_dim: int, config: dict | None = None):
-        super().__init__(state_dim, action_dim, config)
-        self.gamma = self.config.get("gamma", 0.99)
-        self.epsilon = self.config.get("epsilon", 1.0)
-        self.epsilon_min = self.config.get("epsilon_min", 0.01)
-        self.epsilon_decay = self.config.get("epsilon_decay", 0.995)
-        self.batch_size = self.config.get("batch_size", 32)
-        self.lr = self.config.get("lr", 1e-3)
-        self.memory = deque(maxlen=self.config.get("memory_size", 10000))
-
-        self.model = nn.Sequential(
-            nn.Linear(state_dim, 64),
-            nn.ReLU(),
-            nn.Linear(64, 64),
-            nn.ReLU(),
-            nn.Linear(64, action_dim),
-        )
-        self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
-        self.loss_fn = nn.MSELoss()
-
-    def select_action(self, state: Any) -> int:
-        if np.random.rand() < self.epsilon:
-            return random.randrange(self.action_dim)
-        state_t = torch.FloatTensor(state).unsqueeze(0)
-        with torch.no_grad():
-            q_values = self.model(state_t)
-        return int(torch.argmax(q_values).item())
-
-    def store_transition(self, state: Any, action: int, reward: float, next_state: Any, done: bool) -> None:
-        self.memory.append((state, action, reward, next_state, done))
-
 import torch.nn.functional as F
-import torch.optim as optim
 
 from .base_agent import RLAgent
 
