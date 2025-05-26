@@ -100,7 +100,7 @@ class PPOAgent(RLAgent):
 
         self.states: List[Any] = []
         self.actions: List[int] = []
-        self.log_probs: List[torch.Tensor] = []
+        self.log_probs: List[Any] = []
         self.rewards: List[float] = []
         self.dones: List[bool] = []
 
@@ -127,6 +127,7 @@ class PPOAgent(RLAgent):
         self.states.append(np.asarray(state))
         self.actions.append(action)
         return action
+
 
     def store_reward(self, reward: float, done: bool) -> None:
         self.rewards.append(reward)

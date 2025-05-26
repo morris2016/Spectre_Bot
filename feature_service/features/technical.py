@@ -767,12 +767,22 @@ class TechnicalFeatures(BaseFeature):
             
             # Channel width as volatility measure
             result['keltner_width'] = (result['keltner_upper'] - result['keltner_lower']) / result['keltner_middle']
-            
+
             return result
         except Exception as e:
             logger.error(f"Error calculating Keltner Channels: {str(e)}")
             return pd.DataFrame(index=data.index)
-    
+
+    def _calculate_obv(self, data: pd.DataFrame) -> pd.DataFrame:
+        """Calculate On-Balance Volume."""
+        try:
+            result = pd.DataFrame(index=data.index)
+            result["obv"] = calculate_obv(data["close"], data["volume"])
+            return result
+        except Exception as e:
+            logger.error(f"Error calculating OBV: {str(e)}")
+            return pd.DataFrame(index=data.index)
+
     # Add more indicator calculation methods as needed
 
 # Helper functions that might be implemented if needed by the technical indicators
@@ -850,6 +860,7 @@ def calculate_stochastic(high: pd.Series, low: pd.Series, close: pd.Series, k_pe
 
 def calculate_obv(close: pd.Series, volume: pd.Series) -> pd.Series:
     """Calculate On-Balance Volume."""
+
     obv = pd.Series(index=close.index, dtype=float)
     obv.iloc[0] = 0
     for i in range(1, len(close)):
@@ -863,6 +874,7 @@ def calculate_obv(close: pd.Series, volume: pd.Series) -> pd.Series:
 
 
 def detect_divergence(price: pd.Series, indicator: pd.Series, lookback: int = 14) -> pd.Series:
+
     """Basic divergence detection between price and an indicator."""
     diff_price = price.diff()
     diff_ind = indicator.diff()

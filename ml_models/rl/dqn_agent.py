@@ -21,6 +21,7 @@ except ImportError:  # pragma: no cover - optional dependency
     F = None  # type: ignore
     TORCH_AVAILABLE = False
 
+from .base_agent import BaseAgent
 from .base_agent import RLAgent
 
 # Constants
@@ -296,7 +297,21 @@ class DQNAgent(RLAgent):
             self.device = "cpu"
             self.memory = deque(maxlen=memory_size)
             self.weights = np.zeros((state_dim, action_dim))
+
         self.steps_done = 0
+
+        if TORCH_AVAILABLE:
+            if device is None:
+                self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            else:
+                self.device = torch.device(device)
+            self._setup_networks()
+            self._setup_memory(memory_size)
+            self.optimizer = optim.Adam(self.policy_net.parameters(), lr=learning_rate)
+        else:
+            self.device = "cpu"
+            self.memory = deque(maxlen=memory_size)
+            self.weights = np.zeros((state_dim, action_dim))
 
     def _setup_networks(self) -> None:
         if not TORCH_AVAILABLE:
@@ -330,6 +345,7 @@ class DQNAgent(RLAgent):
                     -self.steps_done / self.epsilon_decay
                 )
                 explore = False if self.noisy_nets else random.random() < epsilon
+
                 if explore:
                     return random.randint(0, self.action_dim - 1)
             with torch.no_grad():
@@ -337,6 +353,7 @@ class DQNAgent(RLAgent):
                 return int(q_values.max(1)[1].item())
         q_values = np.dot(state, self.weights)
         return int(np.argmax(q_values))
+
 
     def store_transition(self, state: Any, action: int, reward: float, next_state: Any, done: bool) -> None:
         if TORCH_AVAILABLE:
@@ -367,6 +384,7 @@ class DQNAgent(RLAgent):
                 else:
                     next_q = self.target_net(next_state_batch).max(1)[0].unsqueeze(1)
             target_q = reward_batch.unsqueeze(1) + (1 - done_batch.unsqueeze(1)) * self.gamma * next_q
+
             loss = F.mse_loss(q_values, target_q)
             self.optimizer.zero_grad()
             loss.backward()
@@ -380,6 +398,7 @@ class DQNAgent(RLAgent):
             target = reward + self.gamma * q_next
             self.weights[:, action] += self.learning_rate * (target - q_current) * state
         return 0.0
+
 
     def save(self, path: str) -> None:
         if TORCH_AVAILABLE:
