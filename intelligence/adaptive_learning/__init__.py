@@ -74,16 +74,16 @@ def _discover_adaptive_learners() -> None:
     """
     package_dir = Path(__file__).parent
     for (_, module_name, _) in pkgutil.iter_modules([str(package_dir)]):
-        # Import the module
-        module = importlib.import_module(f"{__name__}.{module_name}")
-        
-        # Find all classes in the module
+        try:
+            module = importlib.import_module(f"{__name__}.{module_name}")
+        except ImportError as exc:  # pragma: no cover - optional deps
+            logger.warning(f"Failed to import adaptive learner module {module_name}: {exc}")
+            continue
+
         for item_name in dir(module):
             item = getattr(module, item_name)
-            
-            # Check if it's a class and has the specific attribute
+
             if inspect.isclass(item) and hasattr(item, '_is_adaptive_learner'):
-                # Register the learner with its class name
                 register_adaptive_learner(item_name, item)
 
 # Auto-discover learners when the package is imported
