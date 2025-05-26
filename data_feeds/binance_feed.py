@@ -26,10 +26,10 @@ from common.async_utils import run_with_timeout
 
 class BinanceFeed(BaseFeed):
     """Feed implementation for Binance exchange."""
-    
-    def __init__(self, config, loop=None, redis_client=None):
+
+    def __init__(self, config, loop=None, redis_client=None, event_bus=None):
         """Initialize the Binance feed."""
-        super().__init__(config, loop, redis_client)
+        super().__init__(config, loop, redis_client, event_bus=event_bus)
         
         # Binance specific configuration
         self.api_key = self.config.get("api_key", "")

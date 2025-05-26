@@ -57,6 +57,10 @@ class DataIngestService:
         self.processors = {}
         self.sources = {}
         self.source_tasks = {}
+
+        # Pipeline tasks
+        self.processing_task = None
+        self.output_task = None
         
         # Data queues
         self.ingest_queue = asyncio.Queue()
@@ -150,7 +154,12 @@ class DataIngestService:
         self.logger.info("Loading data processors")
         
         # First, check configuration for explicitly enabled processors
-        processor_configs = self.config.data_ingest.get("processors", {})
+        ingest_cfg = getattr(self.config, "data_ingest", None)
+        if ingest_cfg is None:
+            self.logger.error("Configuration missing 'data_ingest' section")
+            raise ServiceStartupError("No data_ingest configuration provided")
+
+        processor_configs = ingest_cfg.get("processors", {})
         
         # Import processor modules
         try:
@@ -196,7 +205,12 @@ class DataIngestService:
         self.logger.info("Loading data sources")
         
         # Check configuration for explicitly enabled sources
-        source_configs = self.config.data_ingest.get("sources", {})
+        ingest_cfg = getattr(self.config, "data_ingest", None)
+        if ingest_cfg is None:
+            self.logger.error("Configuration missing 'data_ingest' section")
+            raise ServiceStartupError("No data_ingest configuration provided")
+
+        source_configs = ingest_cfg.get("sources", {})
         
         try:
             # Import all source modules for auto-discovery
