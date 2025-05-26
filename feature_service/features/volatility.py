@@ -32,10 +32,7 @@ def calculate_bollinger_bands(prices: pd.Series,
     return bb.iloc[:, 0], bb.iloc[:, 1], bb.iloc[:, 2]
 
 
-__all__ = [
-    'calculate_atr',
-    'calculate_bollinger_bands',
-]
+
 
 from common.utils import timeit, numpy_rolling_window
 from common.exceptions import FeatureCalculationError
@@ -1002,6 +999,17 @@ class VolatilityAnalyzer:
         return ta.atr(high=data['high'], low=data['low'], close=data['close'], length=period)
 
 
+class VolatilityCalculator:
+    """Simplified calculator that delegates to :class:`VolatilityFeatures`."""
+
+    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
+        self._features = VolatilityFeatures(config)
+
+    def calculate(self, data: pd.DataFrame) -> pd.DataFrame:
+        """Return a DataFrame with volatility indicators."""
+        return self._features.calculate_features(data)
+
+
 def calculate_atr(high: Union[pd.Series, List[float]], low: Union[pd.Series, List[float]],
                   close: Union[pd.Series, List[float]], period: int = 14) -> pd.Series:
     """Standalone Average True Range calculation."""
@@ -1035,15 +1043,11 @@ def calculate_volatility_features(data, config=None):
 
 __all__ = [
     "VolatilityFeatures",
+    "VolatilityAnalyzer",
+    "VolatilityCalculator",
     "calculate_volatility_features",
     "calculate_atr",
     "calculate_bollinger_bands",
-
-    'calculate_atr',
-    'calculate_bollinger_bands',
-    'calculate_volatility_features',
-    'VolatilityFeatures',
-
 ]
 
 # Module initialization

@@ -1506,6 +1506,16 @@ DRAWDOWN_PROTECTION_LEVELS = {
     "STOP_TRADING": 0.20 # 20% drawdown
 }
 
+# Default risk allocation used by drawdown protection
+DEFAULT_RISK_PERCENTAGE = 0.02  # 2% risk per trade
+
+# Thresholds for adjusting risk during recovery modes
+RECOVERY_MODE_THRESHOLDS = {
+    "CONSERVATIVE": 0.25,
+    "BALANCED": 0.50,
+    "AGGRESSIVE": 0.75,
+}
+
 MAX_ALLOWED_DRAWDOWN = 0.25  # 25% maximum allowed drawdown
 
 EXPOSURE_LIMITS = {

@@ -89,20 +89,25 @@ def register_all_components() -> None:
     for base_path in base_paths:
         try:
             package = importlib.import_module(base_path)
-            for _, name, is_pkg in pkgutil.iter_modules(package.__path__, package.__name__ + '.'):
-                if not is_pkg:
-                    try:
-                        module = importlib.import_module(name)
-                        # Register all classes in the module that are risk components
-                        for attr_name in dir(module):
-                            attr = getattr(module, attr_name)
-                            if isinstance(attr, type):
-                                for base_class, registry in registry_map.items():
-                                    if issubclass(attr, base_class) and attr != base_class:
-                                        registry.register(attr)
-                                        logger.debug(f"Registered {attr.__name__} to {registry}")
-                    except (ImportError, AttributeError) as e:
-                        logger.warning(f"Could not import module {name}: {e}")
+            if not hasattr(package, "__path__"):
+                # Module, not package - skip scanning submodules
+                modules = [package]
+            else:
+                modules = []
+                for _, name, is_pkg in pkgutil.iter_modules(package.__path__, package.__name__ + '.'):
+                    if not is_pkg:
+                        try:
+                            modules.append(importlib.import_module(name))
+                        except (ImportError, AttributeError) as e:
+                            logger.warning(f"Could not import module {name}: {e}")
+            for module in modules:
+                for attr_name in dir(module):
+                    attr = getattr(module, attr_name)
+                    if isinstance(attr, type):
+                        for base_class, registry in registry_map.items():
+                            if issubclass(attr, base_class) and attr != base_class:
+                                registry.register(attr)
+                                logger.debug(f"Registered {attr.__name__} to {registry}")
         except ImportError as e:
             logger.warning(f"Could not import base package {base_path}: {e}")
     

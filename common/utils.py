@@ -4212,6 +4212,20 @@ def calculate_distance(
     return np.sqrt((point2[0] - point1[0]) ** 2 + (point2[1] - point1[1]) ** 2)
 
 
+def float_round(value: float, precision: int = 2) -> float:
+    """Round a floating point number to a given precision."""
+    return round(float(value), precision)
+
+
+def calculate_trade_imbalance(buy_volumes: List[float], sell_volumes: List[float]) -> float:
+    """Compute normalized trade imbalance between buys and sells."""
+    total_buy = sum(buy_volumes)
+    total_sell = sum(sell_volumes)
+    if total_buy + total_sell == 0:
+        return 0.0
+    return (total_buy - total_sell) / (total_buy + total_sell)
+
+
 def is_higher_timeframe(higher_tf: str, lower_tf: str) -> bool:
     """
     Check if one timeframe is higher than another.
