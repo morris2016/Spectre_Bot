@@ -35,7 +35,7 @@ from data_storage.time_series import TimeSeriesDB
 from data_storage.market_data import MarketDataRepository
 
 from execution_engine.position_manager import PositionManager
-from execution_engine.microstructure import MarketMicrostructureAnalyzer
+from execution_engine.microstructure import MicrostructureAnalyzer
 from execution_engine.capital_management import CapitalManager
 
 from risk_manager.position_sizing import PositionSizer
@@ -120,7 +120,7 @@ class BacktestEngine:
         
         # Execution models
         self.position_manager = PositionManager()
-        self.microstructure_analyzer = MarketMicrostructureAnalyzer()
+        self.microstructure_analyzer = MicrostructureAnalyzer()
         self.capital_manager = CapitalManager(
             initial_capital=self.initial_capital,
             risk_per_trade=self.config.get('risk_per_trade', 0.02)
