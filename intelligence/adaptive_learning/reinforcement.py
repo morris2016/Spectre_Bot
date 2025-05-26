@@ -18,11 +18,20 @@ from typing import Dict, List, Tuple, Any, Optional, Union, Callable
 from dataclasses import dataclass
 import threading
 import queue
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
-from torch.distributions import Categorical, Normal
+try:
+    import torch  # type: ignore
+    import torch.nn as nn  # type: ignore
+    import torch.optim as optim  # type: ignore
+    import torch.nn.functional as F  # type: ignore
+    from torch.distributions import Categorical, Normal  # type: ignore
+    TORCH_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    torch = None  # type: ignore
+    nn = None  # type: ignore
+    optim = None  # type: ignore
+    F = None  # type: ignore
+    Categorical = Normal = None  # type: ignore
+    TORCH_AVAILABLE = False
 from collections import deque, namedtuple
 import random
 import gymnasium as gym
