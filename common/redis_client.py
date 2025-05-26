@@ -11,7 +11,12 @@ import time
 import asyncio
 from typing import Dict, List, Any, Optional, Union, Callable
 
-import redis.asyncio as redis
+try:
+    import redis.asyncio as redis  # type: ignore
+    REDIS_AVAILABLE = True
+except ImportError:  # pragma: no cover - optional dependency
+    redis = None  # type: ignore
+    REDIS_AVAILABLE = False
 
 from common.logger import get_logger
 from common.exceptions import RedisError, RedisConnectionError
