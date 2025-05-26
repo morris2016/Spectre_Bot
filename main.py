@@ -64,7 +64,7 @@ SERVICE_CLASS_PATHS = {
     "backtester": ("backtester.app", "BacktesterService"),
     "monitoring": ("monitoring.app", "MonitoringService"),
     "api_gateway": ("api_gateway.app", "APIGatewayService"),
-    "ui_server": ("ui.app", "UIService"),
+    "ui": ("ui.app", "UIService"),
     "voice_assistant": ("voice_assistant.app", "VoiceAssistantService"),
 }
 
