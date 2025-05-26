@@ -973,7 +973,8 @@ class Position(Base, TimestampMixin):
     margin = Column(Float, nullable=True)
     leverage = Column(Float, nullable=True)
     notes = Column(Text, nullable=True)
-    position_metadata = Column(JSONB, nullable=True)  # Renamed from metadata
+    position_metadata = Column(JSONB, nullable=True)  # Renamed from metadata to avoid conflict
+
     
     # Relationships
     user = relationship("User")

@@ -837,6 +837,7 @@ def calculate_adx(high: pd.Series, low: pd.Series, close: pd.Series, period: int
     return adx_df
 
 
+
 def calculate_stochastic(high: pd.Series, low: pd.Series, close: pd.Series, k_period: int = 14, d_period: int = 3) -> pd.DataFrame:
     """Standalone Stochastic Oscillator calculation."""
 
