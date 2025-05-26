@@ -138,7 +138,7 @@ repos:
     hooks:
       - id: codespell
         args: [
-          --skip="*.git,*.svg,*.lock,*.css,*.js",
+          '--skip=*.git,*.svg,*.lock,*.css,*.js',
           --ignore-words-list=nd,ot,thru
         ]
 
