@@ -954,6 +954,18 @@ def json_loads(s: str, **kwargs) -> Any:
         raise
 
 
+def load_json_file(path: str) -> Any:
+    """Load JSON data from a file."""
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def save_json_file(data: Any, path: str) -> None:
+    """Save JSON data to a file."""
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+
+
 def deep_update(original: Dict, update: Dict) -> Dict:
     """
     Recursively update a dictionary.
@@ -1135,6 +1147,15 @@ def chunks(lst: List[Any], n: int) -> Generator[List[Any], None, None]:
     """
     for i in range(0, len(lst), n):
         yield lst[i : i + n]
+
+
+def make_async(func: Callable) -> Callable:
+    """Convert a synchronous function into an asynchronous one."""
+
+    async def wrapper(*args: Any, **kwargs: Any) -> Any:
+        return func(*args, **kwargs)
+
+    return wrapper
 
 
 def filter_none_values(d: Dict) -> Dict:
@@ -1602,6 +1623,35 @@ def timer(func):
         return result
 
     return wrapper
+
+
+class Timer:
+    """Context manager for timing code blocks."""
+
+    def __init__(self, name: str = "") -> None:
+        self.name = name
+        self.start = 0.0
+        self.end = 0.0
+
+    def __enter__(self) -> "Timer":
+        self.start = time.time()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        self.end = time.time()
+        logger.debug(f"{self.name} took {self.end - self.start:.4f} seconds")
+
+
+def create_uuid() -> str:
+    """Generate a new UUID string."""
+
+    return UuidUtils.generate()
+
+
+def create_unique_id() -> str:
+    """Generate a short unique identifier."""
+
+    return UuidUtils.generate_short()
 
 
 # Retry with exponential backoff for async functions

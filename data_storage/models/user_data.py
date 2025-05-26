@@ -67,6 +67,7 @@ class UserCapitalSettings:
     created_at: float = field(default_factory=time.time)
     updated_at: float = field(default_factory=time.time)
 
+
 # User preference category enum
 class PreferenceCategory(enum.Enum):
     """Categories for user preferences."""
@@ -976,6 +977,7 @@ class Position(Base, TimestampMixin):
     leverage = Column(Float, nullable=True)
     notes = Column(Text, nullable=True)
     position_metadata = Column(JSONB, nullable=True)
+
     
     # Relationships
     user = relationship("User")

@@ -576,11 +576,9 @@ class StrategyGeneticHistory(Base):
 
 
 class PositionModel(Base):
-    """Minimal position model used for execution history."""
-    """Simplified model for executed positions."""
-    """Model for storing executed trading positions."""
+    """Simplified model for executed trading positions."""
 
-    __tablename__ = 'positions'
+    __tablename__ = 'strategy_positions'
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     strategy_id = Column(UUID(as_uuid=True), ForeignKey('strategies.id'))

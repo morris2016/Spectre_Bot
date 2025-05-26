@@ -142,6 +142,7 @@ repos:
           '--ignore-words-list=nd,ot,thru'
         ]
 
+
   # Dockerfile linting
   - repo: https://github.com/hadolint/hadolint
     rev: v2.12.0
