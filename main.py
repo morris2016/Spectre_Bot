@@ -21,6 +21,7 @@ import nltk
 import ssl
 import socket
 import importlib
+import socket
 
 # Internal imports
 from config import Config, load_config
@@ -498,7 +499,10 @@ async def initialize_db(config: Config) -> DatabaseClient:
     except Exception as e:
         logger.error(f"Failed to initialize database connection: {str(e)}")
         logger.error(traceback.format_exc())
-        raise SystemCriticalError("Database initialization failed") from e
+        logger.warning(
+            "Continuing without database connectivity; persistent storage will be unavailable"
+        )
+        return None
 
 async def initialize_redis(config: Config) -> RedisClient:
     """
@@ -533,7 +537,8 @@ async def initialize_redis(config: Config) -> RedisClient:
     except Exception as e:
         logger.error(f"Failed to initialize Redis connection: {str(e)}")
         logger.error(traceback.format_exc())
-        raise SystemCriticalError("Redis initialization failed") from e
+        logger.warning("Continuing without Redis; functionality may be limited")
+        return None
 
 async def initialize_credentials(config: Config) -> SecureCredentialManager:
     """
@@ -567,6 +572,16 @@ async def initialize_credentials(config: Config) -> SecureCredentialManager:
         logger.error(f"Failed to initialize secure credential manager: {str(e)}")
         logger.error(traceback.format_exc())
         raise SystemCriticalError("Security initialization failed") from e
+
+    """Download an NLTK package with a timeout."""
+    try:
+        socket.setdefaulttimeout(timeout)
+        return nltk.download(package, quiet=True)
+    except Exception as e:
+        logger.error(f"Error downloading NLTK package '{package}': {str(e)}")
+        return False
+    finally:
+        socket.setdefaulttimeout(None)
 
 
 def setup_nltk_data():
@@ -692,6 +707,7 @@ async def startup():
         logger.info("Credential manager initialized successfully")
 
         # Initialize Redis client
+
         try:
             redis_client = await initialize_redis(config)
             logger.info("Redis client initialized successfully")
