@@ -8,14 +8,18 @@ from collections import deque, namedtuple
 from typing import Any
 
 import numpy as np
-import torch
-import torch.nn as nn
-import torch.optim as optim
-
-from .base_agent import BaseAgent
-
-
-import torch.nn.functional as F
+try:
+    import torch
+    import torch.nn as nn
+    import torch.optim as optim
+    import torch.nn.functional as F
+    TORCH_AVAILABLE = True
+except ImportError:  # pragma: no cover - optional dependency
+    torch = None  # type: ignore
+    nn = None  # type: ignore
+    optim = None  # type: ignore
+    F = None  # type: ignore
+    TORCH_AVAILABLE = False
 
 from .base_agent import RLAgent
 
@@ -93,122 +97,151 @@ class PrioritizedReplayMemory:
         return len(self.memory)
 
 
-class DQN(nn.Module):
-    def __init__(self, state_dim: int, action_dim: int, hidden_dim: int = 128) -> None:
-        super().__init__()
-        self.fc1 = nn.Linear(state_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
-        self.fc3 = nn.Linear(hidden_dim, hidden_dim // 2)
-        self.fc4 = nn.Linear(hidden_dim // 2, action_dim)
+if TORCH_AVAILABLE:
+    class DQN(nn.Module):
+        def __init__(self, state_dim: int, action_dim: int, hidden_dim: int = 128) -> None:
+            super().__init__()
+            self.fc1 = nn.Linear(state_dim, hidden_dim)
+            self.fc2 = nn.Linear(hidden_dim, hidden_dim)
+            self.fc3 = nn.Linear(hidden_dim, hidden_dim // 2)
+            self.fc4 = nn.Linear(hidden_dim // 2, action_dim)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = F.relu(self.fc3(x))
-        return self.fc4(x)
+        def forward(self, x: torch.Tensor) -> torch.Tensor:
+            x = F.relu(self.fc1(x))
+            x = F.relu(self.fc2(x))
+            x = F.relu(self.fc3(x))
+            return self.fc4(x)
+else:
+    class DQN:
+        def __init__(self, state_dim: int, action_dim: int, hidden_dim: int = 128) -> None:
+            self.weights = np.zeros((state_dim, action_dim))
 
-
-class DuelingDQN(nn.Module):
-    def __init__(self, state_dim: int, action_dim: int, hidden_dim: int = 128) -> None:
-        super().__init__()
-        self.fc1 = nn.Linear(state_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
-        self.value_fc = nn.Linear(hidden_dim, hidden_dim // 2)
-        self.value = nn.Linear(hidden_dim // 2, 1)
-        self.advantage_fc = nn.Linear(hidden_dim, hidden_dim // 2)
-        self.advantage = nn.Linear(hidden_dim // 2, action_dim)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        value = F.relu(self.value_fc(x))
-        value = self.value(value)
-        advantage = F.relu(self.advantage_fc(x))
-        advantage = self.advantage(advantage)
-        return value + advantage - advantage.mean(dim=1, keepdim=True)
+        def __call__(self, x: np.ndarray) -> np.ndarray:
+            return x @ self.weights
 
 
-class NoisyLinear(nn.Module):
-    def __init__(self, in_features: int, out_features: int, std_init: float = 0.5) -> None:
-        super().__init__()
-        self.in_features = in_features
-        self.out_features = out_features
-        self.std_init = std_init
+if TORCH_AVAILABLE:
+    class DuelingDQN(nn.Module):
+        def __init__(self, state_dim: int, action_dim: int, hidden_dim: int = 128) -> None:
+            super().__init__()
+            self.fc1 = nn.Linear(state_dim, hidden_dim)
+            self.fc2 = nn.Linear(hidden_dim, hidden_dim)
+            self.value_fc = nn.Linear(hidden_dim, hidden_dim // 2)
+            self.value = nn.Linear(hidden_dim // 2, 1)
+            self.advantage_fc = nn.Linear(hidden_dim, hidden_dim // 2)
+            self.advantage = nn.Linear(hidden_dim // 2, action_dim)
 
-        self.weight_mu = nn.Parameter(torch.empty(out_features, in_features))
-        self.weight_sigma = nn.Parameter(torch.empty(out_features, in_features))
-        self.register_buffer("weight_epsilon", torch.empty(out_features, in_features))
-        self.bias_mu = nn.Parameter(torch.empty(out_features))
-        self.bias_sigma = nn.Parameter(torch.empty(out_features))
-        self.register_buffer("bias_epsilon", torch.empty(out_features))
-        self.reset_parameters()
-        self.reset_noise()
-
-    def reset_parameters(self) -> None:
-        mu_range = 1 / np.sqrt(self.weight_mu.size(1))
-        self.weight_mu.data.uniform_(-mu_range, mu_range)
-        self.weight_sigma.data.fill_(self.std_init / np.sqrt(self.weight_sigma.size(1)))
-        self.bias_mu.data.uniform_(-mu_range, mu_range)
-        self.bias_sigma.data.fill_(self.std_init / np.sqrt(self.bias_sigma.size(0)))
-
-    def reset_noise(self) -> None:
-        epsilon_in = self._scale_noise(self.in_features)
-        epsilon_out = self._scale_noise(self.out_features)
-        self.weight_epsilon.copy_(epsilon_out.outer(epsilon_in))
-        self.bias_epsilon.copy_(epsilon_out)
-
-    @staticmethod
-    def _scale_noise(size: int) -> torch.Tensor:
-        x = torch.randn(size)
-        return x.sign().mul_(x.abs().sqrt_())
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        if self.training:
-            weight = self.weight_mu + self.weight_sigma * self.weight_epsilon
-            bias = self.bias_mu + self.bias_sigma * self.bias_epsilon
-        else:
-            weight = self.weight_mu
-            bias = self.bias_mu
-        return F.linear(x, weight, bias)
+        def forward(self, x: torch.Tensor) -> torch.Tensor:
+            x = F.relu(self.fc1(x))
+            x = F.relu(self.fc2(x))
+            value = F.relu(self.value_fc(x))
+            value = self.value(value)
+            advantage = F.relu(self.advantage_fc(x))
+            advantage = self.advantage(advantage)
+            return value + advantage - advantage.mean(dim=1, keepdim=True)
+else:
+    class DuelingDQN(DQN):
+        pass
 
 
-class NoisyDQN(nn.Module):
-    def __init__(self, state_dim: int, action_dim: int, hidden_dim: int = 128) -> None:
-        super().__init__()
-        self.fc1 = nn.Linear(state_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
-        self.fc3 = NoisyLinear(hidden_dim, hidden_dim // 2)
-        self.fc4 = NoisyLinear(hidden_dim // 2, action_dim)
+if TORCH_AVAILABLE:
+    class NoisyLinear(nn.Module):
+        def __init__(self, in_features: int, out_features: int, std_init: float = 0.5) -> None:
+            super().__init__()
+            self.in_features = in_features
+            self.out_features = out_features
+            self.std_init = std_init
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = F.relu(self.fc3(x))
-        return self.fc4(x)
+            self.weight_mu = nn.Parameter(torch.empty(out_features, in_features))
+            self.weight_sigma = nn.Parameter(torch.empty(out_features, in_features))
+            self.register_buffer("weight_epsilon", torch.empty(out_features, in_features))
+            self.bias_mu = nn.Parameter(torch.empty(out_features))
+            self.bias_sigma = nn.Parameter(torch.empty(out_features))
+            self.register_buffer("bias_epsilon", torch.empty(out_features))
+            self.reset_parameters()
+            self.reset_noise()
 
-    def reset_noise(self) -> None:
-        self.fc3.reset_noise()
-        self.fc4.reset_noise()
+        def reset_parameters(self) -> None:
+            mu_range = 1 / np.sqrt(self.weight_mu.size(1))
+            self.weight_mu.data.uniform_(-mu_range, mu_range)
+            self.weight_sigma.data.fill_(self.std_init / np.sqrt(self.weight_sigma.size(1)))
+            self.bias_mu.data.uniform_(-mu_range, mu_range)
+            self.bias_sigma.data.fill_(self.std_init / np.sqrt(self.bias_sigma.size(0)))
+
+        def reset_noise(self) -> None:
+            epsilon_in = self._scale_noise(self.in_features)
+            epsilon_out = self._scale_noise(self.out_features)
+            self.weight_epsilon.copy_(epsilon_out.outer(epsilon_in))
+            self.bias_epsilon.copy_(epsilon_out)
+
+        @staticmethod
+        def _scale_noise(size: int) -> torch.Tensor:
+            x = torch.randn(size)
+            return x.sign().mul_(x.abs().sqrt_())
+
+        def forward(self, x: torch.Tensor) -> torch.Tensor:
+            if self.training:
+                weight = self.weight_mu + self.weight_sigma * self.weight_epsilon
+                bias = self.bias_mu + self.bias_sigma * self.bias_epsilon
+            else:
+                weight = self.weight_mu
+                bias = self.bias_mu
+            return F.linear(x, weight, bias)
+else:
+    class NoisyLinear:
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
+            pass
+
+        def reset_noise(self) -> None:
+            pass
 
 
-class NoisyDuelingDQN(nn.Module):
-    def __init__(self, state_dim: int, action_dim: int, hidden_dim: int = 128) -> None:
-        super().__init__()
-        self.fc1 = nn.Linear(state_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
-        self.value_fc = NoisyLinear(hidden_dim, hidden_dim // 2)
-        self.value = NoisyLinear(hidden_dim // 2, 1)
-        self.advantage_fc = NoisyLinear(hidden_dim, hidden_dim // 2)
-        self.advantage = NoisyLinear(hidden_dim // 2, action_dim)
+if TORCH_AVAILABLE:
+    class NoisyDQN(nn.Module):
+        def __init__(self, state_dim: int, action_dim: int, hidden_dim: int = 128) -> None:
+            super().__init__()
+            self.fc1 = nn.Linear(state_dim, hidden_dim)
+            self.fc2 = nn.Linear(hidden_dim, hidden_dim)
+            self.fc3 = NoisyLinear(hidden_dim, hidden_dim // 2)
+            self.fc4 = NoisyLinear(hidden_dim // 2, action_dim)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        value = F.relu(self.value_fc(x))
-        value = self.value(value)
-        advantage = F.relu(self.advantage_fc(x))
-        advantage = self.advantage(advantage)
-        return value + advantage - advantage.mean(dim=1, keepdim=True)
+        def forward(self, x: torch.Tensor) -> torch.Tensor:
+            x = F.relu(self.fc1(x))
+            x = F.relu(self.fc2(x))
+            x = F.relu(self.fc3(x))
+            return self.fc4(x)
+
+        def reset_noise(self) -> None:
+            self.fc3.reset_noise()
+            self.fc4.reset_noise()
+
+
+    class NoisyDuelingDQN(nn.Module):
+        def __init__(self, state_dim: int, action_dim: int, hidden_dim: int = 128) -> None:
+            super().__init__()
+            self.fc1 = nn.Linear(state_dim, hidden_dim)
+            self.fc2 = nn.Linear(hidden_dim, hidden_dim)
+            self.value_fc = NoisyLinear(hidden_dim, hidden_dim // 2)
+            self.value = NoisyLinear(hidden_dim // 2, 1)
+            self.advantage_fc = NoisyLinear(hidden_dim, hidden_dim // 2)
+            self.advantage = NoisyLinear(hidden_dim // 2, action_dim)
+
+        def forward(self, x: torch.Tensor) -> torch.Tensor:
+            x = F.relu(self.fc1(x))
+            x = F.relu(self.fc2(x))
+            value = F.relu(self.value_fc(x))
+            value = self.value(value)
+            advantage = F.relu(self.advantage_fc(x))
+            advantage = self.advantage(advantage)
+            return value + advantage - advantage.mean(dim=1, keepdim=True)
+else:
+    class NoisyDQN(DQN):
+        def reset_noise(self) -> None:
+            pass
+
+    class NoisyDuelingDQN(DuelingDQN):
+        def reset_noise(self) -> None:
+            pass
 
     def reset_noise(self) -> None:
         self.value_fc.reset_noise()
@@ -251,16 +284,23 @@ class DQNAgent(RLAgent):
         self.dueling_network = dueling_network
         self.double_dqn = double_dqn
         self.noisy_nets = noisy_nets
-        if device is None:
-            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        if TORCH_AVAILABLE:
+            if device is None:
+                self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            else:
+                self.device = torch.device(device)
+            self._setup_networks()
+            self._setup_memory(memory_size)
+            self.optimizer = optim.Adam(self.policy_net.parameters(), lr=learning_rate)
         else:
-            self.device = torch.device(device)
-        self._setup_networks()
-        self._setup_memory(memory_size)
-        self.optimizer = optim.Adam(self.policy_net.parameters(), lr=learning_rate)
+            self.device = "cpu"
+            self.memory = deque(maxlen=memory_size)
+            self.weights = np.zeros((state_dim, action_dim))
         self.steps_done = 0
 
     def _setup_networks(self) -> None:
+        if not TORCH_AVAILABLE:
+            return
         if self.dueling_network:
             net_class = NoisyDuelingDQN if self.noisy_nets else DuelingDQN
         else:
@@ -271,6 +311,10 @@ class DQNAgent(RLAgent):
         self.target_net.eval()
 
     def _setup_memory(self, memory_size: int) -> None:
+        if not TORCH_AVAILABLE:
+            return
+        if not TORCH_AVAILABLE:
+            return
         if self.prioritized_replay:
             self.memory = PrioritizedReplayMemory(memory_size, alpha=ALPHA)
             self.beta = BETA_START
@@ -278,125 +322,101 @@ class DQNAgent(RLAgent):
             self.memory = ReplayMemory(memory_size)
 
     def select_action(self, state: Any, test_mode: bool = False) -> int:
-        state_t = torch.FloatTensor(state).unsqueeze(0).to(self.device)
-        if not test_mode:
-            self.steps_done += 1
-            epsilon = self.epsilon_end + (self.epsilon_start - self.epsilon_end) * np.exp(
-                -self.steps_done / self.epsilon_decay
-            )
-            if self.noisy_nets:
-                explore = False
-            else:
-                explore = random.random() < epsilon
-            if explore:
-                return random.randint(0, self.action_dim - 1)
-        with torch.no_grad():
-            q_values = self.policy_net(state_t)
-            return int(q_values.max(1)[1].item())
+        if TORCH_AVAILABLE:
+            state_t = torch.FloatTensor(state).unsqueeze(0).to(self.device)
+            if not test_mode:
+                self.steps_done += 1
+                epsilon = self.epsilon_end + (self.epsilon_start - self.epsilon_end) * np.exp(
+                    -self.steps_done / self.epsilon_decay
+                )
+                explore = False if self.noisy_nets else random.random() < epsilon
+                if explore:
+                    return random.randint(0, self.action_dim - 1)
+            with torch.no_grad():
+                q_values = self.policy_net(state_t)
+                return int(q_values.max(1)[1].item())
+        q_values = np.dot(state, self.weights)
+        return int(np.argmax(q_values))
 
     def store_transition(self, state: Any, action: int, reward: float, next_state: Any, done: bool) -> None:
-        if self.prioritized_replay:
-            self.memory.push(state, action, reward, next_state, done, max_prio=self.memory.max_priority)
+        if TORCH_AVAILABLE:
+            if self.prioritized_replay:
+                self.memory.push(state, action, reward, next_state, done, max_prio=self.memory.max_priority)
+            else:
+                self.memory.push(state, action, reward, next_state, done)
         else:
-            self.memory.push(state, action, reward, next_state, done)
+            self.memory.append((state, action, reward, next_state, done))
 
     def update_model(self) -> float | None:
         if len(self.memory) < self.batch_size:
             return None
+        if TORCH_AVAILABLE:
+            batch = random.sample(self.memory, self.batch_size)
+            states, actions, rewards, next_states, dones = zip(*batch)
+            state_batch = torch.FloatTensor(states)
+            action_batch = torch.LongTensor(actions).unsqueeze(1)
+            reward_batch = torch.FloatTensor(rewards)
+            next_state_batch = torch.FloatTensor(next_states)
+            done_batch = torch.FloatTensor(dones)
+
+            q_values = self.policy_net(state_batch).gather(1, action_batch)
+            with torch.no_grad():
+                if self.double_dqn:
+                    next_actions = self.policy_net(next_state_batch).max(1)[1].unsqueeze(1)
+                    next_q = self.target_net(next_state_batch).gather(1, next_actions)
+                else:
+                    next_q = self.target_net(next_state_batch).max(1)[0].unsqueeze(1)
+            target_q = reward_batch.unsqueeze(1) + (1 - done_batch.unsqueeze(1)) * self.gamma * next_q
+            loss = F.mse_loss(q_values, target_q)
+            self.optimizer.zero_grad()
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(self.policy_net.parameters(), CLIP_GRAD)
+            self.optimizer.step()
+            return float(loss.item())
         batch = random.sample(self.memory, self.batch_size)
-        states, actions, rewards, next_states, dones = zip(*batch)
-
-        states_t = torch.FloatTensor(states)
-        actions_t = torch.LongTensor(actions).unsqueeze(1)
-        rewards_t = torch.FloatTensor(rewards)
-        next_states_t = torch.FloatTensor(next_states)
-        dones_t = torch.FloatTensor(dones)
-
-        q_values = self.model(states_t).gather(1, actions_t).squeeze()
-        with torch.no_grad():
-            next_q = self.model(next_states_t).max(1)[0]
-        target_q = rewards_t + (1 - dones_t) * self.gamma * next_q
-
-        loss = self.loss_fn(q_values, target_q)
-        self.optimizer.zero_grad()
-        loss.backward()
-        self.optimizer.step()
-
-        if self.epsilon > self.epsilon_min:
-            self.epsilon *= self.epsilon_decay
-
-        return float(loss.item())
-
-        if self.prioritized_replay:
-            self.beta = min(1.0, BETA_END + (BETA_START - BETA_END) * np.exp(-self.steps_done / BETA_DECAY))
-            batch, indices, weights = self.memory.sample(self.batch_size, self.beta)
-            weights = torch.FloatTensor(weights).to(self.device)
-        else:
-            batch = self.memory.sample(self.batch_size)
-            indices = None
-            weights = None
-        state_batch = torch.FloatTensor([b.state for b in batch]).to(self.device)
-        action_batch = torch.LongTensor([b.action for b in batch]).unsqueeze(1).to(self.device)
-        reward_batch = torch.FloatTensor([b.reward for b in batch]).to(self.device)
-        next_state_batch = torch.FloatTensor([b.next_state for b in batch]).to(self.device)
-        done_batch = torch.FloatTensor([b.done for b in batch]).to(self.device)
-        q_values = self.policy_net(state_batch).gather(1, action_batch)
-        with torch.no_grad():
-            if self.double_dqn:
-                next_actions = self.policy_net(next_state_batch).max(1)[1].unsqueeze(1)
-                next_q_values = self.target_net(next_state_batch).gather(1, next_actions)
-            else:
-                next_q_values = self.target_net(next_state_batch).max(1)[0].unsqueeze(1)
-        target_q_values = reward_batch.unsqueeze(1) + (1 - done_batch.unsqueeze(1)) * self.gamma * next_q_values
-        if self.prioritized_replay:
-            td_errors = torch.abs(q_values - target_q_values).detach().cpu().numpy()
-            loss = (weights.unsqueeze(1) * F.mse_loss(q_values, target_q_values, reduction="none")).mean()
-        else:
-            loss = F.mse_loss(q_values, target_q_values)
-        self.optimizer.zero_grad()
-        loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.policy_net.parameters(), CLIP_GRAD)
-        self.optimizer.step()
-        with torch.no_grad():
-            for target_param, policy_param in zip(self.target_net.parameters(), self.policy_net.parameters()):
-                target_param.data.copy_(target_param.data * (1 - self.tau) + policy_param.data * self.tau)
-        if self.prioritized_replay and indices is not None:
-            self.memory.update_priorities(indices, td_errors)
-        if self.noisy_nets:
-            self.policy_net.reset_noise()
-            self.target_net.reset_noise()
-        return float(loss.item())
+        for state, action, reward, next_state, done in batch:
+            q_current = np.dot(state, self.weights)[action]
+            q_next = np.max(np.dot(next_state, self.weights)) if not done else 0.0
+            target = reward + self.gamma * q_next
+            self.weights[:, action] += self.learning_rate * (target - q_current) * state
+        return 0.0
 
     def save(self, path: str) -> None:
-        torch.save(
-            {
-                "policy_net": self.policy_net.state_dict(),
-                "target_net": self.target_net.state_dict(),
-                "optimizer": self.optimizer.state_dict(),
-                "steps_done": self.steps_done,
-                "config": {
-                    "state_dim": self.state_dim,
-                    "action_dim": self.action_dim,
-                    "hidden_dim": self.hidden_dim,
-                    "learning_rate": self.learning_rate,
-                    "gamma": self.gamma,
-                    "tau": self.tau,
-                    "epsilon_start": self.epsilon_start,
-                    "epsilon_end": self.epsilon_end,
-                    "epsilon_decay": self.epsilon_decay,
-                    "batch_size": self.batch_size,
-                    "prioritized_replay": self.prioritized_replay,
-                    "dueling_network": self.dueling_network,
-                    "double_dqn": self.double_dqn,
-                    "noisy_nets": self.noisy_nets,
+        if TORCH_AVAILABLE:
+            torch.save(
+                {
+                    "policy_net": self.policy_net.state_dict(),
+                    "target_net": self.target_net.state_dict(),
+                    "optimizer": self.optimizer.state_dict(),
+                    "steps_done": self.steps_done,
+                    "config": {
+                        "state_dim": self.state_dim,
+                        "action_dim": self.action_dim,
+                        "hidden_dim": self.hidden_dim,
+                        "learning_rate": self.learning_rate,
+                        "gamma": self.gamma,
+                        "tau": self.tau,
+                        "epsilon_start": self.epsilon_start,
+                        "epsilon_end": self.epsilon_end,
+                        "epsilon_decay": self.epsilon_decay,
+                        "batch_size": self.batch_size,
+                        "prioritized_replay": self.prioritized_replay,
+                        "dueling_network": self.dueling_network,
+                        "double_dqn": self.double_dqn,
+                        "noisy_nets": self.noisy_nets,
+                    },
                 },
-            },
-            path,
-        )
+                path,
+            )
+        else:
+            np.save(path, self.weights)
 
     def load(self, path: str) -> None:
-        checkpoint = torch.load(path, map_location=self.device)
-        self.policy_net.load_state_dict(checkpoint["policy_net"])
-        self.target_net.load_state_dict(checkpoint["target_net"])
-        self.optimizer.load_state_dict(checkpoint["optimizer"])
-        self.steps_done = checkpoint["steps_done"]
+        if TORCH_AVAILABLE:
+            checkpoint = torch.load(path, map_location=self.device)
+            self.policy_net.load_state_dict(checkpoint["policy_net"])
+            self.target_net.load_state_dict(checkpoint["target_net"])
+            self.optimizer.load_state_dict(checkpoint["optimizer"])
+            self.steps_done = checkpoint["steps_done"]
+        else:
+            self.weights = np.load(path)

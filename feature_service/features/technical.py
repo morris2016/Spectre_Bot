@@ -848,10 +848,33 @@ def calculate_stochastic(high: pd.Series, low: pd.Series, close: pd.Series, k_pe
     return df
 
 
+def calculate_obv(close: pd.Series, volume: pd.Series) -> pd.Series:
+    """Calculate On-Balance Volume."""
+    obv = pd.Series(index=close.index, dtype=float)
+    obv.iloc[0] = 0
+    for i in range(1, len(close)):
+        if close.iloc[i] > close.iloc[i - 1]:
+            obv.iloc[i] = obv.iloc[i - 1] + volume.iloc[i]
+        elif close.iloc[i] < close.iloc[i - 1]:
+            obv.iloc[i] = obv.iloc[i - 1] - volume.iloc[i]
+        else:
+            obv.iloc[i] = obv.iloc[i - 1]
+    return obv
+
+
+def detect_divergence(price: pd.Series, indicator: pd.Series, lookback: int = 14) -> pd.Series:
+    """Basic divergence detection between price and an indicator."""
+    diff_price = price.diff()
+    diff_ind = indicator.diff()
+    divergence = (diff_price * diff_ind) < 0
+    return divergence.rolling(lookback).sum() > 0
+
+
 __all__ = [
     'TechnicalFeatures', 'calculate_technical_features',
     'calculate_rsi', 'calculate_macd',
-    'calculate_adx', 'calculate_stochastic'
+    'calculate_adx', 'calculate_stochastic',
+    'calculate_obv', 'detect_divergence'
 ]
 
 # Module initialization
