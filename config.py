@@ -127,6 +127,11 @@ DEFAULT_CONFIG = {
         "session_timeout": 86400  # 24 hours
     },
     "exchanges": DEFAULT_EXCHANGE_CONFIGS,
+    "data_ingest": {
+        "processors": {},
+        "sources": {},
+        "store_processed_data": False
+    },
     "voice_assistant": {
         "enabled": True,
         "model": "local",  # "local" or "cloud"

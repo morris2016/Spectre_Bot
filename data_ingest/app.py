@@ -117,7 +117,7 @@ class DataIngestService:
                     pass
         
         # Cancel processing and output tasks
-        for task in [self.processing_task, self.output_task]:
+        for task in [getattr(self, "processing_task", None), getattr(self, "output_task", None)]:
             if task and not task.done():
                 task.cancel()
                 try:
@@ -134,10 +134,14 @@ class DataIngestService:
             return False
         
         # Check if tasks are running
+        task = getattr(self, "task", None)
+        processing = getattr(self, "processing_task", None)
+        output = getattr(self, "output_task", None)
+
         all_tasks_running = (
-            not self.task.done() and
-            not self.processing_task.done() and
-            not self.output_task.done()
+            task is not None and not task.done() and
+            processing is not None and not processing.done() and
+            output is not None and not output.done()
         )
         
         # Check that at least some sources are running

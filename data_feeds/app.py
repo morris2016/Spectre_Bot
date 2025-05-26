@@ -120,8 +120,7 @@ class DataFeedService:
                 binance_feed = BinanceFeed(
                     config=feed_configs.get("binance", {}),
                     loop=self.loop,
-                    redis_client=self.redis_client,
-                    event_bus=self.event_bus
+                    redis_client=self.redis_client
                 )
                 self.feeds["binance"] = binance_feed
             except Exception as e:
@@ -132,12 +131,17 @@ class DataFeedService:
         if feed_configs.get("deriv", {}).get("enabled", False):
             self.logger.info("Initializing Deriv feed")
             try:
-                deriv_feed = DerivFeed(
-                    config=feed_configs.get("deriv", {}),
-                    loop=self.loop,
-                    redis_client=self.redis_client,
-                    event_bus=self.event_bus
+                deriv_conf = feed_configs.get("deriv", {})
+                credentials = DerivCredentials(
+                    app_id=deriv_conf.get("app_id", ""),
+                    api_token=deriv_conf.get("api_token"),
+                    account_id=deriv_conf.get("account_id")
                 )
+                options = DerivFeedOptions(
+                    ping_interval=deriv_conf.get("websocket", {}).get("ping_interval", 30),
+                    subscription_timeout=deriv_conf.get("websocket", {}).get("ping_timeout", 10)
+                )
+                deriv_feed = DerivFeed(credentials=credentials, options=options)
                 self.feeds["deriv"] = deriv_feed
             except Exception as e:
                 self.logger.error(f"Failed to initialize Deriv feed: {str(e)}")
