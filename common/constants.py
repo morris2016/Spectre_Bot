@@ -1973,6 +1973,19 @@ FEED_STATUS = {
     "ERROR": "error"
 }
 
+
+class DataSourcePreference(enum.Enum):
+    """Preference order for selecting data sources."""
+
+    EXCHANGE_ONLY = "exchange_only"
+    DB_ONLY = "db_only"
+    DB_FIRST = "db_first"
+    API_ONLY = "api_only"
+    SIMULATION = "simulation"
+
+
+DataProvider = DataSourcePreference
+
 # Data constants
 DATA_SOURCES = {
     "EXCHANGE": "exchange",
@@ -1981,6 +1994,13 @@ DATA_SOURCES = {
     "API": "api",
     "SIMULATION": "simulation"
 }
+
+
+class DataSourcePreference(enum.Enum):
+    """Preferred order for fetching historical data."""
+
+    DB_FIRST = "db_first"
+    FEED_FIRST = "feed_first"
 
 SYSTEM_COMPONENT_TYPES = {
     "SERVICE": "service",

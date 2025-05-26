@@ -836,10 +836,22 @@ def calculate_adx(high: pd.Series, low: pd.Series, close: pd.Series, period: int
     adx_df.columns = [f"ADX_{period}", f"DMP_{period}", f"DMN_{period}"]
     return adx_df
 
+  
+def calculate_stochastic(high: pd.Series, low: pd.Series, close: pd.Series, k_period: int = 14, d_period: int = 3) -> pd.DataFrame:
+    """Standalone Stochastic Oscillator calculation."""
+
+    k = ta.stoch(high, low, close, k_period, d_period)
+    df = pd.DataFrame({
+        'stoch_k': k,
+        'stoch_d': k.rolling(d_period).mean()
+    })
+    return df
+
 
 __all__ = [
     'TechnicalFeatures', 'calculate_technical_features',
-    'calculate_rsi', 'calculate_macd'
+    'calculate_rsi', 'calculate_macd',
+    'calculate_adx', 'calculate_stochastic'
 ]
 
 # Module initialization

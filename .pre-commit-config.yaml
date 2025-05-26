@@ -139,8 +139,10 @@ repos:
       - id: codespell
         args: [
           '--skip=*.git,*.svg,*.lock,*.css,*.js',
-          --ignore-words-list=nd,ot,thru
+
+          '--ignore-words-list=nd,ot,thru'
         ]
+
 
   # Dockerfile linting
   - repo: https://github.com/hadolint/hadolint

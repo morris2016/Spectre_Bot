@@ -69,7 +69,7 @@ BACKTEST_METRICS = {
 # Public exports
 __all__ = [
     'BacktestEngine',
-    'DataProvider',
+    'BacktestDataProvider',
     'Performance',
     'Optimization',
     'Scenario',
@@ -80,7 +80,7 @@ __all__ = [
 
 # Dynamic imports for public API
 from backtester.engine import BacktestEngine
-from backtester.data_provider import DataProvider
+from backtester.data_provider import BacktestDataProvider
 from backtester.performance import Performance
 from backtester.optimization import Optimization
 from backtester.scenario import Scenario
