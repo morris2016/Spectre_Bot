@@ -19,6 +19,7 @@ from concurrent.futures import ThreadPoolExecutor
 import multiprocessing as mp
 import nltk
 import ssl
+import socket
 import importlib
 import socket
 
@@ -572,7 +573,6 @@ async def initialize_credentials(config: Config) -> SecureCredentialManager:
         logger.error(traceback.format_exc())
         raise SystemCriticalError("Security initialization failed") from e
 
-def download_nltk_package(package: str, timeout: int = 10) -> bool:
     """Download an NLTK package with a timeout."""
     try:
         socket.setdefaulttimeout(timeout)
@@ -611,6 +611,24 @@ def setup_nltk_data():
     nltk_data_dir = os.path.expanduser("~/.nltk_data")
     nltk.data.path.insert(0, nltk_data_dir)
 
+    # Helper to download packages with a short timeout to avoid hangs in offline environments
+    def download_nltk_package(name: str, timeout: int = 10) -> bool:
+        """Attempt to download an NLTK package with a timeout."""
+        original_timeout = socket.getdefaulttimeout()
+        socket.setdefaulttimeout(timeout)
+        try:
+            success = nltk.download(name, quiet=True, raise_on_error=False, halt_on_error=False)
+            if success:
+                logger.info(f"Successfully downloaded NLTK package '{name}'")
+                return True
+            logger.error(f"Failed to download NLTK package '{name}'")
+            return False
+        except Exception as e:
+            logger.error(f"Failed to download NLTK package '{name}': {str(e)}")
+            return False
+        finally:
+            socket.setdefaulttimeout(original_timeout)
+
     # Check each package
     for package in required_packages:
         try:
@@ -618,15 +636,24 @@ def setup_nltk_data():
             logger.debug(f"NLTK package '{package}' found locally")
         except LookupError:
             logger.warning(f"NLTK package '{package}' not found locally, attempting to download")
-            success = download_nltk_package(package)
-            if success:
-                logger.info(f"Successfully downloaded NLTK package '{package}'")
-            else:
+
+            try:
+                downloaded = nltk.download(package, quiet=True)
+                if downloaded:
+                    logger.info(f"Successfully downloaded NLTK package '{package}'")
+                else:
+                    logger.error(f"Failed to download NLTK package '{package}'")
+                    logger.warning(
+                        f"System will continue without NLTK package '{package}', some NLP features may be limited"
+                    )
+            except Exception as e:
+                logger.error(f"Failed to download NLTK package '{package}': {str(e)}")
                 logger.warning(
                     f"System will continue without NLTK package '{package}', some NLP features may be limited"
                 )
 
     logger.info("NLTK setup complete")
+
 
 async def startup():
     """
@@ -680,18 +707,24 @@ async def startup():
         logger.info("Credential manager initialized successfully")
 
         # Initialize Redis client
-        redis_client = await initialize_redis(config)
-        if redis_client:
+
+        try:
+            redis_client = await initialize_redis(config)
             logger.info("Redis client initialized successfully")
-        else:
-            logger.warning("Redis client not available; caching features disabled")
+        except SystemCriticalError:
+            # Allow system to continue in a degraded mode when Redis is unavailable
+            logger.warning("Redis connection failed; continuing without Redis features")
+            redis_client = None
 
         # Initialize database client
-        db_client = await initialize_db(config)
-        if db_client:
+        try:
+            db_client = await initialize_db(config)
             logger.info("Database client initialized successfully")
-        else:
-            logger.warning("Database unavailable; persistence disabled")
+        except SystemCriticalError:
+            logger.warning(
+                "Database connection failed; continuing without database features"
+            )
+            db_client = None
 
         # Create service manager
         service_manager = ServiceManager(config, service_event_loop)
