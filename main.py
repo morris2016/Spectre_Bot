@@ -27,7 +27,9 @@ except ImportError:  # pragma: no cover - optional dependency
         "NLTK library not found. NLP features will be disabled"
     )
 import ssl
+import socket
 import importlib
+import socket
 
 # Internal imports
 from config import Config, load_config
@@ -513,8 +515,11 @@ async def initialize_db(config: Config) -> DatabaseClient:
     except Exception as e:
         logger.error(f"Failed to initialize database connection: {str(e)}")
         logger.error(traceback.format_exc())
-        logger.warning("Continuing without database; persistence features disabled")
-        return DatabaseClient()
+
+        logger.warning(
+            "Continuing without database connectivity; persistent storage will be unavailable"
+        )
+        return None
 
 async def initialize_redis(config: Config) -> RedisClient:
     """
@@ -549,8 +554,9 @@ async def initialize_redis(config: Config) -> RedisClient:
     except Exception as e:
         logger.error(f"Failed to initialize Redis connection: {str(e)}")
         logger.error(traceback.format_exc())
-        logger.warning("Continuing without Redis; caching features disabled")
-        return RedisClient()  # return uninitialized client stub
+
+        logger.warning("Continuing without Redis; functionality may be limited")
+        return None
 
 async def initialize_credentials(config: Config) -> SecureCredentialManager:
     """
@@ -585,6 +591,17 @@ async def initialize_credentials(config: Config) -> SecureCredentialManager:
         logger.error(traceback.format_exc())
         raise SystemCriticalError("Security initialization failed") from e
 
+    """Download an NLTK package with a timeout."""
+    try:
+        socket.setdefaulttimeout(timeout)
+        return nltk.download(package, quiet=True)
+    except Exception as e:
+        logger.error(f"Error downloading NLTK package '{package}': {str(e)}")
+        return False
+    finally:
+        socket.setdefaulttimeout(None)
+
+
 def setup_nltk_data():
     """
     Set up NLTK data and handle potential download errors.
@@ -616,6 +633,24 @@ def setup_nltk_data():
     nltk_data_dir = os.path.expanduser("~/.nltk_data")
     nltk.data.path.insert(0, nltk_data_dir)
 
+    # Helper to download packages with a short timeout to avoid hangs in offline environments
+    def download_nltk_package(name: str, timeout: int = 10) -> bool:
+        """Attempt to download an NLTK package with a timeout."""
+        original_timeout = socket.getdefaulttimeout()
+        socket.setdefaulttimeout(timeout)
+        try:
+            success = nltk.download(name, quiet=True, raise_on_error=False, halt_on_error=False)
+            if success:
+                logger.info(f"Successfully downloaded NLTK package '{name}'")
+                return True
+            logger.error(f"Failed to download NLTK package '{name}'")
+            return False
+        except Exception as e:
+            logger.error(f"Failed to download NLTK package '{name}': {str(e)}")
+            return False
+        finally:
+            socket.setdefaulttimeout(original_timeout)
+
     # Check each package
     for package in required_packages:
         try:
@@ -623,14 +658,24 @@ def setup_nltk_data():
             logger.debug(f"NLTK package '{package}' found locally")
         except LookupError:
             logger.warning(f"NLTK package '{package}' not found locally, attempting to download")
+
             try:
-                nltk.download(package, quiet=True)
-                logger.info(f"Successfully downloaded NLTK package '{package}'")
+                downloaded = nltk.download(package, quiet=True)
+                if downloaded:
+                    logger.info(f"Successfully downloaded NLTK package '{package}'")
+                else:
+                    logger.error(f"Failed to download NLTK package '{package}'")
+                    logger.warning(
+                        f"System will continue without NLTK package '{package}', some NLP features may be limited"
+                    )
             except Exception as e:
                 logger.error(f"Failed to download NLTK package '{package}': {str(e)}")
-                logger.warning(f"System will continue without NLTK package '{package}', some NLP features may be limited")
+                logger.warning(
+                    f"System will continue without NLTK package '{package}', some NLP features may be limited"
+                )
 
     logger.info("NLTK setup complete")
+
 
 async def startup():
     """
@@ -684,12 +729,24 @@ async def startup():
         logger.info("Credential manager initialized successfully")
 
         # Initialize Redis client
-        redis_client = await initialize_redis(config)
-        logger.info("Redis client initialized successfully")
+
+        try:
+            redis_client = await initialize_redis(config)
+            logger.info("Redis client initialized successfully")
+        except SystemCriticalError:
+            # Allow system to continue in a degraded mode when Redis is unavailable
+            logger.warning("Redis connection failed; continuing without Redis features")
+            redis_client = None
 
         # Initialize database client
-        db_client = await initialize_db(config)
-        logger.info("Database client initialized successfully")
+        try:
+            db_client = await initialize_db(config)
+            logger.info("Database client initialized successfully")
+        except SystemCriticalError:
+            logger.warning(
+                "Database connection failed; continuing without database features"
+            )
+            db_client = None
 
         # Create service manager
         service_manager = ServiceManager(config, service_event_loop)

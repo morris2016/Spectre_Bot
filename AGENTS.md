@@ -3,7 +3,7 @@
 ## Coding Style
 - Follow **PEP 8** conventions.
 - The project uses **flake8** for linting. Configuration is in `setup.cfg` with a
-  max line length of 120 characters.
+  max line length of 150 characters.
 - Run `flake8` or `pre-commit` to check code style before committing.
 
 ## Running Tests

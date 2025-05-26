@@ -205,6 +205,8 @@ class Timeframe(enum.Enum):
     W1 = "1w"
     MN1 = "1M"
 
+TIME_FRAMES = TIMEFRAMES = [tf.value for tf in Timeframe]
+
 
 class OrderType(enum.Enum):
     """Order types for trading."""
@@ -852,6 +854,29 @@ SOCIAL_API_KEYS = {
     "synthetic": "synthetic_index",
 }
 
+SOCIAL_UPDATE_INTERVALS = {
+    "twitter": 60,
+    "reddit": 300,
+    "telegram": 120,
+    "discord": 120,
+    "stocktwits": 180,
+    "tradingview": 300,
+}
+
+NLP_MODELS = {
+    "sentiment": "ProsusAI/finbert",
+    "crypto_sentiment": "ElKulako/cryptobert",
+    "ner": "en_core_web_sm",
+}
+
+ASSET_KEYWORDS = {
+    "BTC/USD": ["bitcoin", "btc", "bitcoin/usd", "btcusd"],
+    "ETH/USD": ["ethereum", "eth", "ethereum/usd", "ethusd"],
+    "EUR/USD": ["euro", "eur/usd", "eurusd", "euro dollar"],
+    "GBP/USD": ["gbp", "pound", "cable", "gbp/usd", "gbpusd"],
+    "USD/JPY": ["yen", "jpy", "usdjpy", "dollar yen"],
+}
+
 
 # ======================================
 # Feature Engineering
@@ -867,6 +892,7 @@ DEFAULT_FEATURE_PARAMS = {}
 
 EXCHANGE_TYPES = [ex.value for ex in Exchange]
 TIME_FRAMES = [tf.value for tf in Timeframe]
+TIMEFRAMES = TIME_FRAMES
 ORDER_TYPES = [ot.value for ot in OrderType]
 ORDER_SIDES = [side.value for side in OrderSide]
 POSITION_SIDES = [ps.value for ps in PositionSide]
@@ -891,7 +917,7 @@ __all__ = [
     'PositionSide', 'PositionType', 'OrderStatus', 'PositionStatus',
     'TriggerType', 'TimeInForce',
     'SignalDirection', 'SignalStrength', 'MarketRegime', 'StrategyType',
-    'RiskLevel', 'FeeType','EXCHANGE_TYPES', 'TIME_FRAMES','ORDER_TYPES', 'ORDER_SIDES',
+    'RiskLevel', 'FeeType','EXCHANGE_TYPES', 'TIME_FRAMES', 'TIMEFRAMES', 'ORDER_TYPES', 'ORDER_SIDES',
     'ORDER_TYPE', 'ORDER_STATUS', 'TIME_IN_FORCE',
     'POSITION_SIDES', 'ORDER_STATUSES', 'POSITION_STATUSES', 'POSITION_SIDE', 'POSITION_STATUS',
 
@@ -1600,6 +1626,10 @@ LIQUIDITY_THRESHOLDS = {
 }
 
 ORDER_BOOK_LEVELS = 10  # Number of order book levels to track
+
+FLOW_IMBALANCE_WINDOW = 100  # Number of recent trades to measure flow imbalance
+SPREAD_ANALYSIS_WINDOW = 100  # Window size for spread behavior analysis
+MICROSTRUCTURE_PATTERN_LOOKBACK = 500  # Lookback period for pattern detection
 
 # Machine learning constants
 ML_MODEL_TYPES = {
