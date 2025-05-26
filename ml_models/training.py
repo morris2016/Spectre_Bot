@@ -25,8 +25,18 @@ import shutil
 from pathlib import Path
 
 # ML Libraries
-import tensorflow as tf
-from tensorflow.keras import layers, models, optimizers, callbacks, regularizers
+try:
+    import tensorflow as tf  # type: ignore
+    from tensorflow.keras import (
+        layers,
+        models,
+        optimizers,
+        callbacks,
+        regularizers,
+    )
+except Exception:  # pragma: no cover - optional dependency
+    tf = None  # type: ignore
+    layers = models = optimizers = callbacks = regularizers = None  # type: ignore
 import torch
 import torch.nn as nn
 import torch.optim as optim

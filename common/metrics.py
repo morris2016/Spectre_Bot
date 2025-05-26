@@ -381,30 +381,29 @@ class MetricsCollector:
             
     def record_timing(self, metric_name, duration):
         """Record a timing measurement."""
+        # Maintain backward-compatible list of raw timings
+        self.record_timer(metric_name, duration)
+
+        # Aggregate basic statistics for quick access
         full_name = f"{self.namespace}.{metric_name}"
-        if full_name not in self.timers:
-            self.timers[full_name] = {
+        stats = self.timers.setdefault(
+            f"{full_name}.stats",
+            {
                 'count': 0,
-                'sum': 0,
+                'sum': 0.0,
                 'min': float('inf'),
-                'max': 0,
-                'avg': 0,
-                'samples': []
-            }
-        
-        timer = self.timers[full_name]
-        timer['count'] += 1
-        timer['sum'] += duration
-        timer['min'] = min(timer['min'], duration)
-        timer['max'] = max(timer['max'], duration)
-        timer['avg'] = timer['sum'] / timer['count']
-        
-        # Keep limited samples for percentile calculations
-        timer['samples'].append(duration)
-        if len(timer['samples']) > 100:
-            timer['samples'].pop(0)
-            
-        return timer
+                'max': 0.0,
+                'avg': 0.0,
+            },
+        )
+
+        stats['count'] += 1
+        stats['sum'] += duration
+        stats['min'] = min(stats['min'], duration)
+        stats['max'] = max(stats['max'], duration)
+        stats['avg'] = stats['sum'] / stats['count']
+
+        return stats
     
     def get_percentile(self, metric_name, percentile):
         """Get a percentile value for a timing metric."""
