@@ -17,7 +17,15 @@ import traceback
 from typing import Any
 from concurrent.futures import ThreadPoolExecutor
 import multiprocessing as mp
-import nltk
+try:
+    import nltk  # type: ignore
+    NLTK_AVAILABLE = True
+except ImportError:  # pragma: no cover - optional dependency
+    nltk = None  # type: ignore
+    NLTK_AVAILABLE = False
+    logging.getLogger(__name__).warning(
+        "NLTK library not found. NLP features will be disabled"
+    )
 import ssl
 import socket
 import importlib
@@ -122,9 +130,10 @@ class ServiceManager:
                     f"Failed to import service {name} from {module_path}: {exc}"
                 )
                 if self.config.services.get(name, {}).get("required", True):
-                    raise ServiceStartupError(
-                        f"Cannot import required service {name}: {exc}"
+                    self.logger.warning(
+                        f"Service {name} marked as required but failed to load; continuing"
                     )
+                continue
 
         # Create service instances but don't start them yet
         for name, service_class in service_classes.items():
@@ -140,9 +149,14 @@ class ServiceManager:
             except Exception as exc:
                 self.logger.error(f"Failed to instantiate {name} service: {exc}")
                 self.logger.error(traceback.format_exc())
-                raise ServiceStartupError(
-                    f"Failed to instantiate {name} service: {exc}"
-                )
+                if self.config.services.get(name, {}).get("required", True):
+                    self.logger.warning(
+                        f"Service {name} marked as required but failed to instantiate; continuing"
+                    )
+                else:
+                    self.logger.debug(
+                        f"Optional service {name} skipped due to instantiation failure"
+                    )
 
         # Start services in dependency order
         for service_name in SERVICE_STARTUP_ORDER:
@@ -209,7 +223,9 @@ class ServiceManager:
             self.service_statuses[service_name] = "failed"
             self.logger.error(f"Failed to start {service_name} service: {str(e)}")
             self.logger.error(traceback.format_exc())
-            raise ServiceStartupError(f"Failed to start {service_name} service: {str(e)}")
+            self.logger.warning(
+                f"Service {service_name} failed to start and will be skipped"
+            )
 
     async def _monitor_service(self, service_name: str, service: Any):
         """
@@ -499,6 +515,7 @@ async def initialize_db(config: Config) -> DatabaseClient:
     except Exception as e:
         logger.error(f"Failed to initialize database connection: {str(e)}")
         logger.error(traceback.format_exc())
+
         logger.warning(
             "Continuing without database connectivity; persistent storage will be unavailable"
         )
@@ -537,6 +554,7 @@ async def initialize_redis(config: Config) -> RedisClient:
     except Exception as e:
         logger.error(f"Failed to initialize Redis connection: {str(e)}")
         logger.error(traceback.format_exc())
+
         logger.warning("Continuing without Redis; functionality may be limited")
         return None
 
@@ -590,6 +608,10 @@ def setup_nltk_data():
     This function attempts to load required NLTK data packages locally,
     and handles SSL certificate issues that might occur.
     """
+    if not NLTK_AVAILABLE:
+        logger.warning("NLTK is not installed. Skipping NLP initialization")
+        return
+
     logger.info("Setting up NLTK data...")
 
     # Required NLTK packages

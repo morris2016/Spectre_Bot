@@ -24,16 +24,54 @@ import socket
 import string
 import decimal
 import datetime
-import dateutil.parser
+try:
+    from dateutil import parser as date_parser  # type: ignore
+    DATEUTIL_AVAILABLE = True
+except ImportError:  # pragma: no cover - optional dependency
+    DATEUTIL_AVAILABLE = False
+    date_parser = None  # type: ignore
 import threading
 import functools
 import itertools
 import collections
 import urllib.parse
-import numpy as np
-import pandas as pd
+try:
+    import numpy as np  # type: ignore
+except ImportError:  # pragma: no cover - optional dependency
+    class _DummyNumpy:
+        ndarray = list
+        integer = int
+        floating = float
+
+        def __getattr__(self, name: str):
+            raise ImportError("NumPy is required for this functionality")
+
+    np = _DummyNumpy()  # type: ignore
+
+try:
+    import pandas as pd  # type: ignore
+except ImportError:  # pragma: no cover - optional dependency
+    class _DummyPandas:
+        class Series(list):
+            pass
+
+        class DataFrame(dict):
+            pass
+
+        class Timestamp:
+            pass
+
+        def __getattr__(self, name: str):
+            raise ImportError("pandas is required for this functionality")
+
+    pd = _DummyPandas()  # type: ignore
 import logging
-import nltk
+try:
+    import nltk  # type: ignore
+    NLTK_AVAILABLE = True
+except ImportError:  # pragma: no cover - optional dependency
+    nltk = None  # type: ignore
+    NLTK_AVAILABLE = False
 import sys
 import asyncio
 import importlib
@@ -247,8 +285,10 @@ def parse_datetime(date_string: str) -> datetime.datetime:
         datetime.datetime: Parsed datetime object
     """
     try:
-        return dateutil.parser.parse(date_string)
-    except (ValueError, TypeError) as e:
+        if DATEUTIL_AVAILABLE:
+            return date_parser.parse(date_string)  # type: ignore[attr-defined]
+        return datetime.datetime.fromisoformat(date_string)
+    except (ValueError, TypeError, AttributeError) as e:
         logger.error(f"Failed to parse datetime: {date_string}", exc_info=e)
         raise
 

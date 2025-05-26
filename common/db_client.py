@@ -16,7 +16,12 @@ import asyncio
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Union, Tuple
 
-import asyncpg
+try:
+    import asyncpg  # type: ignore
+    DB_LIB_AVAILABLE = True
+except ImportError:  # pragma: no cover - optional dependency
+    asyncpg = None  # type: ignore
+    DB_LIB_AVAILABLE = False
 
 from common.logger import get_logger
 from common.exceptions import (

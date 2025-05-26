@@ -735,8 +735,26 @@ def record_failure(name, error=None, tags=None):
         log_msg += f" {tag_str}"
     
     _default_collector.logger.warning(log_msg)
-import numpy as np
-import pandas as pd
+try:
+    import numpy as np  # type: ignore
+except ImportError:  # pragma: no cover - optional dependency
+    class _DummyNumpy:
+        ndarray = list
+        def __getattr__(self, name: str):
+            raise ImportError("NumPy is required for metrics calculations")
+    np = _DummyNumpy()  # type: ignore
+
+try:
+    import pandas as pd  # type: ignore
+except ImportError:  # pragma: no cover - optional dependency
+    class _DummyPandas:
+        class Series(list):
+            pass
+        class DataFrame(dict):
+            pass
+        def __getattr__(self, name: str):
+            raise ImportError("pandas is required for metrics calculations")
+    pd = _DummyPandas()  # type: ignore
 import math
 
 def compute_sharpe_ratio(returns: List[float], risk_free_rate: float = 0.0, annualization_factor: int = 252) -> float:
