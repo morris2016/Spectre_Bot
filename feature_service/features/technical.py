@@ -767,12 +767,22 @@ class TechnicalFeatures(BaseFeature):
             
             # Channel width as volatility measure
             result['keltner_width'] = (result['keltner_upper'] - result['keltner_lower']) / result['keltner_middle']
-            
+
             return result
         except Exception as e:
             logger.error(f"Error calculating Keltner Channels: {str(e)}")
             return pd.DataFrame(index=data.index)
-    
+
+    def _calculate_obv(self, data: pd.DataFrame) -> pd.DataFrame:
+        """Calculate On-Balance Volume."""
+        try:
+            result = pd.DataFrame(index=data.index)
+            result["obv"] = calculate_obv(data["close"], data["volume"])
+            return result
+        except Exception as e:
+            logger.error(f"Error calculating OBV: {str(e)}")
+            return pd.DataFrame(index=data.index)
+
     # Add more indicator calculation methods as needed
 
 # Helper functions that might be implemented if needed by the technical indicators
@@ -848,10 +858,34 @@ def calculate_stochastic(high: pd.Series, low: pd.Series, close: pd.Series, k_pe
     return df
 
 
+def calculate_obv(close: pd.Series, volume: pd.Series) -> pd.Series:
+    """Standalone On-Balance Volume calculation."""
+    obv = pd.Series(index=close.index, dtype=float)
+    obv.iloc[0] = 0
+    for i in range(1, len(close)):
+        if close.iloc[i] > close.iloc[i - 1]:
+            obv.iloc[i] = obv.iloc[i - 1] + volume.iloc[i]
+        elif close.iloc[i] < close.iloc[i - 1]:
+            obv.iloc[i] = obv.iloc[i - 1] - volume.iloc[i]
+        else:
+            obv.iloc[i] = obv.iloc[i - 1]
+    return obv
+
+
+def detect_divergence(price: pd.Series, indicator: pd.Series, secondary: pd.Series | None = None,
+                      volume: pd.Series | None = None, lookback: int = 14) -> pd.DataFrame:
+    """Basic divergence detection between price and an indicator."""
+    diff_price = price.diff()
+    diff_ind = indicator.diff()
+    divergence = (diff_price * diff_ind) < 0
+    return divergence.rolling(lookback).sum() > 0
+
+
 __all__ = [
     'TechnicalFeatures', 'calculate_technical_features',
     'calculate_rsi', 'calculate_macd',
-    'calculate_adx', 'calculate_stochastic'
+    'calculate_adx', 'calculate_stochastic',
+    'calculate_obv', 'detect_divergence'
 ]
 
 # Module initialization
