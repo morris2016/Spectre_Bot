@@ -14,6 +14,7 @@ import json
 import enum
 import datetime
 import secrets
+import time
 from typing import Dict, List, Optional, Union, Any, TypeVar, Generic, Tuple
 from dataclasses import dataclass, field, asdict
 
@@ -38,33 +39,34 @@ from data_storage.models.market_data import Base, TimestampMixin, Auditable, Sof
 
 @dataclass
 class UserPreferences:
-    """Data class representing user risk preferences and trading profile."""
+    """User-level capital and risk preferences."""
 
     user_id: str
-    risk_profile: str
-    max_drawdown_threshold: float
-    risk_per_trade: float
-    leverage_preference: float
-    recovery_aggressiveness: float
-    auto_compound: bool
-    capital_allocation_strategy: str
-    created_at: float
-    updated_at: float
+    risk_profile: str = "moderate"
+    max_drawdown_threshold: float = 20.0
+    risk_per_trade: float = 1.0
+    leverage_preference: float = 2.0
+    recovery_aggressiveness: float = 0.5
+    auto_compound: bool = True
+    capital_allocation_strategy: str = "dynamic"
+    created_at: float = field(default_factory=time.time)
+    updated_at: float = field(default_factory=time.time)
 
 
 @dataclass
 class UserCapitalSettings:
-    """Data class representing user capital management configuration."""
+    """Configuration for capital allocation limits."""
 
     user_id: str
-    max_position_size_percentage: float
-    min_position_size: float
-    kelly_criterion_modifier: float
-    max_correlated_exposure: float
-    reserve_percentage: float
-    profit_distribution: Dict[str, float]
-    created_at: float
-    updated_at: float
+    max_position_size_percentage: float = 10.0
+    min_position_size: float = 0.01
+    kelly_criterion_modifier: float = 0.5
+    max_correlated_exposure: float = 25.0
+    reserve_percentage: float = 10.0
+    profit_distribution: Dict[str, float] = field(default_factory=lambda: {"reinvest": 80.0, "reserve": 20.0})
+    created_at: float = field(default_factory=time.time)
+    updated_at: float = field(default_factory=time.time)
+
 
 # User preference category enum
 class PreferenceCategory(enum.Enum):
@@ -144,6 +146,7 @@ class User(Base, Auditable, SoftDeleteMixin):
         Index('ix_users_email', 'email'),
         Index('ix_users_role', 'role'),
         Index('ix_users_is_active', 'is_active'),
+        {'extend_existing': True},
     )
     
     def __repr__(self):
@@ -973,7 +976,7 @@ class Position(Base, TimestampMixin):
     margin = Column(Float, nullable=True)
     leverage = Column(Float, nullable=True)
     notes = Column(Text, nullable=True)
-    position_metadata = Column(JSONB, nullable=True)  # Renamed from metadata to avoid conflict
+    position_metadata = Column(JSONB, nullable=True)
 
     
     # Relationships
@@ -991,6 +994,7 @@ class Position(Base, TimestampMixin):
         Index('ix_positions_status', 'status'),
         Index('ix_positions_open_time', 'open_time'),
         Index('ix_positions_close_time', 'close_time'),
+        {'extend_existing': True},
     )
     
     def __repr__(self):

@@ -19,6 +19,10 @@ from concurrent.futures import ThreadPoolExecutor
 
 from common.logger import get_logger
 from common.constants import TIME_FRAMES, DataSourcePreference
+
+DATA_SOURCES = DataSourcePreference
+DataProvider = DataSourcePreference
+
 from common.exceptions import (
     DataSourceError, DataInsufficientError, InvalidAssetError
 )
@@ -113,7 +117,8 @@ class BacktestDataProvider:
         include_orderbook: bool = False,
         include_ticks: bool = False,
         include_sentiment: bool = False,
-        data_source: str = DataSourcePreference.DB_FIRST
+        data_source: DataSourcePreference = DATA_SOURCES.DB_FIRST
+
     ) -> bool:
         """
         Load historical data for the specified assets, timeframes, and date range.
@@ -230,7 +235,8 @@ class BacktestDataProvider:
         timeframe: str, 
         start_date: datetime.datetime,
         end_date: datetime.datetime,
-        data_source: str = DataSourcePreference.DB_FIRST
+        data_source: DataSourcePreference = DATA_SOURCES.DB_FIRST
+
     ) -> pd.DataFrame:
         """
         Load OHLCV data for a specific asset and timeframe.
