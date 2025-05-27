@@ -45,6 +45,7 @@ class UIService:
             self.logger.warning("Static directory '%s' does not exist", static_dir)
             self.static_available = False
 
+
         self.app.add_api_route("/{full_path:path}", self.index, methods=["GET"])
 
     async def start(self) -> None:
@@ -88,3 +89,4 @@ class UIService:
             return FileResponse(self.index_path)
         self.logger.error("Index file '%s' not found", self.index_path)
         return Response(status_code=404)
+
