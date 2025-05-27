@@ -29,7 +29,8 @@ from enum import Enum, auto
 # Internal imports
 from common.logger import get_logger
 from common.exceptions import ModelError, DataError, TrainingError
-from common.utils import timeit, gpu_stats
+from common.utils import timeit
+from ml_models.hardware.gpu import setup_gpu, get_gpu_memory_usage
 from ml_models.models.base import BaseModel, ModelConfig, ModelOutput, DataBatch
 
 logger = get_logger(__name__)
@@ -1787,3 +1788,23 @@ class DeepLearningModel(BaseModel):
             probabilities=None,  # Not applicable for regression tasks
             raw_output=output
         )
+
+
+def create_deep_learning_model(
+    model_type: str,
+    input_shape: Union[int, Tuple[int, ...]],
+    output_shape: int,
+    problem_type: str,
+    hyperparams: Dict[str, Any],
+    use_gpu: bool = False,
+) -> DeepLearningModel:
+    """Factory to create a configured deep learning model."""
+    cfg_dict = {
+        **hyperparams,
+        'model_type': DeepModelType[model_type.upper()],
+        'input_dim': input_shape[0] if isinstance(input_shape, (list, tuple)) else input_shape,
+        'output_dim': output_shape,
+    }
+    config = DeepLearningConfig(**cfg_dict)
+    config.device = 'cuda' if use_gpu and setup_gpu() else 'cpu'
+    return DeepLearningModel(config)

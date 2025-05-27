@@ -1085,7 +1085,23 @@ class ModelPredictor:
     async def clean_up(self):
         """Clean up resources before shutdown."""
         await self.clear_cache()
-        
+
         # Additional cleanup if needed
         logger.info("ModelPredictor resources cleaned up")
+
+
+def predict_momentum_score(data: pd.DataFrame) -> float:
+    """Simple heuristic to compute a momentum score from price data."""
+    if data.empty:
+        return 0.0
+    # Use percent change as a basic momentum measure
+    momentum = data.pct_change().mean().mean()
+    return float(momentum)
+
+
+def predict_mean_reversion_probability(data: pd.DataFrame) -> float:
+    """Return a naive probability of mean reversion based on momentum."""
+    momentum = predict_momentum_score(data)
+    prob = max(0.0, min(1.0, 1.0 - abs(momentum)))
+    return float(prob)
 
