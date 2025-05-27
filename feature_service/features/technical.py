@@ -20,6 +20,10 @@ from common.utils import timeit, numpy_rolling_window
 from common.exceptions import FeatureCalculationError
 from common.constants import TECHNICAL_INDICATOR_PARAMS
 from feature_service.features.base_feature import BaseFeature
+from feature_service.features.volatility import (
+    calculate_bollinger_bands as _volatility_bbands,
+    calculate_atr as _volatility_atr,
+)
 
 logger = get_logger(__name__)
 
@@ -846,6 +850,11 @@ def calculate_adx(high: pd.Series, low: pd.Series, close: pd.Series, period: int
     adx_df.columns = [f"ADX_{period}", f"DMP_{period}", f"DMN_{period}"]
     return adx_df
 
+
+def calculate_atr(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> pd.Series:
+    """Wrapper for ATR calculation using the volatility module."""
+    return _volatility_atr(high, low, close, period)
+
   
 def calculate_stochastic(high: pd.Series, low: pd.Series, close: pd.Series, k_period: int = 14, d_period: int = 3) -> pd.DataFrame:
     """Standalone Stochastic Oscillator calculation."""
@@ -856,6 +865,12 @@ def calculate_stochastic(high: pd.Series, low: pd.Series, close: pd.Series, k_pe
         'stoch_d': k.rolling(d_period).mean()
     })
     return df
+
+
+def calculate_bollinger_bands(close: pd.Series, period: int = 20, std_dev: float = 2.0) -> pd.DataFrame:
+    """Wrapper for Bollinger Bands using the volatility module."""
+    upper, middle, lower = _volatility_bbands(close, window=period, num_std_dev=std_dev)
+    return pd.DataFrame({'bb_upper': upper, 'bb_middle': middle, 'bb_lower': lower})
 
 
 def calculate_obv(close: pd.Series, volume: pd.Series) -> pd.Series:
@@ -885,7 +900,8 @@ def detect_divergence(price: pd.Series, indicator: pd.Series, lookback: int = 14
 __all__ = [
     'TechnicalFeatures', 'calculate_technical_features',
     'calculate_rsi', 'calculate_macd',
-    'calculate_adx', 'calculate_stochastic',
+    'calculate_adx', 'calculate_atr', 'calculate_stochastic',
+    'calculate_bollinger_bands',
     'calculate_obv', 'detect_divergence'
 ]
 
