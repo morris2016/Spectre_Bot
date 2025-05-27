@@ -45,6 +45,7 @@ except Exception:  # pragma: no cover - optional dependency
     logging.getLogger(__name__).warning(
         "PyTorch not available; reinforcement learning features are disabled"
     )
+
 from collections import deque, namedtuple
 import random
 import gymnasium as gym

@@ -32,6 +32,7 @@ import ssl
 import socket
 import importlib
 import socket
+from common.utils import safe_nltk_download
 
 # Internal imports
 from config import Config, load_config
@@ -66,7 +67,7 @@ SERVICE_CLASS_PATHS = {
     "backtester": ("backtester.app", "BacktesterService"),
     "monitoring": ("monitoring.app", "MonitoringService"),
     "api_gateway": ("api_gateway.app", "APIGatewayService"),
-    "ui_server": ("ui.app", "UIService"),
+    "ui": ("ui.app", "UIService"),
     "voice_assistant": ("voice_assistant.app", "VoiceAssistantService"),
 }
 
@@ -646,6 +647,7 @@ def setup_nltk_data():
                     "System will continue without NLTK package '%s', some NLP features may be limited",
                     package,
                 )
+
 
     logger.info("NLTK setup complete")
 
