@@ -29,9 +29,8 @@ except ImportError:  # pragma: no cover - optional dependency
         "NLTK library not found. NLP features will be disabled"
     )
 import ssl
-import socket
 import importlib
-import socket
+
 from common.utils import safe_nltk_download
 
 # Internal imports
@@ -301,9 +300,16 @@ class ServiceManager:
 
                             # Check if this is a critical service
                             if self.config.services.get(service_name, {}).get("critical", False):
-                                self.logger.critical(f"Critical service {service_name} failed, initiating system shutdown due to {service_name} failure")
+                                self.logger.critical(
+                                    f"Critical service {service_name} failed, "
+                                    f"initiating system shutdown due to {service_name} failure"
+                                )
                                 # Use loop.call_soon_threadsafe to avoid nested event loop issues
-                                self.loop.call_soon_threadsafe(lambda: asyncio.create_task(self.shutdown("Critical service failure")))
+                                self.loop.call_soon_threadsafe(
+                                    lambda: asyncio.create_task(
+                                        self.shutdown("Critical service failure")
+                                    )
+                                )
                     else:
                         self.logger.warning(f"Auto-restart disabled for {service_name}, not restarting")
 
@@ -423,6 +429,7 @@ class ServiceManager:
         self.logger.info("All services stopped")
         self.shutdown_complete.set()
 
+
 def setup_argument_parser():
     """
     Set up command-line argument parser.
@@ -481,6 +488,7 @@ def setup_argument_parser():
 
     return parser
 
+
 async def initialize_db(config: Config) -> DatabaseClient:
     """
     Initialize the database connection.
@@ -524,6 +532,7 @@ async def initialize_db(config: Config) -> DatabaseClient:
         )
         return None
 
+
 async def initialize_redis(config: Config) -> RedisClient:
     """
     Initialize the Redis connection.
@@ -561,6 +570,7 @@ async def initialize_redis(config: Config) -> RedisClient:
         logger.warning("Continuing without Redis; functionality may be limited")
         return None
 
+
 async def initialize_credentials(config: Config) -> SecureCredentialManager:
     """
     Initialize the secure credential manager.
@@ -593,16 +603,6 @@ async def initialize_credentials(config: Config) -> SecureCredentialManager:
         logger.error(f"Failed to initialize secure credential manager: {str(e)}")
         logger.error(traceback.format_exc())
         raise SystemCriticalError("Security initialization failed") from e
-
-    """Download an NLTK package with a timeout."""
-    try:
-        socket.setdefaulttimeout(timeout)
-        return nltk.download(package, quiet=True)
-    except Exception as e:
-        logger.error(f"Error downloading NLTK package '{package}': {str(e)}")
-        return False
-    finally:
-        socket.setdefaulttimeout(None)
 
 
 def setup_nltk_data():
@@ -642,10 +642,12 @@ def setup_nltk_data():
             nltk.data.find(f'tokenizers/{package}' if package == 'punkt' else f'corpora/{package}')
             logger.debug(f"NLTK package '{package}' found locally")
         except LookupError:
-            if not safe_nltk_download(package):
+            if safe_nltk_download(package):
+                logger.info(f"NLTK package '{package}' is available")
+            else:
                 logger.warning(
-                    "System will continue without NLTK package '%s', some NLP features may be limited",
-                    package,
+                    f"NLTK package '{package}' not found; some NLP features may be limited"
+
                 )
 
 
@@ -758,6 +760,7 @@ async def startup():
         logger.critical(traceback.format_exc())
         return 4
 
+
 async def handle_shutdown_signal(signal_num, service_manager):
     """
     Handle OS shutdown signals gracefully.
@@ -769,6 +772,7 @@ async def handle_shutdown_signal(signal_num, service_manager):
     sig_name = signal.Signals(signal_num).name
     logger.info(f"Received shutdown signal: {sig_name}")
     await service_manager.shutdown(f"Received {sig_name} signal")
+
 
 def main():
     """
@@ -803,6 +807,7 @@ def main():
             executor.shutdown(wait=False)
         if service_event_loop:
             service_event_loop.close()
+
 
 if __name__ == "__main__":
     main()
