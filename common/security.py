@@ -18,9 +18,38 @@ import string
 from typing import Dict, List, Any, Optional, Union
 from datetime import datetime, timedelta
 from pathlib import Path
-from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+try:  # pragma: no cover - optional dependency
+    from cryptography.fernet import Fernet
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+    CRYPTO_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    import logging
+
+    CRYPTO_AVAILABLE = False
+
+    logging.getLogger(__name__).warning(
+        "cryptography package not available; using insecure fallback"
+    )
+
+    def _xor_bytes(data: bytes, key: bytes) -> bytes:
+        return bytes(b ^ key[i % len(key)] for i, b in enumerate(data))
+
+    class Fernet:  # type: ignore
+        """Simplistic XOR-based fallback for missing cryptography."""
+
+        def __init__(self, key: bytes):
+            self.key = base64.urlsafe_b64decode(key)
+
+        @staticmethod
+        def generate_key() -> bytes:
+            return base64.urlsafe_b64encode(os.urandom(32))
+
+        def encrypt(self, data: bytes) -> bytes:
+            return base64.urlsafe_b64encode(_xor_bytes(data, self.key))
+
+        def decrypt(self, token: bytes) -> bytes:
+            return _xor_bytes(base64.urlsafe_b64decode(token), self.key)
 
 from common.logger import get_logger
 from common.exceptions import SecurityError, APIKeyError, AuthenticationError
@@ -456,14 +485,21 @@ class SecureCredentialManager:
             Hashed password (base64 encoded)
         """
         salt_bytes = base64.b64decode(salt)
-        kdf = PBKDF2HMAC(
-            algorithm=hashes.SHA256(),
-            length=32,
-            salt=salt_bytes,
-            iterations=100000
-        )
-        key = kdf.derive(password.encode('utf-8'))
-        return base64.b64encode(key).decode('utf-8')
+
+        if CRYPTO_AVAILABLE:
+            kdf = PBKDF2HMAC(
+                algorithm=hashes.SHA256(),
+                length=32,
+                salt=salt_bytes,
+                iterations=100000,
+            )
+            key = kdf.derive(password.encode("utf-8"))
+        else:
+            key = hashlib.pbkdf2_hmac(
+                "sha256", password.encode("utf-8"), salt_bytes, 100000, dklen=32
+            )
+
+        return base64.b64encode(key).decode("utf-8")
         
     async def audit_log(self, action: str, user: str, resource: str, status: str, details: Optional[Dict] = None):
         """

@@ -15,7 +15,15 @@ from typing import Dict, List, Tuple, Any, Optional, Union, Callable
 import inspect
 from functools import wraps, lru_cache
 import time
-import ta
+try:
+    import ta  # type: ignore
+    TA_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    ta = None  # type: ignore
+    TA_AVAILABLE = False
+    logging.getLogger(__name__).warning(
+        "ta library not found; using pandas implementations for indicators"
+    )
 from scipy import stats, signal
 import pywt
 from sklearn import preprocessing
@@ -391,7 +399,9 @@ class FeatureExtractor:
             Series containing SMA values
         """
         period = params.get('sma_period', 14)
-        return ta.sma(data['close'], length=period)
+        if TA_AVAILABLE:
+            return ta.sma(data['close'], length=period)
+        return data['close'].rolling(period).mean()
     
     def sma_gpu(self, data: cudf.DataFrame, params: Dict[str, Any]) -> cudf.Series:
         """GPU-accelerated SMA calculation."""
@@ -412,7 +422,9 @@ class FeatureExtractor:
             Series containing EMA values
         """
         period = params.get('ema_period', 14)
-        return ta.ema(data['close'], length=period)
+        if TA_AVAILABLE:
+            return ta.ema(data['close'], length=period)
+        return data['close'].ewm(span=period, adjust=False).mean()
     
     def ema_gpu(self, data: cudf.DataFrame, params: Dict[str, Any]) -> cudf.Series:
         """GPU-accelerated EMA calculation."""
@@ -433,7 +445,17 @@ class FeatureExtractor:
             Series containing RSI values
         """
         period = params.get('rsi_period', 14)
-        return ta.rsi(data['close'], length=period)
+        if TA_AVAILABLE:
+            return ta.rsi(data['close'], length=period)
+
+        delta = data['close'].diff()
+        up = delta.clip(lower=0)
+        down = -delta.clip(upper=0)
+        ma_up = up.ewm(span=period - 1, adjust=False).mean()
+        ma_down = down.ewm(span=period - 1, adjust=False).mean()
+        rs = ma_up / ma_down
+        rsi = 100 - (100 / (1 + rs))
+        return rsi
     
     @feature_calculation
     def macd(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
@@ -454,8 +476,17 @@ class FeatureExtractor:
         slow_period = params.get('macd_slow_period', 26)
         signal_period = params.get('macd_signal_period', 9)
         
-        macd_df = ta.macd(data['close'], fast=fast_period, slow=slow_period, signal=signal_period)
-        return macd_df.iloc[:, 0]
+        if TA_AVAILABLE:
+            macd_df = ta.macd(
+                data['close'], fast=fast_period, slow=slow_period, signal=signal_period
+            )
+            return macd_df.iloc[:, 0]
+
+        ema_fast = data['close'].ewm(span=fast_period, adjust=False).mean()
+        ema_slow = data['close'].ewm(span=slow_period, adjust=False).mean()
+        macd_line = ema_fast - ema_slow
+        signal_line = macd_line.ewm(span=signal_period, adjust=False).mean()
+        return macd_line
     
     @feature_calculation
     def macd_signal(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
@@ -476,8 +507,17 @@ class FeatureExtractor:
         slow_period = params.get('macd_slow_period', 26)
         signal_period = params.get('macd_signal_period', 9)
         
-        macd_df = ta.macd(data['close'], fast=fast_period, slow=slow_period, signal=signal_period)
-        return macd_df.iloc[:, 2]
+        if TA_AVAILABLE:
+            macd_df = ta.macd(
+                data['close'], fast=fast_period, slow=slow_period, signal=signal_period
+            )
+            return macd_df.iloc[:, 2]
+
+        ema_fast = data['close'].ewm(span=fast_period, adjust=False).mean()
+        ema_slow = data['close'].ewm(span=slow_period, adjust=False).mean()
+        macd_line = ema_fast - ema_slow
+        signal_line = macd_line.ewm(span=signal_period, adjust=False).mean()
+        return signal_line
     
     @feature_calculation
     def macd_hist(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
@@ -498,8 +538,18 @@ class FeatureExtractor:
         slow_period = params.get('macd_slow_period', 26)
         signal_period = params.get('macd_signal_period', 9)
         
-        macd_df = ta.macd(data['close'], fast=fast_period, slow=slow_period, signal=signal_period)
-        return macd_df.iloc[:, 1]
+        if TA_AVAILABLE:
+            macd_df = ta.macd(
+                data['close'], fast=fast_period, slow=slow_period, signal=signal_period
+            )
+            return macd_df.iloc[:, 1]
+
+        ema_fast = data['close'].ewm(span=fast_period, adjust=False).mean()
+        ema_slow = data['close'].ewm(span=slow_period, adjust=False).mean()
+        macd_line = ema_fast - ema_slow
+        signal_line = macd_line.ewm(span=signal_period, adjust=False).mean()
+        hist = macd_line - signal_line
+        return hist
     
     @feature_calculation
     def bollinger_upper(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
@@ -645,7 +695,21 @@ class FeatureExtractor:
             Series containing ATR values
         """
         period = params.get('atr_period', 14)
-        return ta.atr(high=data['high'], low=data['low'], close=data['close'], length=period)
+        if TA_AVAILABLE:
+            return ta.atr(
+                high=data['high'], low=data['low'], close=data['close'], length=period
+            )
+
+        high = data['high']
+        low = data['low']
+        close = data['close']
+        prev_close = close.shift()
+        tr = pd.concat([
+            high - low,
+            (high - prev_close).abs(),
+            (low - prev_close).abs(),
+        ], axis=1).max(axis=1)
+        return tr.rolling(period).mean()
     
     @feature_calculation
     def adx(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:

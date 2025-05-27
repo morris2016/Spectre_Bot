@@ -38,8 +38,17 @@ except Exception:  # pragma: no cover - optional dependency
 
 from collections import deque, namedtuple
 import random
-import gymnasium as gym
-from gymnasium import spaces
+try:
+    import gymnasium as gym  # type: ignore
+    from gymnasium import spaces  # type: ignore
+    GYM_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    gym = None  # type: ignore
+    spaces = None  # type: ignore
+    GYM_AVAILABLE = False
+    logging.getLogger(__name__).warning(
+        "gymnasium not available; using minimal environment implementation"
+    )
 import datetime
 from concurrent.futures import ThreadPoolExecutor
 
@@ -80,33 +89,82 @@ Experience = namedtuple('Experience',
 logger = get_logger(__name__)
 
 
-class MarketEnvironment:
-    """
-    Trading environment for reinforcement learning that simulates market conditions
-    and provides rewards based on trading actions and performance.
-    
-    This environment implements a gym-like interface but is customized for trading
-    with advanced market dynamics, transaction costs, and realistic constraints.
-    """
-    
-    def __init__(
-        self, 
-        market_data: pd.DataFrame,
-        features: pd.DataFrame,
-        initial_balance: float = 1000.0,
-        commission_rate: float = 0.001,
-        slippage_model: str = 'realistic',
-        risk_factor: float = 0.01,
-        max_position_size: float = 1.0,
-        trading_frequency: str = '1m',
-        reward_type: str = 'sharpe',
-        state_lookback: int = 60,
-        include_market_features: bool = True,
-        include_trade_history: bool = True,
-        include_balance_history: bool = True,
-        randomize_start: bool = True,
-        market_impact_model: Optional[Callable] = None
-    ):
+if not GYM_AVAILABLE:
+    class MarketEnvironment:
+        """Minimal market environment used when gymnasium is unavailable."""
+
+        def __init__(
+            self,
+            market_data: pd.DataFrame,
+            features: pd.DataFrame,
+            initial_balance: float = 1000.0,
+            commission_rate: float = 0.001,
+            slippage_model: str = "realistic",
+            risk_factor: float = 0.01,
+            max_position_size: float = 1.0,
+            trading_frequency: str = "1m",
+            reward_type: str = "sharpe",
+            state_lookback: int = 60,
+            include_market_features: bool = True,
+            include_trade_history: bool = True,
+            include_balance_history: bool = True,
+            randomize_start: bool = True,
+            market_impact_model: Optional[Callable] = None,
+        ) -> None:
+            self.market_data = market_data.reset_index(drop=True)
+            self.features = features.reset_index(drop=True)
+            self.state_lookback = state_lookback
+            self.current_idx = state_lookback
+
+        def _get_state(self) -> np.ndarray:
+            start = self.current_idx - self.state_lookback
+            df = pd.concat(
+                [
+                    self.market_data.iloc[start:self.current_idx],
+                    self.features.iloc[start:self.current_idx],
+                ],
+                axis=1,
+            )
+            return df.values.flatten()
+
+        def reset(self):
+            self.current_idx = self.state_lookback
+            return self._get_state(), {}
+
+        def step(self, action, position_size_pct=None):
+            self.current_idx += 1
+            terminated = self.current_idx >= len(self.market_data)
+            truncated = False
+            reward = 0.0
+            return self._get_state(), reward, terminated, truncated, {}
+else:
+    class MarketEnvironment:
+        """Trading environment for reinforcement learning.
+
+        This environment simulates market conditions and provides rewards based
+        on trading actions and performance. It mimics a gymnasium-style interface
+        with advanced market dynamics, transaction costs, and realistic
+        constraints.
+        """
+
+        def __init__(
+                self,
+                market_data: pd.DataFrame,
+                features: pd.DataFrame,
+                initial_balance: float = 1000.0,
+                commission_rate: float = 0.001,
+                slippage_model: str = 'realistic',
+                risk_factor: float = 0.01,
+                max_position_size: float = 1.0,
+                trading_frequency: str = '1m',
+                reward_type: str = 'sharpe',
+                state_lookback: int = 60,
+                include_market_features: bool = True,
+                include_trade_history: bool = True,
+                include_balance_history: bool = True,
+                randomize_start: bool = True,
+                market_impact_model: Optional[Callable] = None
+        ) -> None:
         """
         Initialize the trading environment.
         
