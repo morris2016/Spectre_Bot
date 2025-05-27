@@ -17,7 +17,8 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 
-from common.constants import OrderSide, OrderType, SignalConfidence, SignalType, TimeInForce
+from common.constants import OrderSide, OrderType, SignalType, TimeInForce
+from intelligence.app import SignalConfidence
 from common.exceptions import InvalidDataError, StrategyError
 from common.utils import calculate_risk_reward, normalize_price_series
 from feature_service.features.market_structure import detect_consolidation, identify_swing_points

@@ -141,6 +141,17 @@ class ChartPatternRecognizer:
             f"ChartPatternRecognizer initialized with min_bars={min_pattern_bars}, "
             f"max_bars={max_pattern_bars}, GPU acceleration: {enable_gpu}"
         )
+
+
+class ChartPattern:
+    """Lightweight wrapper exposing a simple detect method."""
+
+    def __init__(self) -> None:
+        self.recognizer = ChartPatternRecognizer()
+
+    def detect(self, data: pd.DataFrame, symbol: str = "", timeframe: str = "1h") -> List[PatternInfo]:
+        """Detect chart patterns using the underlying recognizer."""
+        return self.recognizer.detect_patterns(data, symbol=symbol, timeframe=timeframe)
     
     def _load_pretrained_models(self):
         """Load pretrained models for pattern detection"""

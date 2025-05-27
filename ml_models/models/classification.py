@@ -755,7 +755,7 @@ class ClassificationModel(BaseModel):
         logger.info(f"Cross-validation scores: {cv_scores}")
         logger.info(f"Mean CV accuracy: {cv_scores.mean():.4f} ± {cv_scores.std():.4f}")
     
-    def _create_neural_network_classifier(self) -> tf.keras.Model:
+    def _create_neural_network_classifier(self) -> Any:
         """
         Create a neural network classifier using TensorFlow/Keras.
         
@@ -887,7 +887,7 @@ class ClassificationModel(BaseModel):
         
         return base_clf
     
-    def _get_keras_callbacks(self) -> List[callbacks.Callback]:
+    def _get_keras_callbacks(self) -> List[Any]:
         """
         Configure callbacks for Keras neural network training.
         

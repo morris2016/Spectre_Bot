@@ -2544,3 +2544,27 @@ class AdvancedSupportResistance:
         self.active_zones = {tf: [] for tf in TIMEFRAMES}
         logger.info("Support/resistance zones reset")
 
+
+def identify_support_resistance_zones(
+    data: pd.DataFrame,
+    zone_width_pct: float = 0.01,
+    min_touches: int = 2,
+    swing_strength: float = 0.5,
+) -> Dict[str, List[float]]:
+    """Lightweight support/resistance detection using pivot points."""
+    supports: List[float] = []
+    resistances: List[float] = []
+    highs = data['high']
+    lows = data['low']
+
+    for i in range(1, len(data) - 1):
+        if lows.iloc[i] <= lows.iloc[i - 1] and lows.iloc[i] <= lows.iloc[i + 1]:
+            supports.append(lows.iloc[i])
+        if highs.iloc[i] >= highs.iloc[i - 1] and highs.iloc[i] >= highs.iloc[i + 1]:
+            resistances.append(highs.iloc[i])
+
+    return {
+        'support': sorted(set(supports)),
+        'resistance': sorted(set(resistances)),
+    }
+

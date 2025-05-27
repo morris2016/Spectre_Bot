@@ -37,6 +37,23 @@ class TradeDirection(Enum):
 
 
 @dataclass
+class SignalEvent:
+    """Lightweight signal representation used in tests."""
+    timestamp: float
+    asset: str
+    direction: TradeDirection
+    confidence: float = 0.0
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class StrategyConfig:
+    """Base configuration for strategy brains."""
+    risk_per_trade: float = 0.01
+    max_position_size: float = 0.05
+
+
+@dataclass
 class BrainConfig:
     """Base configuration for strategy brains."""
     pass

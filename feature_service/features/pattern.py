@@ -1228,3 +1228,72 @@ def detect_patterns(data: pd.DataFrame, config: Optional[PatternConfiguration] =
     pf = PatternFeatures(config)
     return pf.calculate_features(data)
 
+
+def detect_rectangle_pattern(data: pd.DataFrame, lookback: int = 20) -> List[Dict[str, Any]]:
+    """Detect simple rectangle consolidation patterns."""
+    if len(data) < lookback:
+        return []
+
+    highs = data['high'].rolling(lookback).max()
+    lows = data['low'].rolling(lookback).min()
+    range_pct = (highs - lows) / data['close']
+
+    patterns: List[Dict[str, Any]] = []
+    in_pattern = False
+    start = None
+
+    for idx, flag in range_pct.lt(0.02).items():
+        if flag and not in_pattern:
+            in_pattern = True
+            start = idx
+        elif not flag and in_pattern:
+            patterns.append({
+                'start': start,
+                'end': idx,
+                'high': float(highs.loc[idx]),
+                'low': float(lows.loc[idx]),
+            })
+            in_pattern = False
+
+    if in_pattern:
+        patterns.append({
+            'start': start,
+            'end': data.index[-1],
+            'high': float(highs.iloc[-1]),
+            'low': float(lows.iloc[-1]),
+        })
+
+    return patterns
+
+
+def detect_triangle_pattern(data: pd.DataFrame, lookback: int = 20) -> List[Dict[str, Any]]:
+    """Detect basic triangle patterns based on converging highs and lows."""
+    if len(data) < lookback:
+        return []
+
+    highs = data['high']
+    lows = data['low']
+    slope_high = highs.diff().rolling(lookback).mean()
+    slope_low = lows.diff().rolling(lookback).mean()
+
+    patterns: List[Dict[str, Any]] = []
+    in_pattern = False
+    start = None
+
+    for i in range(lookback, len(data)):
+        decreasing_high = slope_high.iloc[i] < 0
+        increasing_low = slope_low.iloc[i] > 0
+        if decreasing_high and increasing_low:
+            if not in_pattern:
+                start = data.index[i - lookback + 1]
+                in_pattern = True
+        else:
+            if in_pattern:
+                patterns.append({'start': start, 'end': data.index[i]})
+                in_pattern = False
+
+    if in_pattern:
+        patterns.append({'start': start, 'end': data.index[-1]})
+
+    return patterns
+
