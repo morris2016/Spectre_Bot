@@ -21,10 +21,10 @@ from common.exceptions import (
 )
 from common.constants import SIGNAL_TYPES, POSITION_DIRECTION, MARKET_REGIMES
 from strategy_brains.base_brain import StrategyBrain
-from strategy_brains.trend_following import TrendFollowingBrain
-from strategy_brains.mean_reversion import MeanReversionBrain
-from strategy_brains.breakout import BreakoutBrain
-from strategy_brains.pattern_recognition import PatternRecognitionBrain
+from strategy_brains.trend_brain import TrendBrain
+from strategy_brains.mean_reversion_brain import MeanReversionBrain
+from strategy_brains.breakout_brain import BreakoutBrain
+from strategy_brains.pattern_brain import PatternBrain
 from strategy_brains.ml_brain import MLBrain
 from strategy_brains.adaptive_brain import AdaptiveBrain
 
@@ -142,12 +142,14 @@ class StrategyBrainService:
         
         # Brain class mapping
         brain_classes = {
-            "trend_following": TrendFollowingBrain,
+            "trend": TrendBrain,
+            "trend_following": TrendBrain,
             "mean_reversion": MeanReversionBrain,
             "breakout": BreakoutBrain,
-            "pattern_recognition": PatternRecognitionBrain,
+            "pattern": PatternBrain,
+            "pattern_recognition": PatternBrain,
             "ml": MLBrain,
-            "adaptive": AdaptiveBrain
+            "adaptive": AdaptiveBrain,
         }
         
         # Initialize each configured brain
