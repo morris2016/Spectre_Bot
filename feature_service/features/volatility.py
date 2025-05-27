@@ -9,10 +9,18 @@ and adaptive parameterization for effective market regime detection and risk man
 
 import numpy as np
 import pandas as pd
-import ta
+from common.logger import get_logger
+try:
+    import ta  # type: ignore
+    TA_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    ta = None  # type: ignore
+    TA_AVAILABLE = False
+    get_logger(__name__).warning(
+        "ta library not available; volatility indicators degraded"
+    )
 from numba import jit
 from typing import Dict, List, Union, Tuple, Optional, Any
-from common.logger import get_logger
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 import warnings

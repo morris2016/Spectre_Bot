@@ -16,10 +16,18 @@ import pandas as pd
 from typing import Dict, List, Tuple, Optional, Union, Any, Callable
 from scipy import stats
 from scipy.signal import argrelextrema, find_peaks
-import ta
+import logging
+try:
+    import ta  # type: ignore
+    TA_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    ta = None  # type: ignore
+    TA_AVAILABLE = False
+    logging.getLogger(__name__).warning(
+        "ta library not available; pattern features will be limited"
+    )
 from common.ta_candles import cdl_pattern
 from dataclasses import dataclass
-import logging
 from datetime import datetime, timedelta
 
 from common.logger import get_logger

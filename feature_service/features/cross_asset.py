@@ -7,9 +7,16 @@ correlation and cointegration tests.
 
 from typing import Optional, Tuple
 
+import logging
+
 import numpy as np
 import pandas as pd
-from statsmodels.tsa.stattools import coint
+try:
+    from statsmodels.tsa.stattools import coint  # type: ignore
+    STATSMODELS_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    coint = None  # type: ignore
+    STATSMODELS_AVAILABLE = False
 
 __all__ = ["compute_pair_correlation", "cointegration_score"]
 
@@ -63,5 +70,10 @@ def cointegration_score(
     min_len = min(len(s1), len(s2))
     if min_len < 2:
         return float("nan")
-    result = coint(s1.iloc[-min_len:], s2.iloc[-min_len:])
-    return float(result[1])
+    if STATSMODELS_AVAILABLE and coint is not None:
+        result = coint(s1.iloc[-min_len:], s2.iloc[-min_len:])
+        return float(result[1])
+    logging.getLogger(__name__).warning(
+        "statsmodels not available; cointegration score set to NaN"
+    )
+    return float("nan")
