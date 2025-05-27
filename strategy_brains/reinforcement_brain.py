@@ -80,24 +80,11 @@ if not GYM_AVAILABLE:
             return self._get_observation(), {}
 
         def step(self, action):
-            prev_price = self.data['close'].iloc[self.current_step - 1]
             self.current_step += 1
-            price = self.data['close'].iloc[self.current_step - 1]
             obs = self._get_observation()
             terminated = self.current_step >= len(self.data)
             truncated = False
-
             reward = 0.0
-            if action == 1:
-                reward = price - prev_price
-                self.position = 1
-            elif action == 2:
-                reward = prev_price - price
-                self.position = -1
-            else:
-                self.position = 0
-
-            self.balance += reward
 
             return obs, reward, terminated, truncated, {}
 else:
