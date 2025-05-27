@@ -18,7 +18,7 @@ import asyncio
 
 from common.logger import get_logger
 from common.exceptions import VotingError
-from common.utils import normalize_weights, sigmoid, calculate_confidence
+from common.utils import normalize_weights, sigmoid
 from common.constants import (
     VOTE_THRESHOLDS, SIGNAL_TYPES, CONFIDENCE_LEVELS,
     DEFAULT_VOTING_CONFIG

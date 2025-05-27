@@ -115,6 +115,8 @@ if not GYM_AVAILABLE:
             self.features = features.reset_index(drop=True)
             self.state_lookback = state_lookback
             self.current_idx = state_lookback
+            self.balance = initial_balance
+            self.position = 0  # -1 sell, 0 hold, 1 buy
 
         def _get_state(self) -> np.ndarray:
             start = self.current_idx - self.state_lookback
@@ -165,6 +167,7 @@ else:
                 randomize_start: bool = True,
                 market_impact_model: Optional[Callable] = None
         ) -> None:
+
         """
         Initialize the trading environment.
         

@@ -20,7 +20,15 @@ import logging
 from dataclasses import dataclass
 from scipy.signal import argrelextrema
 from scipy.stats import linregress
-import ta
+try:
+    import ta  # type: ignore
+    TA_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    ta = None  # type: ignore
+    TA_AVAILABLE = False
+    logging.getLogger(__name__).warning(
+        "ta library not available; some market structure features disabled"
+    )
 
 
 def identify_swing_points(df: pd.DataFrame, window: int = 5) -> List[int]:

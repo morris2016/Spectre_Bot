@@ -9,10 +9,18 @@ and adaptive parameterization for effective pattern recognition and signal gener
 
 import numpy as np
 import pandas as pd
-import ta
+from common.logger import get_logger
+try:
+    import ta  # type: ignore
+    TA_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    ta = None  # type: ignore
+    TA_AVAILABLE = False
+    get_logger(__name__).warning(
+        "ta library not available; technical indicators degraded"
+    )
 from numba import jit, cuda
 from typing import Dict, List, Union, Tuple, Optional, Any
-from common.logger import get_logger
 from concurrent.futures import ThreadPoolExecutor
 import warnings
 

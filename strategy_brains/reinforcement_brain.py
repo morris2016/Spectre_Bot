@@ -67,6 +67,9 @@ if not GYM_AVAILABLE:
             self.data = data.reset_index(drop=True)
             self.window_size = window_size
             self.current_step = window_size
+            self.balance = initial_balance
+            self.position = 0
+
 
         def _get_observation(self) -> np.ndarray:
             start = self.current_step - self.window_size
@@ -82,6 +85,7 @@ if not GYM_AVAILABLE:
             terminated = self.current_step >= len(self.data)
             truncated = False
             reward = 0.0
+
             return obs, reward, terminated, truncated, {}
 else:
     class TradingEnvironment(gym.Env):

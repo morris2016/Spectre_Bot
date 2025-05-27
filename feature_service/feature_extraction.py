@@ -25,9 +25,25 @@ except Exception:  # pragma: no cover - optional dependency
         "ta library not found; using pandas implementations for indicators"
     )
 from scipy import stats, signal
-import pywt
+try:
+    import pywt  # type: ignore
+    PYWT_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    pywt = None  # type: ignore
+    PYWT_AVAILABLE = False
+    logging.getLogger(__name__).warning(
+        "pywt not available; wavelet features disabled"
+    )
 from sklearn import preprocessing
-import statsmodels.api as sm
+try:
+    import statsmodels.api as sm  # type: ignore
+    STATSMODELS_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    sm = None  # type: ignore
+    STATSMODELS_AVAILABLE = False
+    logging.getLogger(__name__).warning(
+        "statsmodels not available; econometrics features disabled"
+    )
 from empyrical import max_drawdown, sharpe_ratio, sortino_ratio, calmar_ratio
 from feature_service.processor_utils import cudf, HAS_GPU
 from numba import cuda, jit, vectorize
