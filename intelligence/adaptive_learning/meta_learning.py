@@ -17,11 +17,22 @@ import logging
 import numpy as np
 import pandas as pd
 from typing import Dict, List, Tuple, Any, Optional, Union, Callable
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-from torch.utils.data import DataLoader, Dataset, TensorDataset
+try:
+    import torch  # type: ignore
+    import torch.nn as nn  # type: ignore
+    import torch.nn.functional as F  # type: ignore
+    import torch.optim as optim  # type: ignore
+    from torch.utils.data import DataLoader, Dataset, TensorDataset  # type: ignore
+    TORCH_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    torch = None  # type: ignore
+    nn = None  # type: ignore
+    F = None  # type: ignore
+    optim = None  # type: ignore
+    DataLoader = Dataset = TensorDataset = None  # type: ignore
+    TORCH_AVAILABLE = False
+    logger = logging.getLogger(__name__)
+    logger.warning("PyTorch not available; meta-learning features are disabled")
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from datetime import datetime, timedelta
 import json

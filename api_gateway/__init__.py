@@ -10,11 +10,6 @@ the frontend UI and the backend services of the QuantumSpectre Elite Trading Sys
 import logging
 from typing import Dict, List, Any
 from api_gateway.app import (
-    ApiGatewayService, initialize_api, register_route, register_middleware,
-    register_auth_provider, register_ws_handler
-)
-
-from api_gateway.app import (
     ApiGatewayService,
     initialize_api,
     register_route,
