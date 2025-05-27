@@ -26,12 +26,26 @@ try:
     from torch.distributions import Categorical, Normal  # type: ignore
     TORCH_AVAILABLE = True
 except Exception:  # pragma: no cover - optional dependency
-    torch = None  # type: ignore
-    nn = None  # type: ignore
-    optim = None  # type: ignore
-    F = None  # type: ignore
-    Categorical = Normal = None  # type: ignore
+    from types import SimpleNamespace
+
+    torch = SimpleNamespace(
+        device=lambda *_, **__: "cpu",
+        FloatTensor=lambda *_, **__: None,
+        Tensor=lambda *_, **__: None,
+    )
+    nn = SimpleNamespace(
+        Module=object,
+        Linear=lambda *_, **__: None,
+        Parameter=lambda *_, **__: None,
+    )
+    optim = SimpleNamespace(Adam=lambda *_, **__: None)
+    F = SimpleNamespace(relu=lambda x: x)
+    Categorical = Normal = object
     TORCH_AVAILABLE = False
+    logging.getLogger(__name__).warning(
+        "PyTorch not available; reinforcement learning features are disabled"
+    )
+
 from collections import deque, namedtuple
 import random
 import gymnasium as gym

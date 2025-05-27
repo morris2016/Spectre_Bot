@@ -16,6 +16,8 @@ import logging
 import traceback
 from typing import Any
 from concurrent.futures import ThreadPoolExecutor
+
+from common.utils import safe_nltk_download
 import multiprocessing as mp
 try:
     import nltk  # type: ignore
@@ -626,23 +628,26 @@ def setup_nltk_data():
     try:
         _create_unverified_https_context = ssl._create_unverified_context
     except AttributeError:
-        pass
-    else:
+        _create_unverified_https_context = None
+    if _create_unverified_https_context:
         ssl._create_default_https_context = _create_unverified_https_context
 
     # Try to load packages from local data directory first
     nltk_data_dir = os.path.expanduser("~/.nltk_data")
     nltk.data.path.insert(0, nltk_data_dir)
 
-    # Check that required NLTK resources are available locally without attempting network downloads
+    # Check each package without attempting network downloads
     for package in required_packages:
-        resource = f"tokenizers/{package}" if package == 'punkt' else f"corpora/{package}"
-        if safe_nltk_download(resource):
-            logger.debug(f"NLTK package '{package}' available")
-        else:
-            logger.warning(
-                f"NLTK package '{package}' not available; some NLP features may be limited"
-            )
+        try:
+            nltk.data.find(f'tokenizers/{package}' if package == 'punkt' else f'corpora/{package}')
+            logger.debug(f"NLTK package '{package}' found locally")
+        except LookupError:
+            if not safe_nltk_download(package):
+                logger.warning(
+                    "System will continue without NLTK package '%s', some NLP features may be limited",
+                    package,
+                )
+
 
     logger.info("NLTK setup complete")
 

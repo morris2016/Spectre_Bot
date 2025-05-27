@@ -160,6 +160,11 @@ async def run_in_threadpool(func: Callable[..., R], *args, **kwargs) -> R:
         None, lambda: func(*args, **kwargs)
     )
 
+
+async def run_in_thread_pool(func: Callable[..., R], *args: Any, **kwargs: Any) -> R:
+    """Alias for :func:`run_in_threadpool` for backward compatibility."""
+    return await run_in_threadpool(func, *args, **kwargs)
+
 async def retry(
     coroutine_func: Callable[..., Coroutine],
     *args,
