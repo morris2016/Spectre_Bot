@@ -67,7 +67,13 @@ class FeatureService:
     4. Managing feature calculation pipelines
     """
     
-    def __init__(self, config: Config):
+    def __init__(
+        self,
+        config: Config,
+        loop: Optional[asyncio.AbstractEventLoop] = None,
+        redis_client: Optional[RedisClient] = None,
+        db_client: Optional[DatabaseClient] = None,
+    ) -> None:
         """
         Initialize the feature service.
         
@@ -75,11 +81,12 @@ class FeatureService:
             config: Application configuration
         """
         self.config = config
+        self.loop = loop or asyncio.get_event_loop()
         self.processor = None
         self.extractor = None
         self.mtf_analyzer = None
-        self.redis_client = None
-        self.db_client = None
+        self.redis_client = redis_client
+        self.db_client = db_client
         self.metrics = MetricsCollector(SERVICE_NAME)
         
         # Cached data
@@ -97,9 +104,6 @@ class FeatureService:
             time_period=1.0
         )
         
-        # Initialize event loop
-        self.loop = None
-        
         logger.info("Feature service instance created")
     
     async def initialize(self, db_connector: Optional[DatabaseClient] = None) -> None:
@@ -112,12 +116,13 @@ class FeatureService:
         
         try:
             # Initialize common resources
-            self.redis_client = RedisClient(
-                host=self.config.get("redis.host", "localhost"),
-                port=self.config.get("redis.port", 6379),
-                db=self.config.get("redis.feature_service_db", 1),
-                password=self.config.get("redis.password", None),
-            )
+            if self.redis_client is None:
+                self.redis_client = RedisClient(
+                    host=self.config.get("redis.host", "localhost"),
+                    port=self.config.get("redis.port", 6379),
+                    db=self.config.get("redis.feature_service_db", 1),
+                    password=self.config.get("redis.password", None),
+                )
 
             if db_connector is not None:
                 self.db_client = db_connector
