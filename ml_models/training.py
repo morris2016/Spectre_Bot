@@ -38,10 +38,11 @@ except Exception:  # pragma: no cover - optional dependency
     tf = None  # type: ignore
     layers = models = optimizers = callbacks = regularizers = None  # type: ignore
 try:
-    import torch
-    import torch.nn as nn
-    import torch.optim as optim
-    from torch.utils.data import DataLoader, TensorDataset
+    import torch  # type: ignore
+    import torch.nn as nn  # type: ignore
+    import torch.optim as optim  # type: ignore
+    from torch.utils.data import DataLoader, TensorDataset  # type: ignore
+
     TORCH_AVAILABLE = True
 except Exception:  # pragma: no cover - optional dependency
     torch = None  # type: ignore

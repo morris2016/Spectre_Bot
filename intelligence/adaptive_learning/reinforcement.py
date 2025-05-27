@@ -26,25 +26,15 @@ try:
     from torch.distributions import Categorical, Normal  # type: ignore
     TORCH_AVAILABLE = True
 except Exception:  # pragma: no cover - optional dependency
-    from types import SimpleNamespace
 
-    torch = SimpleNamespace(
-        device=lambda *_, **__: "cpu",
-        FloatTensor=lambda *_, **__: None,
-        Tensor=lambda *_, **__: None,
-    )
-    nn = SimpleNamespace(
-        Module=object,
-        Linear=lambda *_, **__: None,
-        Parameter=lambda *_, **__: None,
-    )
-    optim = SimpleNamespace(Adam=lambda *_, **__: None)
-    F = SimpleNamespace(relu=lambda x: x)
-    Categorical = Normal = object
+    torch = None  # type: ignore
+    nn = None  # type: ignore
+    optim = None  # type: ignore
+    F = None  # type: ignore
+    Categorical = Normal = None  # type: ignore
     TORCH_AVAILABLE = False
-    logging.getLogger(__name__).warning(
-        "PyTorch not available; reinforcement learning features are disabled"
-    )
+    logger = logging.getLogger(__name__)
+    logger.warning("PyTorch not available; reinforcement features are disabled")
 
 from collections import deque, namedtuple
 import random
@@ -1083,192 +1073,218 @@ class LegacyDQNAgent:
         
         
 # Neural network models for DQN
-class DQN(nn.Module):
-    """Basic DQN network."""
-    
-    def __init__(self, state_dim, action_dim, hidden_dim=128):
-        super(DQN, self).__init__()
-        self.state_dim = state_dim
-        self.action_dim = action_dim
-        self.hidden_dim = hidden_dim
-        
-        # Network layers
-        self.fc1 = nn.Linear(state_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
-        self.fc3 = nn.Linear(hidden_dim, hidden_dim // 2)
-        self.fc4 = nn.Linear(hidden_dim // 2, action_dim)
-        
-    def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = F.relu(self.fc3(x))
-        return self.fc4(x)
+if TORCH_AVAILABLE:
+    class DQN(nn.Module):
+        """Basic DQN network."""
+
+        def __init__(self, state_dim, action_dim, hidden_dim=128):
+            super().__init__()
+            self.state_dim = state_dim
+            self.action_dim = action_dim
+            self.hidden_dim = hidden_dim
+
+            # Network layers
+            self.fc1 = nn.Linear(state_dim, hidden_dim)
+            self.fc2 = nn.Linear(hidden_dim, hidden_dim)
+            self.fc3 = nn.Linear(hidden_dim, hidden_dim // 2)
+            self.fc4 = nn.Linear(hidden_dim // 2, action_dim)
+
+        def forward(self, x):
+            x = F.relu(self.fc1(x))
+            x = F.relu(self.fc2(x))
+            x = F.relu(self.fc3(x))
+            return self.fc4(x)
+else:  # pragma: no cover - optional dependency
+    class DQN:  # type: ignore
+        """Placeholder when PyTorch is not available."""
+
+        def __init__(self, *_: Any, **__: Any) -> None:
+            raise RuntimeError("PyTorch is required for DQN models")
         
 
-class DuelingDQN(nn.Module):
-    """Dueling DQN architecture."""
-    
-    def __init__(self, state_dim, action_dim, hidden_dim=128):
-        super(DuelingDQN, self).__init__()
-        self.state_dim = state_dim
-        self.action_dim = action_dim
-        self.hidden_dim = hidden_dim
-        
-        # Feature layers
-        self.fc1 = nn.Linear(state_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
-        
-        # Value stream
-        self.value_fc = nn.Linear(hidden_dim, hidden_dim // 2)
-        self.value = nn.Linear(hidden_dim // 2, 1)
-        
-        # Advantage stream
-        self.advantage_fc = nn.Linear(hidden_dim, hidden_dim // 2)
-        self.advantage = nn.Linear(hidden_dim // 2, action_dim)
-        
-    def forward(self, x):
-        # Shared feature layers
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        
-        # Value stream
-        value = F.relu(self.value_fc(x))
-        value = self.value(value)
-        
-        # Advantage stream
-        advantage = F.relu(self.advantage_fc(x))
-        advantage = self.advantage(advantage)
-        
-        # Combine value and advantage
-        # Q(s,a) = V(s) + (A(s,a) - mean(A(s,a')))
-        return value + advantage - advantage.mean(dim=1, keepdim=True)
+if TORCH_AVAILABLE:
+    class DuelingDQN(nn.Module):
+        """Dueling DQN architecture."""
+
+        def __init__(self, state_dim, action_dim, hidden_dim=128):
+            super().__init__()
+            self.state_dim = state_dim
+            self.action_dim = action_dim
+            self.hidden_dim = hidden_dim
+
+            # Feature layers
+            self.fc1 = nn.Linear(state_dim, hidden_dim)
+            self.fc2 = nn.Linear(hidden_dim, hidden_dim)
+
+            # Value stream
+            self.value_fc = nn.Linear(hidden_dim, hidden_dim // 2)
+            self.value = nn.Linear(hidden_dim // 2, 1)
+
+            # Advantage stream
+            self.advantage_fc = nn.Linear(hidden_dim, hidden_dim // 2)
+            self.advantage = nn.Linear(hidden_dim // 2, action_dim)
+
+        def forward(self, x):
+            # Shared feature layers
+            x = F.relu(self.fc1(x))
+            x = F.relu(self.fc2(x))
+
+            # Value stream
+            value = F.relu(self.value_fc(x))
+            value = self.value(value)
+
+            # Advantage stream
+            advantage = F.relu(self.advantage_fc(x))
+            advantage = self.advantage(advantage)
+
+            # Combine value and advantage
+            return value + advantage - advantage.mean(dim=1, keepdim=True)
+else:  # pragma: no cover - optional dependency
+    class DuelingDQN:  # type: ignore
+        def __init__(self, *_: Any, **__: Any) -> None:
+            raise RuntimeError("PyTorch is required for DuelingDQN models")
         
 
-class NoisyLinear(nn.Module):
-    """Noisy linear layer for exploration."""
-    
-    def __init__(self, in_features, out_features, std_init=0.5):
-        super(NoisyLinear, self).__init__()
-        self.in_features = in_features
-        self.out_features = out_features
-        self.std_init = std_init
-        
-        # Learnable parameters
-        self.weight_mu = nn.Parameter(torch.Tensor(out_features, in_features))
-        self.weight_sigma = nn.Parameter(torch.Tensor(out_features, in_features))
-        self.bias_mu = nn.Parameter(torch.Tensor(out_features))
-        self.bias_sigma = nn.Parameter(torch.Tensor(out_features))
-        
-        # Register buffer for noise
-        self.register_buffer('weight_epsilon', torch.Tensor(out_features, in_features))
-        self.register_buffer('bias_epsilon', torch.Tensor(out_features))
-        
-        # Initialize parameters
-        self.reset_parameters()
-        self.reset_noise()
-        
-    def reset_parameters(self):
-        """Initialize the layer parameters."""
-        mu_range = 1.0 / np.sqrt(self.in_features)
-        self.weight_mu.data.uniform_(-mu_range, mu_range)
-        self.weight_sigma.data.fill_(self.std_init / np.sqrt(self.in_features))
-        self.bias_mu.data.uniform_(-mu_range, mu_range)
-        self.bias_sigma.data.fill_(self.std_init / np.sqrt(self.out_features))
-        
-    def reset_noise(self):
-        """Reset the noise."""
-        epsilon_in = self._scale_noise(self.in_features)
-        epsilon_out = self._scale_noise(self.out_features)
-        self.weight_epsilon.copy_(torch.outer(epsilon_out, epsilon_in))
-        self.bias_epsilon.copy_(epsilon_out)
-        
-    def _scale_noise(self, size):
-        """Generate scaled noise."""
-        x = torch.randn(size)
-        return x.sign().mul(x.abs().sqrt())
-        
-    def forward(self, x):
-        """Forward pass with noise."""
-        if self.training:
-            weight = self.weight_mu + self.weight_sigma * self.weight_epsilon
-            bias = self.bias_mu + self.bias_sigma * self.bias_epsilon
-        else:
-            weight = self.weight_mu
-            bias = self.bias_mu
-            
-        return F.linear(x, weight, bias)
+if TORCH_AVAILABLE:
+    class NoisyLinear(nn.Module):
+        """Noisy linear layer for exploration."""
+
+        def __init__(self, in_features, out_features, std_init=0.5):
+            super().__init__()
+            self.in_features = in_features
+            self.out_features = out_features
+            self.std_init = std_init
+
+            # Learnable parameters
+            self.weight_mu = nn.Parameter(torch.Tensor(out_features, in_features))
+            self.weight_sigma = nn.Parameter(torch.Tensor(out_features, in_features))
+            self.bias_mu = nn.Parameter(torch.Tensor(out_features))
+            self.bias_sigma = nn.Parameter(torch.Tensor(out_features))
+
+            # Register buffer for noise
+            self.register_buffer('weight_epsilon', torch.Tensor(out_features, in_features))
+            self.register_buffer('bias_epsilon', torch.Tensor(out_features))
+
+            # Initialize parameters
+            self.reset_parameters()
+            self.reset_noise()
+
+        def reset_parameters(self):
+            """Initialize the layer parameters."""
+            mu_range = 1.0 / np.sqrt(self.in_features)
+            self.weight_mu.data.uniform_(-mu_range, mu_range)
+            self.weight_sigma.data.fill_(self.std_init / np.sqrt(self.in_features))
+            self.bias_mu.data.uniform_(-mu_range, mu_range)
+            self.bias_sigma.data.fill_(self.std_init / np.sqrt(self.out_features))
+
+        def reset_noise(self):
+            """Reset the noise."""
+            epsilon_in = self._scale_noise(self.in_features)
+            epsilon_out = self._scale_noise(self.out_features)
+            self.weight_epsilon.copy_(torch.outer(epsilon_out, epsilon_in))
+            self.bias_epsilon.copy_(epsilon_out)
+
+        def _scale_noise(self, size):
+            """Generate scaled noise."""
+            x = torch.randn(size)
+            return x.sign().mul(x.abs().sqrt())
+
+        def forward(self, x):
+            """Forward pass with noise."""
+            if self.training:
+                weight = self.weight_mu + self.weight_sigma * self.weight_epsilon
+                bias = self.bias_mu + self.bias_sigma * self.bias_epsilon
+            else:
+                weight = self.weight_mu
+                bias = self.bias_mu
+
+            return F.linear(x, weight, bias)
+else:  # pragma: no cover - optional dependency
+    class NoisyLinear:  # type: ignore
+        def __init__(self, *_: Any, **__: Any) -> None:
+            raise RuntimeError("PyTorch is required for NoisyLinear layers")
         
 
-class NoisyDQN(nn.Module):
-    """DQN with noisy layers for exploration."""
-    
-    def __init__(self, state_dim, action_dim, hidden_dim=128):
-        super(NoisyDQN, self).__init__()
-        self.state_dim = state_dim
-        self.action_dim = action_dim
-        self.hidden_dim = hidden_dim
-        
-        # Network layers
-        self.fc1 = nn.Linear(state_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
-        self.fc3 = NoisyLinear(hidden_dim, hidden_dim // 2)
-        self.fc4 = NoisyLinear(hidden_dim // 2, action_dim)
-        
-    def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = F.relu(self.fc3(x))
-        return self.fc4(x)
-        
-    def reset_noise(self):
-        """Reset noise in noisy layers."""
-        self.fc3.reset_noise()
-        self.fc4.reset_noise()
+if TORCH_AVAILABLE:
+    class NoisyDQN(nn.Module):
+        """DQN with noisy layers for exploration."""
+
+        def __init__(self, state_dim, action_dim, hidden_dim=128):
+            super().__init__()
+            self.state_dim = state_dim
+            self.action_dim = action_dim
+            self.hidden_dim = hidden_dim
+
+            # Network layers
+            self.fc1 = nn.Linear(state_dim, hidden_dim)
+            self.fc2 = nn.Linear(hidden_dim, hidden_dim)
+            self.fc3 = NoisyLinear(hidden_dim, hidden_dim // 2)
+            self.fc4 = NoisyLinear(hidden_dim // 2, action_dim)
+
+        def forward(self, x):
+            x = F.relu(self.fc1(x))
+            x = F.relu(self.fc2(x))
+            x = F.relu(self.fc3(x))
+            return self.fc4(x)
+
+        def reset_noise(self):
+            """Reset noise in noisy layers."""
+            self.fc3.reset_noise()
+            self.fc4.reset_noise()
+else:  # pragma: no cover - optional dependency
+    class NoisyDQN:  # type: ignore
+        def __init__(self, *_: Any, **__: Any) -> None:
+            raise RuntimeError("PyTorch is required for NoisyDQN models")
         
 
-class NoisyDuelingDQN(nn.Module):
-    """Dueling DQN with noisy layers."""
-    
-    def __init__(self, state_dim, action_dim, hidden_dim=128):
-        super(NoisyDuelingDQN, self).__init__()
-        self.state_dim = state_dim
-        self.action_dim = action_dim
-        self.hidden_dim = hidden_dim
-        
-        # Feature layers
-        self.fc1 = nn.Linear(state_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
-        
-        # Value stream
-        self.value_fc = NoisyLinear(hidden_dim, hidden_dim // 2)
-        self.value = NoisyLinear(hidden_dim // 2, 1)
-        
-        # Advantage stream
-        self.advantage_fc = NoisyLinear(hidden_dim, hidden_dim // 2)
-        self.advantage = NoisyLinear(hidden_dim // 2, action_dim)
-        
-    def forward(self, x):
-        # Shared feature layers
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        
-        # Value stream
-        value = F.relu(self.value_fc(x))
-        value = self.value(value)
-        
-        # Advantage stream
-        advantage = F.relu(self.advantage_fc(x))
-        advantage = self.advantage(advantage)
-        
-        # Combine value and advantage
-        return value + advantage - advantage.mean(dim=1, keepdim=True)
-        
-    def reset_noise(self):
-        """Reset noise in all noisy layers."""
-        self.value_fc.reset_noise()
-        self.value.reset_noise()
-        self.advantage_fc.reset_noise()
-        self.advantage.reset_noise()
+if TORCH_AVAILABLE:
+    class NoisyDuelingDQN(nn.Module):
+        """Dueling DQN with noisy layers."""
+
+        def __init__(self, state_dim, action_dim, hidden_dim=128):
+            super().__init__()
+            self.state_dim = state_dim
+            self.action_dim = action_dim
+            self.hidden_dim = hidden_dim
+
+            # Feature layers
+            self.fc1 = nn.Linear(state_dim, hidden_dim)
+            self.fc2 = nn.Linear(hidden_dim, hidden_dim)
+
+            # Value stream
+            self.value_fc = NoisyLinear(hidden_dim, hidden_dim // 2)
+            self.value = NoisyLinear(hidden_dim // 2, 1)
+
+            # Advantage stream
+            self.advantage_fc = NoisyLinear(hidden_dim, hidden_dim // 2)
+            self.advantage = NoisyLinear(hidden_dim // 2, action_dim)
+
+        def forward(self, x):
+            # Shared feature layers
+            x = F.relu(self.fc1(x))
+            x = F.relu(self.fc2(x))
+
+            # Value stream
+            value = F.relu(self.value_fc(x))
+            value = self.value(value)
+
+            # Advantage stream
+            advantage = F.relu(self.advantage_fc(x))
+            advantage = self.advantage(advantage)
+
+            # Combine value and advantage
+            return value + advantage - advantage.mean(dim=1, keepdim=True)
+
+        def reset_noise(self):
+            """Reset noise in all noisy layers."""
+            self.value_fc.reset_noise()
+            self.value.reset_noise()
+            self.advantage_fc.reset_noise()
+            self.advantage.reset_noise()
+else:  # pragma: no cover - optional dependency
+    class NoisyDuelingDQN:  # type: ignore
+        def __init__(self, *_: Any, **__: Any) -> None:
+            raise RuntimeError("PyTorch is required for NoisyDuelingDQN models")
         
 
 # Experience replay memory implementations

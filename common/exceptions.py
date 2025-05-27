@@ -130,8 +130,9 @@ class HardwareError(ResourceError):
     pass
 
 
-class HardwareAccelerationError(ResourceError):
-    """Raised when hardware acceleration (GPU/TPU) fails."""
+class HardwareAccelerationError(HardwareError):
+    """Raised when a hardware acceleration step fails."""
+
     pass
 
 
@@ -595,6 +596,16 @@ class ExecutionError(QuantumSpectreError):
     """Base class for execution engine errors."""
     pass
 
+
+class EnvironmentError(ExecutionError):
+    """Raised for errors related to trading or simulation environments."""
+    pass
+
+
+class InvalidActionError(EnvironmentError):
+    """Raised when an invalid action is taken in an environment."""
+    pass
+
 class PositionError(ExecutionError):
     """Raised for position management errors."""
     pass
@@ -813,8 +824,9 @@ class ModelLoadError(ModelError):
     pass
 
 
-class ModelLoadingError(ModelError):
-    """Raised when a model file cannot be loaded."""
+class ModelLoadingError(ModelLoadError):
+    """Alias for backward compatibility."""
+
     pass
 
 
@@ -1242,6 +1254,7 @@ __all__ = [
     'FeedTimeoutError', 'FeedRateLimitError', 'DatabaseError', 'DatabaseConnectionError',
     'DatabaseQueryError', 'RedisError', 'RedisConnectionError', 'SecurityError',
     'APIKeyError', 'AuthenticationError', 'AuthorizationError', 'ExecutionError',
+    'EnvironmentError', 'InvalidActionError',
     'OrderError', 'OrderRejectedError', 'OrderTimeoutError', 'InsufficientFundsError',
     'InsufficientBalanceError',
     'InvalidOrderError', 'OrderCancellationError', 'SlippageExceededError', 'NetworkError',
