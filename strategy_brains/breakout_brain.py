@@ -8,23 +8,22 @@ that identifies and capitalizes on price breakouts from established ranges,
 support/resistance levels, and chart patterns.
 """
 
-import asyncio
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
 
-from common.constants import OrderSide, OrderType, SignalConfidence, SignalType, TimeInForce
+from common.constants import OrderSide, OrderType, SignalType, TimeInForce
+from intelligence.app import SignalConfidence
 from common.exceptions import InvalidDataError, StrategyError
 from common.utils import calculate_risk_reward, normalize_price_series
+
 from feature_service.features.market_structure import detect_consolidation, identify_swing_points
 from feature_service.features.pattern import detect_rectangle_pattern, detect_triangle_pattern
 from feature_service.features.technical import calculate_atr
 from feature_service.features.volatility import volatility_expansion_indicator
-from feature_service.features.volume import relative_volume_profile, volume_breakout_confirmation
 from intelligence.pattern_recognition.chart_patterns import ChartPattern
 from intelligence.pattern_recognition.support_resistance import identify_support_resistance_zones
 from strategy_brains.base_brain import SignalEvent, StrategyBrain, StrategyConfig
@@ -353,7 +352,7 @@ class BreakoutBrain(StrategyBrain):
         breakout_signals = []
 
         # Get the most recent data points
-        recent_data = data.iloc[-self.config.confirmation_periods :]
+        recent_data = data.iloc[-self.config.confirmation_periods:]
         latest_close = recent_data["close"].iloc[-1]
         latest_high = recent_data["high"].iloc[-1]
         latest_low = recent_data["low"].iloc[-1]
@@ -629,6 +628,13 @@ class BreakoutBrain(StrategyBrain):
                 take_profit = entry_price + (risk * self.config.risk_reward_min)
             else:
                 take_profit = entry_price - (risk * self.config.risk_reward_min)
+
+        # Normalize prices to tick size for the asset
+        asset = data.name if hasattr(data, "name") else "DEFAULT"
+        tick_size = TICK_SIZE_MAPPING.get(asset, TICK_SIZE_MAPPING["DEFAULT"])
+        entry_price, stop_loss, take_profit = normalize_price_series(
+            pd.Series([entry_price, stop_loss, take_profit]), tick_size
+        ).tolist()
 
         # Create the signal event
         return SignalEvent(

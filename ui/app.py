@@ -8,7 +8,7 @@ from typing import Any, Optional
 import uvicorn
 from fastapi import FastAPI, Response
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 
 from common.logger import get_logger
 from common.metrics import MetricsCollector
@@ -42,6 +42,7 @@ class UIService:
             self.app.mount("/static", StaticFiles(directory=static_dir), name="static")
         else:
             self.logger.warning("Static directory '%s' not found; UI will be limited", static_dir)
+
 
         self.app.add_api_route("/{full_path:path}", self.index, methods=["GET"])
 
@@ -87,3 +88,4 @@ class UIService:
 
         self.logger.warning("UI index file not found at %s", self.index_path)
         return Response(status_code=404)
+
