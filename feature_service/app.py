@@ -9,44 +9,31 @@ and other trading signals.
 """
 
 import os
-import sys
 import time
 import json
 import asyncio
-import logging
-from typing import Dict, List, Set, Any, Optional, Union, Tuple
-from datetime import datetime, timedelta
-import multiprocessing as mp
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+from typing import Dict, List, Any, Optional
+from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor
 import signal
 import traceback
-import numpy as np
 import pandas as pd
 
 # Internal imports
 from config import Config
 from common.logger import get_logger
-from common.utils import (
-    setup_event_loop, cancel_all_tasks, 
-    time_execution, generate_uuid
-)
+from common.utils import time_execution
 from common.metrics import MetricsCollector
-from common.exceptions import (
-    FeatureCalculationError, FeatureServiceError,
-    InvalidTimeframeError, InvalidParameterError
-)
+from common.exceptions import FeatureCalculationError, FeatureServiceError
 from common.redis_client import RedisClient
 
-from common.db_client import get_db_client, DatabaseClient
-
 from common.db_client import DatabaseClient, get_db_client
-from common.async_utils import TaskGroup, PeriodicTask, Throttler
+from common.async_utils import PeriodicTask, Throttler
 
 # Feature service imports
 from feature_service import (
     init_feature_service, shutdown_feature_service,
-    get_feature_calculator, get_feature_transformer,
-    get_processor, get_all_feature_calculators
+    get_all_feature_calculators
 )
 from feature_service.processor import FeatureProcessor
 from feature_service.feature_extraction import FeatureExtractor
@@ -67,7 +54,8 @@ class FeatureService:
     4. Managing feature calculation pipelines
     """
     
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, loop: Optional[asyncio.AbstractEventLoop] = None,
+                 redis_client: Optional[RedisClient] = None, db_client: Optional[DatabaseClient] = None):
         """
         Initialize the feature service.
         
@@ -78,8 +66,8 @@ class FeatureService:
         self.processor = None
         self.extractor = None
         self.mtf_analyzer = None
-        self.redis_client = None
-        self.db_client = None
+        self.redis_client = redis_client
+        self.db_client = db_client
         self.metrics = MetricsCollector(SERVICE_NAME)
         
         # Cached data
@@ -98,7 +86,7 @@ class FeatureService:
         )
         
         # Initialize event loop
-        self.loop = None
+        self.loop = loop or asyncio.get_event_loop()
         
         logger.info("Feature service instance created")
     

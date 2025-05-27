@@ -139,6 +139,7 @@ if not GYM_AVAILABLE:
             truncated = False
             reward = 0.0
             return self._get_state(), reward, terminated, truncated, {}
+
 else:
     class MarketEnvironment:
         """Trading environment for reinforcement learning.
@@ -150,33 +151,32 @@ else:
         """
 
         def __init__(
-                self,
-                market_data: pd.DataFrame,
-                features: pd.DataFrame,
-                initial_balance: float = 1000.0,
-                commission_rate: float = 0.001,
-                slippage_model: str = 'realistic',
-                risk_factor: float = 0.01,
-                max_position_size: float = 1.0,
-                trading_frequency: str = '1m',
-                reward_type: str = 'sharpe',
-                state_lookback: int = 60,
-                include_market_features: bool = True,
-                include_trade_history: bool = True,
-                include_balance_history: bool = True,
-                randomize_start: bool = True,
-                market_impact_model: Optional[Callable] = None
+            self,
+            market_data: pd.DataFrame,
+            features: pd.DataFrame,
+            initial_balance: float = 1000.0,
+            commission_rate: float = 0.001,
+            slippage_model: str = 'realistic',
+            risk_factor: float = 0.01,
+            max_position_size: float = 1.0,
+            trading_frequency: str = '1m',
+            reward_type: str = 'sharpe',
+            state_lookback: int = 60,
+            include_market_features: bool = True,
+            include_trade_history: bool = True,
+            include_balance_history: bool = True,
+            randomize_start: bool = True,
+            market_impact_model: Optional[Callable] = None,
         ) -> None:
 
-        """
-        Initialize the trading environment.
-        
-        Args:
-            market_data: DataFrame containing OHLCV data
-            features: DataFrame containing pre-calculated features
-            initial_balance: Initial account balance
-            commission_rate: Commission rate per trade
-            slippage_model: Type of slippage model to use
+            """Initialize the trading environment.
+
+            Args:
+                market_data: DataFrame containing OHLCV data
+                features: DataFrame containing pre-calculated features
+                initial_balance: Initial account balance
+                commission_rate: Commission rate per trade
+                slippage_model: Type of slippage model to use
             risk_factor: Maximum risk per trade as fraction of balance
             max_position_size: Maximum position size as multiple of balance
             trading_frequency: Frequency of trading decisions
@@ -188,30 +188,30 @@ else:
             randomize_start: Whether to randomize the starting point
             market_impact_model: Optional function for market impact simulation
         """
-        self.market_data = market_data
-        self.features = features
-        self.initial_balance = initial_balance
-        self.commission_rate = commission_rate
-        self.slippage_model = slippage_model
-        self.risk_factor = risk_factor
-        self.max_position_size = max_position_size
-        self.trading_frequency = trading_frequency
-        self.reward_type = reward_type
-        self.state_lookback = state_lookback
-        self.include_market_features = include_market_features
-        self.include_trade_history = include_trade_history
-        self.include_balance_history = include_balance_history
-        self.randomize_start = randomize_start
-        self.market_impact_model = market_impact_model
+            self.market_data = market_data
+            self.features = features
+            self.initial_balance = initial_balance
+            self.commission_rate = commission_rate
+            self.slippage_model = slippage_model
+            self.risk_factor = risk_factor
+            self.max_position_size = max_position_size
+            self.trading_frequency = trading_frequency
+            self.reward_type = reward_type
+            self.state_lookback = state_lookback
+            self.include_market_features = include_market_features
+            self.include_trade_history = include_trade_history
+            self.include_balance_history = include_balance_history
+            self.randomize_start = randomize_start
+            self.market_impact_model = market_impact_model
         
-        # Validate input data
-        self._validate_data()
+            # Validate input data
+            self._validate_data()
+
+            # Set up observation and action spaces
+            self._setup_spaces()
         
-        # Set up observation and action spaces
-        self._setup_spaces()
-        
-        # Initialize environment state
-        self.reset()
+            # Initialize environment state
+            self.reset()
         
     def _validate_data(self):
         """Validate input data for consistency and completeness."""
