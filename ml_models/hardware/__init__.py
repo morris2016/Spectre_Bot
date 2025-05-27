@@ -1,5 +1,3 @@
-y
-
 #!/usr/bin/env python3
 """
 QuantumSpectre Elite Trading System
