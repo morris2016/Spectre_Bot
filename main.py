@@ -16,6 +16,8 @@ import logging
 import traceback
 from typing import Any
 from concurrent.futures import ThreadPoolExecutor
+
+from common.utils import safe_nltk_download
 import multiprocessing as mp
 try:
     import nltk  # type: ignore
@@ -28,6 +30,10 @@ except ImportError:  # pragma: no cover - optional dependency
     )
 import ssl
 import importlib
+
+
+from common.utils import safe_nltk_download
+
 
 # Internal imports
 from config import Config, load_config
@@ -43,6 +49,7 @@ from common.async_utils import run_with_timeout
 from common.redis_client import RedisClient
 from common.db_client import DatabaseClient, get_db_client
 from common.security import SecureCredentialManager
+from common.utils import safe_nltk_download
 
 # Service imports
 
@@ -63,7 +70,7 @@ SERVICE_CLASS_PATHS = {
     "backtester": ("backtester.app", "BacktesterService"),
     "monitoring": ("monitoring.app", "MonitoringService"),
     "api_gateway": ("api_gateway.app", "APIGatewayService"),
-    "ui_server": ("ui.app", "UIService"),
+    "ui": ("ui.app", "UIService"),
     "voice_assistant": ("voice_assistant.app", "VoiceAssistantService"),
 }
 
@@ -299,9 +306,14 @@ class ServiceManager:
                             if self.config.services.get(service_name, {}).get("critical", False):
                                 self.logger.critical(
                                     f"Critical service {service_name} failed, initiating system shutdown due to {service_name} failure"
+
                                 )
                                 # Use loop.call_soon_threadsafe to avoid nested event loop issues
-                                self.loop.call_soon_threadsafe(lambda: asyncio.create_task(self.shutdown("Critical service failure")))
+                                self.loop.call_soon_threadsafe(
+                                    lambda: asyncio.create_task(
+                                        self.shutdown("Critical service failure")
+                                    )
+                                )
                     else:
                         self.logger.warning(f"Auto-restart disabled for {service_name}, not restarting")
 
@@ -620,8 +632,8 @@ def setup_nltk_data():
     try:
         _create_unverified_https_context = ssl._create_unverified_context
     except AttributeError:
-        pass
-    else:
+        _create_unverified_https_context = None
+    if _create_unverified_https_context:
         ssl._create_default_https_context = _create_unverified_https_context
 
     # Try to load packages from local data directory first
@@ -637,6 +649,7 @@ def setup_nltk_data():
             logger.warning(
                 f"NLTK package '{package}' not found; NLP features may be limited"
             )
+
 
     logger.info("NLTK setup complete")
 
