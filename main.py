@@ -31,7 +31,9 @@ except ImportError:  # pragma: no cover - optional dependency
 import ssl
 import importlib
 
+
 from common.utils import safe_nltk_download
+
 
 # Internal imports
 from config import Config, load_config
@@ -46,6 +48,7 @@ from common.async_utils import run_with_timeout
 from common.redis_client import RedisClient
 from common.db_client import DatabaseClient, get_db_client
 from common.security import SecureCredentialManager
+from common.utils import safe_nltk_download
 
 # Service imports
 
@@ -301,8 +304,10 @@ class ServiceManager:
                             # Check if this is a critical service
                             if self.config.services.get(service_name, {}).get("critical", False):
                                 self.logger.critical(
-                                    f"Critical service {service_name} failed, "
-                                    f"initiating system shutdown due to {service_name} failure"
+                                    "Critical service %s failed, initiating system shutdown due to %s failure",
+                                    service_name,
+                                    service_name,
+
                                 )
                                 # Use loop.call_soon_threadsafe to avoid nested event loop issues
                                 self.loop.call_soon_threadsafe(
@@ -636,19 +641,19 @@ def setup_nltk_data():
     nltk_data_dir = os.path.expanduser("~/.nltk_data")
     nltk.data.path.insert(0, nltk_data_dir)
 
-    # Check each package without attempting network downloads
+    # Check each package locally without triggering downloads
     for package in required_packages:
-        try:
-            nltk.data.find(f'tokenizers/{package}' if package == 'punkt' else f'corpora/{package}')
-            logger.debug(f"NLTK package '{package}' found locally")
-        except LookupError:
-            if safe_nltk_download(package):
-                logger.info(f"NLTK package '{package}' is available")
-            else:
-                logger.warning(
-                    f"NLTK package '{package}' not found; some NLP features may be limited"
+        resource_path = (
+            f"tokenizers/{package}" if package == "punkt" else f"corpora/{package}"
+        )
+        if safe_nltk_download(resource_path):
+            logger.debug("NLTK package '%s' found locally", package)
+        else:
+            logger.warning(
+                "NLTK package '%s' not available; NLP features may be limited",
+                package,
+            )
 
-                )
 
 
     logger.info("NLTK setup complete")
