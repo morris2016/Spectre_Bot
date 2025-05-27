@@ -32,9 +32,9 @@ from common.async_utils import PeriodicTask, Throttler
 
 # Feature service imports
 from feature_service import (
-    init_feature_service,
-    shutdown_feature_service,
-    get_all_feature_calculators,
+    init_feature_service, shutdown_feature_service,
+    get_all_feature_calculators
+
 )
 from feature_service.processor import FeatureProcessor
 from feature_service.feature_extraction import FeatureExtractor
@@ -55,15 +55,10 @@ class FeatureService:
     3. Providing feature data to the intelligence systems
     4. Managing feature calculation pipelines
     """
+    
+    def __init__(self, config: Config, loop: Optional[asyncio.AbstractEventLoop] = None,
+                 redis_client: Optional[RedisClient] = None, db_client: Optional[DatabaseClient] = None):
 
-    def __init__(
-        self,
-        config: Config,
-        loop: Optional[asyncio.AbstractEventLoop] = None,
-        redis_client: Optional[RedisClient] = None,
-        db_client: Optional[DatabaseClient] = None,
-
-    ) -> None:
         """
         Initialize the feature service.
 
@@ -93,6 +88,10 @@ class FeatureService:
             rate_limit=config.get("feature_service.rate_limit", 100),
             time_period=1.0
         )
+        
+        # Initialize event loop
+        self.loop = loop or asyncio.get_event_loop()
+        
 
         logger.info("Feature service instance created")
 
