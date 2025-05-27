@@ -6,7 +6,12 @@ from __future__ import annotations
 from typing import Any, Callable, Dict, Iterable
 import itertools
 import logging
-import optuna
+try:
+    import optuna  # type: ignore
+    OPTUNA_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    optuna = None  # type: ignore
+    OPTUNA_AVAILABLE = False
 from common.metrics import MetricsCollector
 try:
     from hyperopt import fmin, tpe, hp, Trials, STATUS_OK
@@ -93,6 +98,9 @@ class HyperparameterOptimizer:
                     best_params = params
             logger.info("Grid search best params: %s score %.4f", best_params, best_score)
             return best_params or {}
+
+        if not OPTUNA_AVAILABLE:
+            raise ImportError("optuna is required for Bayesian optimization")
 
         def _objective(trial: optuna.Trial) -> float:
             params = {}

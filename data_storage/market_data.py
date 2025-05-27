@@ -22,8 +22,17 @@ from typing import Dict, List, Tuple, Optional, Union, Any, Set, Callable
 from concurrent.futures import ThreadPoolExecutor
 import logging
 from pathlib import Path
-import pyarrow as pa
-import pyarrow.parquet as pq
+try:
+    import pyarrow as pa  # type: ignore
+    import pyarrow.parquet as pq  # type: ignore
+    PYARROW_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    pa = None  # type: ignore
+    pq = None  # type: ignore
+    PYARROW_AVAILABLE = False
+    logging.getLogger(__name__).warning(
+        "pyarrow not available; parquet storage disabled"
+    )
 from pandas.tseries.frequencies import to_offset
 import asyncio
 import aiofiles

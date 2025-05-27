@@ -18,7 +18,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from common.logger import get_logger
 from common.exceptions import CouncilError, DecisionError
-from common.utils import weighted_vote, sigmoid, calculate_confidence
+from common.utils import sigmoid
 from common.constants import (
     VOTE_THRESHOLDS, COUNCIL_WEIGHTS, ASSET_CLASSES, 
     SIGNAL_TYPES, TIMEFRAMES, CONFIDENCE_LEVELS
