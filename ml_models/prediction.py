@@ -28,8 +28,14 @@ try:
     import tensorflow as tf  # type: ignore
 except Exception:  # pragma: no cover - optional dependency
     tf = None  # type: ignore
-import torch
-import torch.nn as nn
+try:
+    import torch  # type: ignore
+    import torch.nn as nn  # type: ignore
+    TORCH_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    torch = None  # type: ignore
+    nn = None  # type: ignore
+    TORCH_AVAILABLE = False
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler
 
 # Internal imports

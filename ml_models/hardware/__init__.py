@@ -1,4 +1,3 @@
-y
 
 #!/usr/bin/env python3
 """

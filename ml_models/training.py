@@ -37,10 +37,18 @@ try:
 except Exception:  # pragma: no cover - optional dependency
     tf = None  # type: ignore
     layers = models = optimizers = callbacks = regularizers = None  # type: ignore
-import torch
-import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import DataLoader, TensorDataset
+try:
+    import torch  # type: ignore
+    import torch.nn as nn  # type: ignore
+    import torch.optim as optim  # type: ignore
+    from torch.utils.data import DataLoader, TensorDataset  # type: ignore
+    TORCH_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    torch = None  # type: ignore
+    nn = None  # type: ignore
+    optim = None  # type: ignore
+    DataLoader = TensorDataset = None  # type: ignore
+    TORCH_AVAILABLE = False
 import sklearn
 from sklearn.model_selection import train_test_split, TimeSeriesSplit, GridSearchCV
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score

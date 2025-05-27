@@ -4840,12 +4840,39 @@ def normalize_quantity(
     return max(normalized, min_quantity)
 
 
+def create_timeframes(start: datetime.datetime, end: datetime.datetime, freq: str = '1D') -> List[pd.Timestamp]:
+    """Generate a list of timestamps between start and end at the given frequency."""
+    if pd is None:  # pragma: no cover - optional dependency
+        raise ImportError('pandas is required for create_timeframes')
+    return list(pd.date_range(start=start, end=end, freq=freq))
+
+
+def calculate_metrics(y_true: Sequence[float], y_pred: Sequence[float]) -> Dict[str, float]:
+    """Calculate simple MAE and MSE metrics."""
+    if np is None:  # pragma: no cover - optional dependency
+        raise ImportError('NumPy is required for calculate_metrics')
+    y_true_arr = np.asarray(y_true)
+    y_pred_arr = np.asarray(y_pred)
+    mse = float(np.mean((y_true_arr - y_pred_arr) ** 2))
+    mae = float(np.mean(np.abs(y_true_arr - y_pred_arr)))
+    return {'mse': mse, 'mae': mae}
+
+
+def validate_data(df: pd.DataFrame) -> pd.DataFrame:
+    """Drop rows with NaN values and ensure DataFrame input."""
+    if pd is None:  # pragma: no cover - optional dependency
+        raise ImportError('pandas is required for validate_data')
+    if not isinstance(df, pd.DataFrame):
+        raise TypeError('validate_data expects a pandas DataFrame')
+    return df.dropna()
+
+
 __all__ = [
     # Time utilities
     'timestamp_ms', 'current_timestamp', 'current_timestamp_micros', 'current_timestamp_nanos',
     'timestamp_to_datetime', 'datetime_to_timestamp', 'parse_datetime',
     'format_datetime', 'timeframe_to_seconds', 'timeframe_to_timedelta',
-    'round_timestamp', 'generate_timeframes', 'parse_timeframe', 'validate_timeframe',
+    'round_timestamp', 'generate_timeframes', 'create_timeframes', 'parse_timeframe', 'validate_timeframe',
     'get_higher_timeframes', 'TimestampUtils',
     
     # Data handling and trading utilities
@@ -4884,8 +4911,8 @@ __all__ = [
     'calculate_position_size', 'calculate_volatility', 'calculate_correlation', 'calculate_drawdown',
     'calculate_liquidation_price', 'calculate_risk_reward', 'calculate_win_rate',
     'calculate_risk_reward_ratio', 'calculate_confidence_score', 'normalize_probability',
-    'weighted_average', 'time_weighted_average', 'validate_signal', 'calculate_expectancy',
-    'calculate_kelly_criterion', 'calculate_sharpe_ratio', 'calculate_sortino_ratio',
+    'weighted_average', 'time_weighted_average', 'validate_signal', 'validate_data', 'calculate_expectancy',
+    'calculate_kelly_criterion', 'calculate_sharpe_ratio', 'calculate_sortino_ratio', 'calculate_metrics',
     'calculate_max_drawdown', 'calculate_calmar_ratio', 'z_score',
     'is_price_consolidating', 'is_breaking_out', 'calculate_pivot_points',
     'pivot_points',

@@ -20,9 +20,16 @@ from datetime import datetime
 from pathlib import Path
 
 # Machine learning imports
-import tensorflow as tf
-from tensorflow.keras import layers, Model, optimizers, callbacks, regularizers
-from tensorflow.keras.models import Sequential, load_model
+try:
+    import tensorflow as tf  # type: ignore
+    from tensorflow.keras import layers, Model, optimizers, callbacks, regularizers  # type: ignore
+    from tensorflow.keras.models import Sequential, load_model  # type: ignore
+    TENSORFLOW_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    tf = None  # type: ignore
+    layers = Model = optimizers = callbacks = regularizers = None  # type: ignore
+    Sequential = load_model = None  # type: ignore
+    TENSORFLOW_AVAILABLE = False
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, VotingClassifier
 from sklearn.svm import SVC
 from sklearn.neural_network import MLPClassifier

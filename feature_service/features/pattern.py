@@ -1214,3 +1214,9 @@ class PatternFeatures:
         logger.info("Updating pattern success rates with %d patterns", len(pattern_success_data))
         self.pattern_success_rates.update(pattern_success_data)
 
+
+def detect_patterns(data: pd.DataFrame, config: Optional[PatternConfiguration] = None) -> pd.DataFrame:
+    """Convenience wrapper returning pattern features for the given data."""
+    pf = PatternFeatures(config)
+    return pf.calculate_features(data)
+
