@@ -2279,3 +2279,19 @@ class EnsembleTimeSeriesModel(BaseModel):
         
         logger.info(f"Ensemble model loaded from {directory} with {len(self.models)} models")
         return self
+
+
+def create_time_series_model(model_type: str, config: TimeSeriesConfig, **kwargs: Any) -> BaseModel:
+    """Factory function to create a time series model by type."""
+    model_type = model_type.lower()
+    model_map = {
+        "arima": ARIMAModel,
+        "prophet": ProphetModel,
+        "lstm": LSTMModel,
+        "tcn": TCNModel,
+        "attention": AttentionModel,
+    }
+    model_cls = model_map.get(model_type)
+    if not model_cls:
+        raise ModelNotFoundError(f"Unknown time series model: {model_type}")
+    return model_cls(config, **kwargs)

@@ -1483,6 +1483,31 @@ def get_host_info() -> Dict[str, Any]:
     return info
 
 
+def gpu_info() -> Dict[str, Any]:
+    """Return basic GPU information using torch if available."""
+    info: Dict[str, Any] = {}
+    try:
+        import torch  # type: ignore
+
+        if torch.cuda.is_available():
+            device_count = torch.cuda.device_count()
+            info["device_count"] = device_count
+            info["devices"] = []
+            for i in range(device_count):
+                props = torch.cuda.get_device_properties(i)
+                info["devices"].append(
+                    {
+                        "id": i,
+                        "name": props.name,
+                        "total_memory": props.total_memory,
+                    }
+                )
+    except Exception:
+        pass
+
+    return info
+
+
 def is_port_open(host: str, port: int, timeout: float = 2.0) -> bool:
     """
     Check if a network port is open.
@@ -3750,6 +3775,18 @@ def decompress_object(data: bytes) -> Any:
     """Decompress and deserialize data produced by :func:`compress_object`."""
     decompressed = gzip.decompress(data)
     return pickle.loads(decompressed)
+
+
+def save_to_file(obj: Any, path: str) -> None:
+    """Serialize an object to a binary file using ``pickle``."""
+    with open(path, "wb") as f:
+        pickle.dump(obj, f)
+
+
+def load_from_file(path: str) -> Any:
+    """Load a serialized object from a binary file."""
+    with open(path, "rb") as f:
+        return pickle.load(f)
 
 
 def validate_data(data: pd.DataFrame) -> pd.DataFrame:
