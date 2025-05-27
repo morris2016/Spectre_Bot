@@ -1704,3 +1704,7 @@ class InteractiveReport:
         except Exception as e:
             logger.error(f"Error generating interactive trade analysis: {e}")
             return f"Error generating trade analysis: {e}"
+
+
+# Backwards compatibility alias
+Report = BacktestReport

@@ -27,9 +27,8 @@ except ImportError:  # pragma: no cover - optional dependency
         "NLTK library not found. NLP features will be disabled"
     )
 import ssl
-import socket
 import importlib
-import socket
+from common.utils import safe_nltk_download
 
 # Internal imports
 from config import Config, load_config
@@ -298,9 +297,16 @@ class ServiceManager:
 
                             # Check if this is a critical service
                             if self.config.services.get(service_name, {}).get("critical", False):
-                                self.logger.critical(f"Critical service {service_name} failed, initiating system shutdown due to {service_name} failure")
+                                self.logger.critical(
+                                    f"Critical service {service_name} failed, "
+                                    f"initiating system shutdown due to {service_name} failure"
+                                )
                                 # Use loop.call_soon_threadsafe to avoid nested event loop issues
-                                self.loop.call_soon_threadsafe(lambda: asyncio.create_task(self.shutdown("Critical service failure")))
+                                self.loop.call_soon_threadsafe(
+                                    lambda: asyncio.create_task(
+                                        self.shutdown("Critical service failure")
+                                    )
+                                )
                     else:
                         self.logger.warning(f"Auto-restart disabled for {service_name}, not restarting")
 
@@ -420,6 +426,7 @@ class ServiceManager:
         self.logger.info("All services stopped")
         self.shutdown_complete.set()
 
+
 def setup_argument_parser():
     """
     Set up command-line argument parser.
@@ -478,6 +485,7 @@ def setup_argument_parser():
 
     return parser
 
+
 async def initialize_db(config: Config) -> DatabaseClient:
     """
     Initialize the database connection.
@@ -521,6 +529,7 @@ async def initialize_db(config: Config) -> DatabaseClient:
         )
         return None
 
+
 async def initialize_redis(config: Config) -> RedisClient:
     """
     Initialize the Redis connection.
@@ -558,6 +567,7 @@ async def initialize_redis(config: Config) -> RedisClient:
         logger.warning("Continuing without Redis; functionality may be limited")
         return None
 
+
 async def initialize_credentials(config: Config) -> SecureCredentialManager:
     """
     Initialize the secure credential manager.
@@ -591,16 +601,6 @@ async def initialize_credentials(config: Config) -> SecureCredentialManager:
         logger.error(traceback.format_exc())
         raise SystemCriticalError("Security initialization failed") from e
 
-    """Download an NLTK package with a timeout."""
-    try:
-        socket.setdefaulttimeout(timeout)
-        return nltk.download(package, quiet=True)
-    except Exception as e:
-        logger.error(f"Error downloading NLTK package '{package}': {str(e)}")
-        return False
-    finally:
-        socket.setdefaulttimeout(None)
-
 
 def setup_nltk_data():
     """
@@ -633,45 +633,17 @@ def setup_nltk_data():
     nltk_data_dir = os.path.expanduser("~/.nltk_data")
     nltk.data.path.insert(0, nltk_data_dir)
 
-    # Helper to download packages with a short timeout to avoid hangs in offline environments
-    def download_nltk_package(name: str, timeout: int = 10) -> bool:
-        """Attempt to download an NLTK package with a timeout."""
-        original_timeout = socket.getdefaulttimeout()
-        socket.setdefaulttimeout(timeout)
-        try:
-            success = nltk.download(name, quiet=True, raise_on_error=False, halt_on_error=False)
-            if success:
-                logger.info(f"Successfully downloaded NLTK package '{name}'")
-                return True
-            logger.error(f"Failed to download NLTK package '{name}'")
-            return False
-        except Exception as e:
-            logger.error(f"Failed to download NLTK package '{name}': {str(e)}")
-            return False
-        finally:
-            socket.setdefaulttimeout(original_timeout)
-
-    # Check each package
+    # Check each package without attempting network downloads
     for package in required_packages:
         try:
             nltk.data.find(f'tokenizers/{package}' if package == 'punkt' else f'corpora/{package}')
             logger.debug(f"NLTK package '{package}' found locally")
         except LookupError:
-            logger.warning(f"NLTK package '{package}' not found locally, attempting to download")
-
-            try:
-                downloaded = nltk.download(package, quiet=True)
-                if downloaded:
-                    logger.info(f"Successfully downloaded NLTK package '{package}'")
-                else:
-                    logger.error(f"Failed to download NLTK package '{package}'")
-                    logger.warning(
-                        f"System will continue without NLTK package '{package}', some NLP features may be limited"
-                    )
-            except Exception as e:
-                logger.error(f"Failed to download NLTK package '{package}': {str(e)}")
+            if safe_nltk_download(package):
+                logger.info(f"NLTK package '{package}' is available")
+            else:
                 logger.warning(
-                    f"System will continue without NLTK package '{package}', some NLP features may be limited"
+                    f"NLTK package '{package}' not found; some NLP features may be limited"
                 )
 
     logger.info("NLTK setup complete")
@@ -783,6 +755,7 @@ async def startup():
         logger.critical(traceback.format_exc())
         return 4
 
+
 async def handle_shutdown_signal(signal_num, service_manager):
     """
     Handle OS shutdown signals gracefully.
@@ -794,6 +767,7 @@ async def handle_shutdown_signal(signal_num, service_manager):
     sig_name = signal.Signals(signal_num).name
     logger.info(f"Received shutdown signal: {sig_name}")
     await service_manager.shutdown(f"Received {sig_name} signal")
+
 
 def main():
     """
@@ -828,6 +802,7 @@ def main():
             executor.shutdown(wait=False)
         if service_event_loop:
             service_event_loop.close()
+
 
 if __name__ == "__main__":
     main()
