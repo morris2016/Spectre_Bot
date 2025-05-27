@@ -4901,6 +4901,13 @@ def normalize_price(price: float, tick_size: float) -> float:
     return round(price / tick_size) * tick_size
 
 
+def normalize_price_series(series: 'pd.Series', tick_size: float) -> 'pd.Series':
+    """Normalize a price series to comply with exchange tick size requirements."""
+    if tick_size <= 0:
+        return series
+    return (series / tick_size).round() * tick_size
+
+
 def normalize_quantity(
     quantity: float, step_size: float, min_quantity: float = 0
 ) -> float:
@@ -4995,6 +5002,7 @@ __all__ = [
     'calculate_position_size', 'calculate_volatility', 'calculate_correlation', 'calculate_drawdown',
     'calculate_liquidation_price', 'calculate_risk_reward', 'calculate_win_rate',
     'calculate_risk_reward_ratio', 'calculate_confidence_score', 'normalize_probability',
+    'normalize_price_series',
     'weighted_average', 'time_weighted_average', 'validate_signal', 'validate_data', 'calculate_expectancy',
     'calculate_kelly_criterion', 'calculate_sharpe_ratio', 'calculate_sortino_ratio', 'calculate_metrics',
     'calculate_max_drawdown', 'calculate_calmar_ratio', 'z_score',

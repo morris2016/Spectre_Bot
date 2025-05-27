@@ -8,7 +8,7 @@ from typing import Any, Optional
 import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 
 from common.logger import get_logger
 from common.metrics import MetricsCollector
@@ -37,7 +37,14 @@ class UIService:
         static_dir = os.path.abspath(self.config.ui.get("static_dir", "./ui/dist"))
         index_file = self.config.ui.get("index_file", "index.html")
         self.index_path = os.path.join(static_dir, index_file)
-        self.app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+        if os.path.isdir(static_dir):
+            self.app.mount("/static", StaticFiles(directory=static_dir), name="static")
+            self.static_available = True
+        else:
+            self.logger.warning("Static directory '%s' does not exist", static_dir)
+            self.static_available = False
+
         self.app.add_api_route("/{full_path:path}", self.index, methods=["GET"])
 
     async def start(self) -> None:
@@ -77,4 +84,7 @@ class UIService:
 
     async def index(self, full_path: str) -> FileResponse:
         """Serve the React application's index file for all routes."""
-        return FileResponse(self.index_path)
+        if os.path.isfile(self.index_path):
+            return FileResponse(self.index_path)
+        self.logger.error("Index file '%s' not found", self.index_path)
+        return Response(status_code=404)
