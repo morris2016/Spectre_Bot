@@ -1962,3 +1962,34 @@ class VolumeProfileAnalyzer:
             return "skewed_low"
         else:
             return "normal"
+
+
+def analyze_volume_profile(prices: Union[pd.Series, List[float]],
+                           volumes: Union[pd.Series, List[float]],
+                           periods: int = 20) -> Dict[str, pd.Series]:
+    """Simple volume profile analysis used by strategy brains."""
+    df = pd.DataFrame({"price": prices, "volume": volumes})
+    volume_sma = df["volume"].rolling(periods).mean()
+    relative_volume = df["volume"] / (volume_sma + 1e-9)
+    return {"volume_sma": volume_sma, "relative_volume": relative_volume}
+
+
+def detect_volume_climax(volumes: Union[pd.Series, List[float]],
+                          prices: Union[pd.Series, List[float]],
+                          lookback: int = 20) -> pd.Series:
+    """Detect simple volume climax events as volume spikes."""
+    volumes_series = pd.Series(volumes)
+    avg_volume = volumes_series.rolling(lookback).mean()
+    climax = volumes_series > avg_volume * 3
+    return climax
+
+
+def calculate_volume_profile(prices: Union[pd.Series, List[float]],
+                             volumes: Union[pd.Series, List[float]],
+                             periods: int = 100,
+                             num_bins: int = 50) -> Dict[str, Any]:
+    """Calculate a basic volume profile for the given price and volume data."""
+    prices_arr = np.array(prices)[-periods:]
+    volumes_arr = np.array(volumes)[-periods:]
+    profiler = VolumeProfile(prices_arr, volumes_arr, num_bins=num_bins)
+    return profiler.get_profile_data()

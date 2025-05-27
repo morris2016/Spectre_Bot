@@ -447,6 +447,11 @@ def generate_timeframes(
     return boundaries
 
 
+def create_timeframes(start_dt: Union[datetime.datetime, str, int], end_dt: Union[datetime.datetime, str, int], timeframe: str) -> List[int]:
+    """Backward-compatible alias for :func:`generate_timeframes`."""
+    return generate_timeframes(start_dt, end_dt, timeframe)
+
+
 def parse_timeframe(timeframe_str: str) -> Tuple[int, str]:
     """
     Parse a timeframe string into value and unit parts.
@@ -2402,6 +2407,11 @@ def calculate_sharpe_ratio(returns: List[float], risk_free_rate: float = 0.0) ->
     return mean_excess_return / std_excess_return
 
 
+def calculate_sharpe(returns: List[float], risk_free_rate: float = 0.0) -> float:
+    """Backward-compatible alias for :func:`calculate_sharpe_ratio`."""
+    return calculate_sharpe_ratio(returns, risk_free_rate)
+
+
 def calculate_sortino_ratio(
     returns: List[float], risk_free_rate: float = 0.0, target_return: float = 0.0
 ) -> float:
@@ -2441,6 +2451,11 @@ def calculate_sortino_ratio(
 
     # Calculate and return Sortino ratio
     return mean_excess_return / downside_deviation
+
+
+def calculate_sortino(returns: List[float], target_return: float = 0.0, risk_free_rate: float = 0.0) -> float:
+    """Backward-compatible alias for :func:`calculate_sortino_ratio`."""
+    return calculate_sortino_ratio(returns, risk_free_rate, target_return)
 
 
 def calculate_max_drawdown(equity_curve: List[float]) -> float:
@@ -3719,10 +3734,27 @@ def compress_object(data: Any) -> bytes:
     return gzip.compress(serialized)
 
 
+def calculate_metrics(y_true: Sequence[Any], y_pred: Sequence[Any]) -> Dict[str, float]:
+    """Compute basic classification metrics using scikit-learn."""
+    from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+
+    return {
+        "accuracy": accuracy_score(y_true, y_pred),
+        "precision": precision_score(y_true, y_pred, zero_division=0),
+        "recall": recall_score(y_true, y_pred, zero_division=0),
+        "f1": f1_score(y_true, y_pred, zero_division=0),
+    }
+
+
 def decompress_object(data: bytes) -> Any:
     """Decompress and deserialize data produced by :func:`compress_object`."""
     decompressed = gzip.decompress(data)
     return pickle.loads(decompressed)
+
+
+def validate_data(data: pd.DataFrame) -> pd.DataFrame:
+    """Basic validation placeholder returning the input."""
+    return data
 def pivot_points(high: float, low: float, close: float) -> Dict[str, float]:
     """Backward-compatible alias for calculate_pivot_points."""
     return calculate_pivot_points(high, low, close)
@@ -4845,7 +4877,7 @@ __all__ = [
     'timestamp_ms', 'current_timestamp', 'current_timestamp_micros', 'current_timestamp_nanos',
     'timestamp_to_datetime', 'datetime_to_timestamp', 'parse_datetime',
     'format_datetime', 'timeframe_to_seconds', 'timeframe_to_timedelta',
-    'round_timestamp', 'generate_timeframes', 'parse_timeframe', 'validate_timeframe',
+    'round_timestamp', 'generate_timeframes', 'create_timeframes', 'parse_timeframe', 'validate_timeframe',
     'get_higher_timeframes', 'TimestampUtils',
     
     # Data handling and trading utilities
@@ -4885,8 +4917,8 @@ __all__ = [
     'calculate_liquidation_price', 'calculate_risk_reward', 'calculate_win_rate',
     'calculate_risk_reward_ratio', 'calculate_confidence_score', 'normalize_probability',
     'weighted_average', 'time_weighted_average', 'validate_signal', 'calculate_expectancy',
-    'calculate_kelly_criterion', 'calculate_sharpe_ratio', 'calculate_sortino_ratio',
-    'calculate_max_drawdown', 'calculate_calmar_ratio', 'z_score',
+    'calculate_kelly_criterion', 'calculate_sharpe_ratio', 'calculate_sharpe', 'calculate_sortino_ratio', 'calculate_sortino', 'calculate_metrics',
+    'calculate_max_drawdown', 'calculate_calmar_ratio', 'z_score', 'validate_data',
     'is_price_consolidating', 'is_breaking_out', 'calculate_pivot_points',
     'pivot_points',
     'periodic_reset', 'obfuscate_sensitive_data', 'exponential_smoothing',

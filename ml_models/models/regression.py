@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 """
 QuantumSpectre Elite Trading System
 Regression Models Implementation
@@ -142,6 +143,11 @@ class RegressionModelFactory:
             return QuantumInspiredRegressionModel(config)
         else:
             raise ValueError(f"Unknown regression model type: {model_type}")
+
+
+def create_regression_model(config: ModelConfig) -> BaseRegressionModel:
+    """Convenience wrapper for :class:`RegressionModelFactory`."""
+    return RegressionModelFactory.create_model(config)
 
 
 class BaseRegressionModel(BaseModel):

@@ -18,11 +18,33 @@ from typing import Dict, List, Tuple, Any, Optional, Union, Callable
 from dataclasses import dataclass
 import threading
 import queue
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
-from torch.distributions import Categorical, Normal
+try:
+    import torch  # type: ignore
+    import torch.nn as nn  # type: ignore
+    import torch.optim as optim  # type: ignore
+    import torch.nn.functional as F  # type: ignore
+    from torch.distributions import Categorical, Normal  # type: ignore
+    TORCH_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    from types import SimpleNamespace
+
+    torch = SimpleNamespace(
+        device=lambda *_, **__: "cpu",
+        FloatTensor=lambda *_, **__: None,
+        Tensor=lambda *_, **__: None,
+    )
+    nn = SimpleNamespace(
+        Module=object,
+        Linear=lambda *_, **__: None,
+        Parameter=lambda *_, **__: None,
+    )
+    optim = SimpleNamespace(Adam=lambda *_, **__: None)
+    F = SimpleNamespace(relu=lambda x: x)
+    Categorical = Normal = object
+    TORCH_AVAILABLE = False
+    logging.getLogger(__name__).warning(
+        "PyTorch not available; reinforcement learning features are disabled"
+    )
 from collections import deque, namedtuple
 import random
 import gymnasium as gym

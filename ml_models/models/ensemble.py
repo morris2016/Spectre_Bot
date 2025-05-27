@@ -34,7 +34,12 @@ from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 import xgboost as xgb
 import lightgbm as lgb
 import catboost as cb
-import tensorflow as tf
+try:
+    import tensorflow as tf
+    TF_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    tf = None  # type: ignore
+    TF_AVAILABLE = False
 
 from ml_models.models.regression import AdvancedRegressionModel
 from ml_models.models.classification import AdvancedClassificationModel
