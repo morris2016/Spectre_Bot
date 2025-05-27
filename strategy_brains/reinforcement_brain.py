@@ -21,8 +21,17 @@ import tensorflow as tf
 from tensorflow.keras.models import Sequential, Model, load_model
 from tensorflow.keras.layers import Dense, LSTM, GRU, Conv1D, Flatten, Input, Concatenate
 from tensorflow.keras.optimizers import Adam
-import gymnasium as gym
-from gymnasium import spaces
+try:
+    import gymnasium as gym  # type: ignore
+    from gymnasium import spaces  # type: ignore
+    GYM_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    gym = None  # type: ignore
+    spaces = None  # type: ignore
+    GYM_AVAILABLE = False
+    logging.getLogger(__name__).warning(
+        "gymnasium not available; using minimal environment implementation"
+    )
 import random
 from collections import deque
 
@@ -40,7 +49,57 @@ from ml_models.rl import DQNAgent
 
 logger = get_logger("ReinforcementBrain")
 
-class TradingEnvironment(gym.Env):
+if not GYM_AVAILABLE:
+    class TradingEnvironment:
+        """Minimal trading environment used when gymnasium is unavailable."""
+
+        def __init__(
+            self,
+            data: pd.DataFrame,
+            initial_balance: float = 1000.0,
+            max_position: float = 1.0,
+            transaction_fee: float = 0.001,
+            reward_function: str = "sharpe",
+            window_size: int = 50,
+            use_position_info: bool = True,
+            action_type: str = "discrete",
+        ) -> None:
+            self.data = data.reset_index(drop=True)
+            self.window_size = window_size
+            self.current_step = window_size
+            self.balance = initial_balance
+            self.position = 0
+
+        def _get_observation(self) -> np.ndarray:
+            start = self.current_step - self.window_size
+            return self.data.iloc[start:self.current_step].values
+
+        def reset(self):
+            self.current_step = self.window_size
+            return self._get_observation(), {}
+
+        def step(self, action):
+            prev_price = self.data['close'].iloc[self.current_step - 1]
+            self.current_step += 1
+            price = self.data['close'].iloc[self.current_step - 1]
+            obs = self._get_observation()
+            terminated = self.current_step >= len(self.data)
+            truncated = False
+
+            reward = 0.0
+            if action == 1:
+                reward = price - prev_price
+                self.position = 1
+            elif action == 2:
+                reward = prev_price - price
+                self.position = -1
+            else:
+                self.position = 0
+
+            self.balance += reward
+            return obs, reward, terminated, truncated, {}
+else:
+    class TradingEnvironment(gym.Env):
     """
     Custom OpenAI Gym environment for trading that simulates market interactions
     and provides rewards based on trading performance.

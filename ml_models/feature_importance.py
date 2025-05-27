@@ -13,13 +13,29 @@ import pandas as pd
 from typing import Dict, List, Tuple, Any, Optional, Union, Callable
 import logging
 import shap
-import eli5
+try:
+    import eli5  # type: ignore
+    ELI5_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    eli5 = None  # type: ignore
+    ELI5_AVAILABLE = False
+    logging.getLogger(__name__).warning(
+        "eli5 not available; some feature importance methods disabled"
+    )
 from sklearn.inspection import permutation_importance
 from sklearn.feature_selection import mutual_info_regression, mutual_info_classif
 import matplotlib.pyplot as plt
 from lightgbm import LGBMRegressor, LGBMClassifier
 from xgboost import XGBRegressor, XGBClassifier
-from boruta import BorutaPy
+try:
+    from boruta import BorutaPy  # type: ignore
+    BORUTA_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    BorutaPy = None  # type: ignore
+    BORUTA_AVAILABLE = False
+    logging.getLogger(__name__).warning(
+        "Boruta package not available; Boruta-based feature selection disabled"
+    )
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 
 from common.logger import get_logger

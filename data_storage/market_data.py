@@ -22,12 +22,54 @@ from typing import Dict, List, Tuple, Optional, Union, Any, Set, Callable
 from concurrent.futures import ThreadPoolExecutor
 import logging
 from pathlib import Path
-import pyarrow as pa
-import pyarrow.parquet as pq
+try:
+    import pyarrow as pa  # type: ignore
+    import pyarrow.parquet as pq  # type: ignore
+    PYARROW_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    pa = None  # type: ignore
+    pq = None  # type: ignore
+    PYARROW_AVAILABLE = False
+    logging.getLogger(__name__).warning(
+        "pyarrow not available; parquet storage disabled"
+    )
 from pandas.tseries.frequencies import to_offset
 import asyncio
-import aiofiles
-import redis
+try:
+    import aiofiles  # type: ignore
+    AIOFILES_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    aiofiles = None  # type: ignore
+    AIOFILES_AVAILABLE = False
+    logging.getLogger(__name__).warning(
+        "aiofiles not available; falling back to synchronous file I/O"
+    )
+
+if not AIOFILES_AVAILABLE:
+    class _AsyncFile:
+        def __init__(self, path: str, mode: str):
+            self._file = open(path, mode)
+
+        async def __aenter__(self):
+            return self._file
+
+        async def __aexit__(self, exc_type, exc, tb):
+            self._file.close()
+            return False
+
+    def aio_open(path: str, mode: str = "r"):
+        return _AsyncFile(path, mode)
+else:
+    aio_open = aiofiles.open
+try:
+    import redis  # type: ignore
+    REDIS_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    redis = None  # type: ignore
+    REDIS_AVAILABLE = False
+    logging.getLogger(__name__).warning(
+        "redis package not available; caching disabled"
+    )
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.future import select
@@ -839,7 +881,7 @@ class MarketDataStore:
             )
             
             # Write to file
-            async with aiofiles.open(file_path, 'wb') as f:
+            async with aio_open(file_path, 'wb') as f:
                 await f.write(compressed_data)
         
         elapsed = time.time() - start_time
@@ -1049,7 +1091,7 @@ class MarketDataStore:
         # Try exact timestamp first
         exact_file = os.path.join(cold_path, f"{hour_str}_{timestamp}.data")
         if os.path.exists(exact_file):
-            async with aiofiles.open(exact_file, 'rb') as f:
+            async with aio_open(exact_file, 'rb') as f:
                 compressed_data = await f.read()
                 data_package = pickle.loads(zlib.decompress(compressed_data))
                 
@@ -1073,7 +1115,7 @@ class MarketDataStore:
         closest_ts = min(timestamps, key=lambda x: abs(x - timestamp))
         closest_file = os.path.join(cold_path, f"{hour_str}_{closest_ts}.data")
         
-        async with aiofiles.open(closest_file, 'rb') as f:
+        async with aio_open(closest_file, 'rb') as f:
             compressed_data = await f.read()
             data_package = pickle.loads(zlib.decompress(compressed_data))
             
@@ -1202,7 +1244,7 @@ class MarketDataStore:
             )
             
             # Write to file
-            async with aiofiles.open(file_path, 'wb') as f:
+            async with aio_open(file_path, 'wb') as f:
                 await f.write(compressed_data)
         
         elapsed = time.time() - start_time
@@ -1471,7 +1513,7 @@ class MarketDataStore:
                 file_path = os.path.join(date_path, hour_file)
                 
                 try:
-                    async with aiofiles.open(file_path, 'rb') as f:
+                    async with aio_open(file_path, 'rb') as f:
                         compressed_data = await f.read()
                         data_package = pickle.loads(zlib.decompress(compressed_data))
                         
