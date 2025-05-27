@@ -1993,3 +1993,15 @@ def calculate_volume_profile(prices: Union[pd.Series, List[float]],
     volumes_arr = np.array(volumes)[-periods:]
     profiler = VolumeProfile(prices_arr, volumes_arr, num_bins=num_bins)
     return profiler.get_profile_data()
+
+
+def relative_volume_profile(data: pd.DataFrame, lookback: int = 20) -> pd.Series:
+    """Return volume divided by its moving average."""
+    volume_ma = data['volume'].rolling(lookback).mean()
+    return data['volume'] / volume_ma
+
+
+def volume_breakout_confirmation(data: pd.DataFrame, threshold: float = 1.5) -> pd.Series:
+    """Detect volume breakout based on relative volume profile."""
+    rvp = relative_volume_profile(data)
+    return rvp > threshold
