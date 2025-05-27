@@ -8,25 +8,23 @@ that capitalizes on changes in market volatility to identify profitable
 trading opportunities.
 """
 
-import asyncio
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
 
-from common.constants import OrderSide, OrderType, SignalConfidence, SignalType, TimeInForce
-from common.exceptions import InvalidDataError, StrategyError
-from common.utils import calculate_risk_reward, normalize_price_series
-from feature_service.features.technical import calculate_atr, calculate_bollinger_bands
-from feature_service.features.volatility import (
-    calculate_historical_volatility,
-    implied_volatility_percentile,
-    volatility_regime_classification,
-    volatility_smile,
+from common.constants import (
+    OrderSide,
+    SignalConfidence,
+    SignalType,
+    TICK_SIZE_MAPPING,
 )
+from common.exceptions import InvalidDataError
+from common.utils import normalize_price_series
+from feature_service.features.technical import calculate_atr, calculate_bollinger_bands
+from feature_service.features.volatility import calculate_historical_volatility
 from strategy_brains.base_brain import SignalEvent, StrategyBrain, StrategyConfig
 
 logger = logging.getLogger(__name__)
@@ -564,6 +562,13 @@ class VolatilityBrain(StrategyBrain):
         if stop_loss is None or take_profit is None:
             logger.warning(f"Could not calculate stop loss or take profit for signal: {signal}")
             return None
+
+        # Normalize calculated prices to tick size for the asset
+        asset = data.name if hasattr(data, "name") else "DEFAULT"
+        tick_size = TICK_SIZE_MAPPING.get(asset, TICK_SIZE_MAPPING["DEFAULT"])
+        entry_price, stop_loss, take_profit = normalize_price_series(
+            pd.Series([entry_price, stop_loss, take_profit]), tick_size
+        ).tolist()
 
         # Calculate risk-reward ratio
         risk = abs(entry_price - stop_loss)
