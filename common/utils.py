@@ -1508,6 +1508,21 @@ def gpu_info() -> Dict[str, Any]:
     return info
 
 
+def gpu_stats() -> Dict[str, Any]:
+    """Return current GPU usage statistics if available."""
+    stats: Dict[str, Any] = {}
+    try:
+        import torch  # type: ignore
+
+        if torch.cuda.is_available():
+            stats["device_count"] = torch.cuda.device_count()
+            stats["allocated_mb"] = torch.cuda.memory_allocated() / (1024 * 1024)
+            stats["reserved_mb"] = torch.cuda.memory_reserved() / (1024 * 1024)
+    except Exception:
+        pass
+
+    return stats
+
 def is_port_open(host: str, port: int, timeout: float = 2.0) -> bool:
     """
     Check if a network port is open.

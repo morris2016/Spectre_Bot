@@ -1790,21 +1790,20 @@ class DeepLearningModel(BaseModel):
         )
 
 
-def create_deep_learning_model(
-    model_type: str,
-    input_shape: Union[int, Tuple[int, ...]],
-    output_shape: int,
-    problem_type: str,
-    hyperparams: Dict[str, Any],
-    use_gpu: bool = False,
-) -> DeepLearningModel:
-    """Factory to create a configured deep learning model."""
-    cfg_dict = {
-        **hyperparams,
-        'model_type': DeepModelType[model_type.upper()],
-        'input_dim': input_shape[0] if isinstance(input_shape, (list, tuple)) else input_shape,
-        'output_dim': output_shape,
+def create_deep_learning_model(model_type: str, config: DeepLearningConfig, **kwargs: Any) -> DeepLearningModel:
+    """Factory function to instantiate a deep learning model."""
+    model_map = {
+        "lstm": LSTMModel,
+        "gru": GRUModel,
+        "conv1d": Conv1DModel,
+        "transformer": TransformerModel,
+        "lstm_attention": LSTMAttentionModel,
+        "wavenet": WaveNetModel,
+        "inceptiontime": InceptionTimeModel,
+        "hybrid": HybridModel,
     }
-    config = DeepLearningConfig(**cfg_dict)
-    config.device = 'cuda' if use_gpu and setup_gpu() else 'cpu'
-    return DeepLearningModel(config)
+    cls = model_map.get(model_type.lower())
+    if not cls:
+        raise ModelError(f"Unknown deep learning model: {model_type}")
+    return cls(config, **kwargs)
+

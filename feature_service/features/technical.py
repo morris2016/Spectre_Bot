@@ -888,6 +888,26 @@ def calculate_obv(close: pd.Series, volume: pd.Series) -> pd.Series:
     return obv
 
 
+def calculate_bollinger_bands(
+    close: pd.Series,
+    period: int = 20,
+    std: float = 2.0,
+) -> Tuple[pd.Series, pd.Series, pd.Series]:
+    """Standalone Bollinger Band calculation."""
+    bb = ta.bbands(close, length=period, std=std)
+    return bb.iloc[:, 0], bb.iloc[:, 1], bb.iloc[:, 2]
+
+
+def calculate_atr(
+    high: pd.Series,
+    low: pd.Series,
+    close: pd.Series,
+    period: int = 14,
+) -> pd.Series:
+    """Standalone Average True Range calculation."""
+    return ta.atr(high=high, low=low, close=close, length=period)
+
+
 def detect_divergence(price: pd.Series, indicator: pd.Series, lookback: int = 14) -> pd.Series:
 
     """Basic divergence detection between price and an indicator."""
@@ -898,11 +918,17 @@ def detect_divergence(price: pd.Series, indicator: pd.Series, lookback: int = 14
 
 
 __all__ = [
-    'TechnicalFeatures', 'calculate_technical_features',
-    'calculate_rsi', 'calculate_macd',
-    'calculate_adx', 'calculate_atr', 'calculate_stochastic',
+    'TechnicalFeatures',
+    'calculate_technical_features',
+    'calculate_rsi',
+    'calculate_macd',
+    'calculate_adx',
+    'calculate_stochastic',
+    'calculate_obv',
     'calculate_bollinger_bands',
-    'calculate_obv', 'detect_divergence'
+    'calculate_atr',
+    'detect_divergence',
+
 ]
 
 # Module initialization

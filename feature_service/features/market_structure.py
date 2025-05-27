@@ -1484,6 +1484,22 @@ def identify_swing_points(
     return feature._identify_swing_points(df, timeframe)
 
 
+def find_support_resistance_levels(
+    df: pd.DataFrame, window_size: int = 20, order: int = 5
+) -> Tuple[List[float], List[float]]:
+    """Return support and resistance levels for the given data."""
+    swings = find_swing_points(df, window_size, order)
+    structure = identify_market_structure(df, swings)
+    return structure.get('support_levels', []), structure.get('resistance_levels', [])
+
+
+def classify_market_structure(df: pd.DataFrame, window_size: int = 20, order: int = 5) -> str:
+    """Return a simple market structure classification (trend)."""
+    swings = find_swing_points(df, window_size, order)
+    structure = identify_market_structure(df, swings)
+    return structure.get('trend', 'neutral')
+
+
 __all__ = [
     'MarketStructureFeature',
     'MarketStructureFeatures',
