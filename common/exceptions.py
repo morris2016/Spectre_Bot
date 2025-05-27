@@ -57,6 +57,16 @@ class OptimizationError(QuantumSpectreError):
     pass
 
 
+class EnvironmentError(QuantumSpectreError):
+    """Raised for errors related to the trading environment."""
+    pass
+
+
+class InvalidActionError(QuantumSpectreError):
+    """Raised when an invalid action is taken in the environment."""
+    pass
+
+
 # ======================================
 # Service Management Exceptions
 # ======================================
@@ -117,6 +127,12 @@ class GPUNotAvailableError(ResourceError):
 
 class HardwareError(ResourceError):
     """Raised for errors related to hardware interaction or failure."""
+    pass
+
+
+class HardwareAccelerationError(HardwareError):
+    """Raised when a hardware acceleration step fails."""
+
     pass
 
 
@@ -580,6 +596,16 @@ class ExecutionError(QuantumSpectreError):
     """Base class for execution engine errors."""
     pass
 
+
+class EnvironmentError(ExecutionError):
+    """Raised for errors related to trading or simulation environments."""
+    pass
+
+
+class InvalidActionError(EnvironmentError):
+    """Raised when an invalid action is taken in an environment."""
+    pass
+
 class PositionError(ExecutionError):
     """Raised for position management errors."""
     pass
@@ -795,6 +821,12 @@ class ModelSaveError(ModelError):
 
 class ModelLoadError(ModelError):
     """Raised when there is an error loading a machine learning model."""
+    pass
+
+
+class ModelLoadingError(ModelLoadError):
+    """Alias for backward compatibility."""
+
     pass
 
 
@@ -1222,6 +1254,7 @@ __all__ = [
     'FeedTimeoutError', 'FeedRateLimitError', 'DatabaseError', 'DatabaseConnectionError',
     'DatabaseQueryError', 'RedisError', 'RedisConnectionError', 'SecurityError',
     'APIKeyError', 'AuthenticationError', 'AuthorizationError', 'ExecutionError',
+    'EnvironmentError', 'InvalidActionError',
     'OrderError', 'OrderRejectedError', 'OrderTimeoutError', 'InsufficientFundsError',
     'InsufficientBalanceError',
     'InvalidOrderError', 'OrderCancellationError', 'SlippageExceededError', 'NetworkError',
@@ -1237,7 +1270,7 @@ __all__ = [
     'TimeoutError', 'ExchangeError', 'RateLimitError', 'FeedNotFoundError',
     'FeedInitializationError', 'FeedAuthenticationError', 'DataSourceError',
     'FeedSubscriptionError', 'FeedDataError', 'ParsingError', 'DataFeedConnectionError',
-    'ModelLoadError', 'DataParsingError', 'CredentialError', 'SecurityViolationError',
+    'ModelLoadError', 'ModelLoadingError', 'DataParsingError', 'CredentialError', 'SecurityViolationError',
     'RegimeDetectionError', 'NewsFeedError', 'NewsParsingError', 'NewsSourceUnavailableError',
     'FeatureNotFoundError', 'FeatureCalculationError', 'FeatureServiceError',
     'InvalidTimeframeError', 'InvalidParameterError', 'AlertDeliveryError',
@@ -1256,7 +1289,7 @@ __all__ = [
     'ServiceConnectionError', 'DataStoreError', 'InvalidDataError', 'TrainingError',
     'ArbitrageValidationError', 'PredictionError', 'AnalysisError', 'RecoveryStrategyError',
     'OptimizationError', 'CorrelationCalculationError', 'SamplingError', 'DataQualityError',
-    'HardwareError', 'EnsembleConfigError', 'ServiceUnavailableError', 'ModelNotSupportedError',
+    'HardwareError', 'HardwareAccelerationError', 'EnsembleConfigError', 'ServiceUnavailableError', 'ModelNotSupportedError',
     'InvalidFeatureFormatError', 'StrategyExecutionError', 'AdaptationError', 'InferenceError',
     'CircuitBreakerTrippedException', 'PatternRecognitionError', 'PatternNotFoundError',
     'DataAlignmentError', 'RESTClientError', 'RequestError', 'DataTransformationError',
@@ -1276,13 +1309,14 @@ __all__ = [
     # Base exceptions
     "QuantumSpectreError", "SystemCriticalError", "ConfigurationError", "TimeoutError",
     "NetworkError", "InvalidParameterError", "CalculationError", "AnalysisError", "OptimizationError",
+    "EnvironmentError", "InvalidActionError",
     
     # Service management
     "ServiceError", "ServiceStartupError", "ServiceShutdownError", "ServiceConnectionError",
     "ServiceUnavailableError", "CircuitBreakerTrippedException", "TTSEngineError",
     
     # Resource management
-    "ResourceError", "ResourceExhaustionError", "GPUNotAvailableError", "HardwareError",
+    "ResourceError", "ResourceExhaustionError", "GPUNotAvailableError", "HardwareError", "HardwareAccelerationError",
     "RedundancyFailureError",
     
     # Data management

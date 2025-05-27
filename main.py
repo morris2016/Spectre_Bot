@@ -16,6 +16,8 @@ import logging
 import traceback
 from typing import Any
 from concurrent.futures import ThreadPoolExecutor
+
+from common.utils import safe_nltk_download
 import multiprocessing as mp
 try:
     import nltk  # type: ignore
@@ -28,6 +30,10 @@ except ImportError:  # pragma: no cover - optional dependency
     )
 import ssl
 import importlib
+
+
+from common.utils import safe_nltk_download
+
 
 # Internal imports
 from config import Config, load_config
@@ -63,7 +69,7 @@ SERVICE_CLASS_PATHS = {
     "backtester": ("backtester.app", "BacktesterService"),
     "monitoring": ("monitoring.app", "MonitoringService"),
     "api_gateway": ("api_gateway.app", "APIGatewayService"),
-    "ui_server": ("ui.app", "UIService"),
+    "ui": ("ui.app", "UIService"),
     "voice_assistant": ("voice_assistant.app", "VoiceAssistantService"),
 }
 
@@ -301,6 +307,7 @@ class ServiceManager:
                                     "Critical service %s failed, initiating system shutdown due to %s failure",
                                     service_name,
                                     service_name,
+
                                 )
                                 # Use loop.call_soon_threadsafe to avoid nested event loop issues
                                 self.loop.call_soon_threadsafe(
@@ -626,8 +633,8 @@ def setup_nltk_data():
     try:
         _create_unverified_https_context = ssl._create_unverified_context
     except AttributeError:
-        pass
-    else:
+        _create_unverified_https_context = None
+    if _create_unverified_https_context:
         ssl._create_default_https_context = _create_unverified_https_context
 
     # Try to load packages from local data directory first
@@ -646,6 +653,8 @@ def setup_nltk_data():
                 "NLTK package '%s' not available; NLP features may be limited",
                 package,
             )
+
+
 
     logger.info("NLTK setup complete")
 

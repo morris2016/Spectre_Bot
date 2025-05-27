@@ -29,15 +29,26 @@ from prophet import Prophet
 from prophet.serialize import model_to_json, model_from_json
 
 # Deep learning
-import tensorflow as tf
-from tensorflow.keras.models import Sequential, Model, load_model
-from tensorflow.keras.layers import (
-    Dense, LSTM, GRU, Dropout, BatchNormalization, Input,
-    Bidirectional, Conv1D, MaxPooling1D, Flatten, 
-    TimeDistributed, Attention, MultiHeadAttention, 
-    LayerNormalization, Add, Activation
-)
-from tensorflow.keras.optimizers import Adam, RMSprop
+try:
+    import tensorflow as tf
+    from tensorflow.keras.models import Sequential, Model, load_model
+    from tensorflow.keras.layers import (
+        Dense, LSTM, GRU, Dropout, BatchNormalization, Input,
+        Bidirectional, Conv1D, MaxPooling1D, Flatten,
+        TimeDistributed, Attention, MultiHeadAttention,
+        LayerNormalization, Add, Activation
+    )
+    from tensorflow.keras.optimizers import Adam, RMSprop
+    TF_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    tf = None  # type: ignore
+    Sequential = Model = load_model = None  # type: ignore
+    Dense = LSTM = GRU = Dropout = BatchNormalization = Input = None  # type: ignore
+    Bidirectional = Conv1D = MaxPooling1D = Flatten = None  # type: ignore
+    TimeDistributed = Attention = MultiHeadAttention = None  # type: ignore
+    LayerNormalization = Add = Activation = None  # type: ignore
+    Adam = RMSprop = None  # type: ignore
+    TF_AVAILABLE = False
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from tensorflow.keras.regularizers import l1_l2
 

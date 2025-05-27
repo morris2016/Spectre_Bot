@@ -20,9 +20,18 @@ from datetime import datetime
 from pathlib import Path
 
 # Machine learning imports
-import tensorflow as tf
-from tensorflow.keras import layers, Model, optimizers, callbacks, regularizers
-from tensorflow.keras.models import Sequential, load_model
+try:
+    import tensorflow as tf  # type: ignore
+    from tensorflow.keras import layers, Model, optimizers, callbacks, regularizers  # type: ignore
+    from tensorflow.keras.models import Sequential, load_model  # type: ignore
+    TENSORFLOW_AVAILABLE = True
+
+except Exception:  # pragma: no cover - optional dependency
+    tf = None  # type: ignore
+    layers = Model = optimizers = callbacks = regularizers = None  # type: ignore
+    Sequential = load_model = None  # type: ignore
+    TENSORFLOW_AVAILABLE = False
+
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, VotingClassifier
 from sklearn.svm import SVC
 from sklearn.neural_network import MLPClassifier
@@ -42,8 +51,13 @@ from sklearn.metrics import (
     log_loss, brier_score_loss, precision_recall_curve
 )
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-from imblearn.over_sampling import SMOTE, ADASYN
-from imblearn.under_sampling import RandomUnderSampler
+try:
+    from imblearn.over_sampling import SMOTE, ADASYN
+    from imblearn.under_sampling import RandomUnderSampler
+    IMBLEARN_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    SMOTE = ADASYN = RandomUnderSampler = None  # type: ignore
+    IMBLEARN_AVAILABLE = False
 
 # Local imports
 from common.logger import get_logger
