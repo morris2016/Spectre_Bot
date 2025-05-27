@@ -8,7 +8,7 @@ from typing import Any, Optional
 import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 
 from common.logger import get_logger
 from common.metrics import MetricsCollector
@@ -46,6 +46,7 @@ class UIService:
         else:
             self.logger.warning("Static directory '%s' does not exist", static_dir)
             self.index_path = None
+
 
         self.app.add_api_route("/{full_path:path}", self.index, methods=["GET"])
 
@@ -89,3 +90,4 @@ class UIService:
         if self.index_path and os.path.exists(self.index_path):
             return FileResponse(self.index_path)
         return FileResponse(self.index_path or '', status_code=404)
+
