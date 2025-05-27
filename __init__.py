@@ -245,4 +245,3 @@ __all__ = [
     "register_hook",
     "register_plugin",
 ]
-

@@ -43,6 +43,7 @@ from common.constants import (
     LOG_LEVELS, DEFAULT_CONFIG_PATH, VERSION
 )
 from common.metrics import MetricsCollector
+from common.utils import safe_nltk_download
 from common.exceptions import ConfigurationError, ServiceStartupError, SystemCriticalError
 from common.async_utils import run_with_timeout
 from common.redis_client import RedisClient
@@ -304,9 +305,7 @@ class ServiceManager:
                             # Check if this is a critical service
                             if self.config.services.get(service_name, {}).get("critical", False):
                                 self.logger.critical(
-                                    "Critical service %s failed, initiating system shutdown due to %s failure",
-                                    service_name,
-                                    service_name,
+                                    f"Critical service {service_name} failed, initiating system shutdown due to {service_name} failure"
 
                                 )
                                 # Use loop.call_soon_threadsafe to avoid nested event loop issues
@@ -641,19 +640,15 @@ def setup_nltk_data():
     nltk_data_dir = os.path.expanduser("~/.nltk_data")
     nltk.data.path.insert(0, nltk_data_dir)
 
-    # Check each package locally without triggering downloads
+    # Check each package and load locally without attempting downloads
     for package in required_packages:
-        resource_path = (
-            f"tokenizers/{package}" if package == "punkt" else f"corpora/{package}"
-        )
-        if safe_nltk_download(resource_path):
-            logger.debug("NLTK package '%s' found locally", package)
+        resource = f"tokenizers/{package}" if package == "punkt" else f"corpora/{package}"
+        if safe_nltk_download(resource):
+            logger.debug(f"NLTK package '{package}' available")
         else:
             logger.warning(
-                "NLTK package '%s' not available; NLP features may be limited",
-                package,
+                f"NLTK package '{package}' not found; NLP features may be limited"
             )
-
 
 
     logger.info("NLTK setup complete")
