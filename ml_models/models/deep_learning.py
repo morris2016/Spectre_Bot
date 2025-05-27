@@ -29,7 +29,8 @@ from enum import Enum, auto
 # Internal imports
 from common.logger import get_logger
 from common.exceptions import ModelError, DataError, TrainingError
-from common.utils import timeit, gpu_stats
+from common.utils import timeit
+from ml_models.hardware.gpu import setup_gpu, get_gpu_memory_usage
 from ml_models.models.base import BaseModel, ModelConfig, ModelOutput, DataBatch
 
 logger = get_logger(__name__)
@@ -1805,3 +1806,4 @@ def create_deep_learning_model(model_type: str, config: DeepLearningConfig, **kw
     if not cls:
         raise ModelError(f"Unknown deep learning model: {model_type}")
     return cls(config, **kwargs)
+

@@ -1523,7 +1523,6 @@ def gpu_stats() -> Dict[str, Any]:
 
     return stats
 
-
 def is_port_open(host: str, port: int, timeout: float = 2.0) -> bool:
     """
     Check if a network port is open.

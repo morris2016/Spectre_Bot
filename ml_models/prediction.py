@@ -1104,3 +1104,4 @@ def predict_mean_reversion_probability(data: pd.DataFrame) -> float:
     momentum = predict_momentum_score(data)
     return float(max(0.0, 1.0 - abs(momentum)))
 
+

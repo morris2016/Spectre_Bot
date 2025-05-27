@@ -53,6 +53,21 @@ def calculate_bollinger_bands(close: pd.Series, period: int = 20, std: float = 2
         'bb_middle': bb.iloc[:, 1],
         'bb_upper': bb.iloc[:, 2],
     })
+
+
+def calculate_historical_volatility(close: pd.Series, period: int = 20) -> pd.Series:
+    """Calculate historical volatility of a price series."""
+    log_returns = np.log(close / close.shift(1))
+    vol = log_returns.rolling(window=period).std()
+    return vol * np.sqrt(252) * 100
+
+
+def calculate_volatility_ratio(close: pd.Series, short_period: int = 5, long_period: int = 20) -> pd.Series:
+    """Calculate ratio of short-term to long-term volatility."""
+    log_returns = np.log(close / close.shift(1))
+    short_vol = log_returns.rolling(window=short_period).std()
+    long_vol = log_returns.rolling(window=long_period).std()
+    return short_vol / long_vol
 def calculate_atr(
     high: pd.Series,
     low: pd.Series,

@@ -172,6 +172,35 @@ def find_swing_points(data: pd.DataFrame, window_size=20, order=5) -> Dict[str, 
     }
 
 
+def find_support_resistance_levels(data: pd.DataFrame, window: int = 20) -> Tuple[List[float], List[float]]:
+    """Identify simple support and resistance levels from high and low prices."""
+    supports = []
+    resistances = []
+    highs = data['high']
+    lows = data['low']
+
+    for i in range(window, len(data)):
+        if highs.iloc[i] >= highs.iloc[i - window:i].max():
+            resistances.append(highs.iloc[i])
+        if lows.iloc[i] <= lows.iloc[i - window:i].min():
+            supports.append(lows.iloc[i])
+
+    return supports, resistances
+
+
+def classify_market_structure(data: pd.DataFrame, short_period: int = 20, long_period: int = 50) -> str:
+    """Classify market structure as bullish, bearish, or sideways."""
+    if len(data) < long_period:
+        return "neutral"
+    ma_short = data['close'].rolling(window=short_period).mean().iloc[-1]
+    ma_long = data['close'].rolling(window=long_period).mean().iloc[-1]
+    if ma_short > ma_long:
+        return "bullish"
+    if ma_short < ma_long:
+        return "bearish"
+    return "sideways"
+
+
 def identify_market_structure(data: pd.DataFrame, swing_points: Dict[str, List[Dict]]) -> Dict[str, Any]:
     """
     Identify market structure based on swing points.
