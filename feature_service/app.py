@@ -60,8 +60,9 @@ class FeatureService:
         self,
         config: Config,
         loop: Optional[asyncio.AbstractEventLoop] = None,
-        redis_client: Any = None,
-        db_client: Any = None,
+        redis_client: Optional[RedisClient] = None,
+        db_client: Optional[DatabaseClient] = None,
+
     ) -> None:
         """
         Initialize the feature service.
@@ -105,12 +106,13 @@ class FeatureService:
 
         try:
             # Initialize common resources
-            self.redis_client = RedisClient(
-                host=self.config.get("redis.host", "localhost"),
-                port=self.config.get("redis.port", 6379),
-                db=self.config.get("redis.feature_service_db", 1),
-                password=self.config.get("redis.password", None),
-            )
+            if self.redis_client is None:
+                self.redis_client = RedisClient(
+                    host=self.config.get("redis.host", "localhost"),
+                    port=self.config.get("redis.port", 6379),
+                    db=self.config.get("redis.feature_service_db", 1),
+                    password=self.config.get("redis.password", None),
+                )
 
             if db_connector is not None:
                 self.db_client = db_connector

@@ -6,7 +6,7 @@ import os
 from typing import Any, Optional
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, Response
 
@@ -36,16 +36,12 @@ class UIService:
 
         static_dir = os.path.abspath(self.config.ui.get("static_dir", "./ui/dist"))
         index_file = self.config.ui.get("index_file", "index.html")
+        self.index_path = os.path.join(static_dir, index_file)
 
         if os.path.isdir(static_dir):
             self.app.mount("/static", StaticFiles(directory=static_dir), name="static")
-            self.index_path = os.path.join(static_dir, index_file)
-            if not os.path.exists(self.index_path):
-                self.logger.warning("Index file '%s' not found", self.index_path)
-                self.index_path = None
         else:
-            self.logger.warning("Static directory '%s' does not exist", static_dir)
-            self.index_path = None
+            self.logger.warning("Static directory '%s' not found; UI will be limited", static_dir)
 
 
         self.app.add_api_route("/{full_path:path}", self.index, methods=["GET"])
@@ -85,9 +81,11 @@ class UIService:
         """Simple health check endpoint for FastAPI."""
         return {"status": "ok"}
 
-    async def index(self, full_path: str) -> FileResponse:
+    async def index(self, full_path: str) -> Response:
         """Serve the React application's index file for all routes."""
-        if self.index_path and os.path.exists(self.index_path):
+        if os.path.exists(self.index_path):
             return FileResponse(self.index_path)
-        return FileResponse(self.index_path or '', status_code=404)
+
+        self.logger.warning("UI index file not found at %s", self.index_path)
+        return Response(status_code=404)
 
