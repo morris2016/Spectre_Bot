@@ -118,6 +118,7 @@ if not GYM_AVAILABLE:
             self.balance = initial_balance
             self.position = 0  # -1 sell, 0 hold, 1 buy
 
+
         def _get_state(self) -> np.ndarray:
             start = self.current_idx - self.state_lookback
             df = pd.concat(
@@ -151,6 +152,7 @@ if not GYM_AVAILABLE:
                 self.position = 0
 
             self.balance += reward
+
             return self._get_state(), reward, terminated, truncated, {}
 else:
     class MarketEnvironment:

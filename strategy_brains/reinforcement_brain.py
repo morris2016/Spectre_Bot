@@ -70,6 +70,7 @@ if not GYM_AVAILABLE:
             self.balance = initial_balance
             self.position = 0
 
+
         def _get_observation(self) -> np.ndarray:
             start = self.current_step - self.window_size
             return self.data.iloc[start:self.current_step].values
@@ -97,6 +98,7 @@ if not GYM_AVAILABLE:
                 self.position = 0
 
             self.balance += reward
+
             return obs, reward, terminated, truncated, {}
 else:
     class TradingEnvironment(gym.Env):
