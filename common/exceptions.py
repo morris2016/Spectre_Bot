@@ -57,6 +57,16 @@ class OptimizationError(QuantumSpectreError):
     pass
 
 
+class EnvironmentError(QuantumSpectreError):
+    """Raised for errors related to the trading environment."""
+    pass
+
+
+class InvalidActionError(QuantumSpectreError):
+    """Raised when an invalid action is taken in the environment."""
+    pass
+
+
 # ======================================
 # Service Management Exceptions
 # ======================================
@@ -122,6 +132,7 @@ class HardwareError(ResourceError):
 
 class HardwareAccelerationError(HardwareError):
     """Raised when a hardware acceleration step fails."""
+
     pass
 
 
@@ -815,6 +826,7 @@ class ModelLoadError(ModelError):
 
 class ModelLoadingError(ModelLoadError):
     """Alias for backward compatibility."""
+
     pass
 
 
@@ -1297,13 +1309,14 @@ __all__ = [
     # Base exceptions
     "QuantumSpectreError", "SystemCriticalError", "ConfigurationError", "TimeoutError",
     "NetworkError", "InvalidParameterError", "CalculationError", "AnalysisError", "OptimizationError",
+    "EnvironmentError", "InvalidActionError",
     
     # Service management
     "ServiceError", "ServiceStartupError", "ServiceShutdownError", "ServiceConnectionError",
     "ServiceUnavailableError", "CircuitBreakerTrippedException", "TTSEngineError",
     
     # Resource management
-    "ResourceError", "ResourceExhaustionError", "GPUNotAvailableError", "HardwareError",
+    "ResourceError", "ResourceExhaustionError", "GPUNotAvailableError", "HardwareError", "HardwareAccelerationError",
     "RedundancyFailureError",
     
     # Data management

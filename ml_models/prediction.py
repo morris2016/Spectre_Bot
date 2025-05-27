@@ -31,6 +31,7 @@ except Exception:  # pragma: no cover - optional dependency
 try:
     import torch  # type: ignore
     import torch.nn as nn  # type: ignore
+
     TORCH_AVAILABLE = True
 except Exception:  # pragma: no cover - optional dependency
     torch = None  # type: ignore

@@ -42,6 +42,7 @@ try:
     import torch.nn as nn  # type: ignore
     import torch.optim as optim  # type: ignore
     from torch.utils.data import DataLoader, TensorDataset  # type: ignore
+
     TORCH_AVAILABLE = True
 except Exception:  # pragma: no cover - optional dependency
     torch = None  # type: ignore

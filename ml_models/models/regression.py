@@ -147,6 +147,7 @@ class RegressionModelFactory:
 
 def create_regression_model(config: ModelConfig) -> BaseRegressionModel:
     """Convenience wrapper to instantiate a regression model from config."""
+
     return RegressionModelFactory.create_model(config)
 
 

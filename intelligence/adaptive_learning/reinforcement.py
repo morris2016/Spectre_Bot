@@ -26,6 +26,7 @@ try:
     from torch.distributions import Categorical, Normal  # type: ignore
     TORCH_AVAILABLE = True
 except Exception:  # pragma: no cover - optional dependency
+
     torch = None  # type: ignore
     nn = None  # type: ignore
     optim = None  # type: ignore
@@ -34,6 +35,7 @@ except Exception:  # pragma: no cover - optional dependency
     TORCH_AVAILABLE = False
     logger = logging.getLogger(__name__)
     logger.warning("PyTorch not available; reinforcement features are disabled")
+
 from collections import deque, namedtuple
 import random
 import gymnasium as gym
