@@ -139,6 +139,8 @@ class RegressionModelFactory:
             return PeriodicRegressionModel(config)
         elif model_type == "adaptive":
             return AdaptiveRegressionModel(config)
+        elif model_type == "advanced":
+            return AdvancedRegressionModel(config)
         elif model_type == "quantum":
             return QuantumInspiredRegressionModel(config)
         else:
@@ -1602,6 +1604,16 @@ class AdaptiveRegressionModel(BaseRegressionModel):
             error_msg = f"Error during prediction with adaptive model: {str(e)}"
             logger.error(error_msg)
             raise InferenceError(error_msg) from e
+
+
+class AdvancedRegressionModel(BaseRegressionModel):
+    """Simple extra trees regression model for experiments."""
+
+    def _create_model(self):
+        self.model = ExtraTreesRegressor(
+            n_estimators=self.config.get('n_estimators', 200),
+            random_state=self.config.get('random_state', 42),
+        )
 
 
 class QuantumInspiredRegressionModel(BaseRegressionModel):

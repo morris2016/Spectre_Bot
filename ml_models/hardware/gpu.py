@@ -1014,3 +1014,16 @@ class GPUAccelerator(HardwareAccelerator):
             self.logger.error(f"Error optimizing model for inference: {str(e)}")
             self.metrics.increment_counter("gpu_errors_count")
             return model
+
+
+def setup_gpu() -> bool:
+    """Initialize the GPU manager and return availability status."""
+    manager = GPUManager()
+    return manager.has_gpu
+
+
+def get_gpu_memory_usage() -> float:
+    """Return current allocated GPU memory in MB if available."""
+    manager = GPUManager()
+    status = manager.memory_status()
+    return status.get("allocated_mb", 0)

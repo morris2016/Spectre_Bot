@@ -72,6 +72,23 @@ def calculate_bollinger_bands(
     bands = ta.volatility.BollingerBands(close=close, window=window, window_dev=num_std_dev)
     return bands.bollinger_hband(), bands.bollinger_mavg(), bands.bollinger_lband()
 
+
+def calculate_historical_volatility(close: pd.Series, period: int = 20) -> pd.Series:
+    """Standalone historical volatility as annualized standard deviation."""
+    log_returns = np.log(close / close.shift(1))
+    vol = log_returns.rolling(window=period).std()
+    return vol * np.sqrt(252) * 100
+
+
+def calculate_volatility_ratio(
+    close: pd.Series, short_period: int = 5, long_period: int = 20
+) -> pd.Series:
+    """Return the ratio of short-term to long-term volatility."""
+    log_returns = np.log(close / close.shift(1))
+    short_vol = log_returns.rolling(window=short_period).std()
+    long_vol = log_returns.rolling(window=long_period).std()
+    return short_vol / long_vol
+
 logger = get_logger(__name__)
 
 
@@ -1048,6 +1065,8 @@ __all__ = [
     "calculate_volatility_features",
     "calculate_atr",
     "calculate_bollinger_bands",
+    "calculate_historical_volatility",
+    "calculate_volatility_ratio",
 ]
 
 # Module initialization

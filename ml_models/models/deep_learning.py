@@ -1787,3 +1787,21 @@ class DeepLearningModel(BaseModel):
             probabilities=None,  # Not applicable for regression tasks
             raw_output=output
         )
+
+
+def create_deep_learning_model(model_type: str, config: DeepLearningConfig, **kwargs: Any) -> DeepLearningModel:
+    """Factory function to instantiate a deep learning model."""
+    model_map = {
+        "lstm": LSTMModel,
+        "gru": GRUModel,
+        "conv1d": Conv1DModel,
+        "transformer": TransformerModel,
+        "lstm_attention": LSTMAttentionModel,
+        "wavenet": WaveNetModel,
+        "inceptiontime": InceptionTimeModel,
+        "hybrid": HybridModel,
+    }
+    cls = model_map.get(model_type.lower())
+    if not cls:
+        raise ModelError(f"Unknown deep learning model: {model_type}")
+    return cls(config, **kwargs)
