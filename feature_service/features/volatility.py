@@ -76,6 +76,13 @@ def calculate_volatility_ratio(close: pd.Series, short_period: int = 5, long_per
     short_vol = log_returns.rolling(window=short_period).std()
     long_vol = log_returns.rolling(window=long_period).std()
     return short_vol / long_vol
+
+
+def volatility_expansion_indicator(close: pd.Series, period: int = 20) -> pd.Series:
+    """Simple volatility expansion indicator based on ATR changes."""
+    atr = calculate_atr(close, close, close, period)
+    atr_mean = atr.rolling(window=period).mean()
+    return atr / atr_mean
 def calculate_atr(
     high: pd.Series,
     low: pd.Series,
@@ -1090,6 +1097,7 @@ __all__ = [
     "calculate_bollinger_bands",
     "calculate_historical_volatility",
     "calculate_volatility_ratio",
+    "volatility_expansion_indicator",
 ]
 
 # Module initialization

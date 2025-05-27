@@ -6,9 +6,9 @@ import os
 from typing import Any, Optional
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 
 from common.logger import get_logger
 from common.metrics import MetricsCollector
@@ -42,6 +42,7 @@ class UIService:
             self.app.mount("/static", StaticFiles(directory=static_dir), name="static")
         else:
             self.logger.warning("Static directory '%s' not found; UI will run without static files", static_dir)
+
 
         self.app.add_api_route("/{full_path:path}", self.index, methods=["GET"])
 
@@ -80,9 +81,10 @@ class UIService:
         """Simple health check endpoint for FastAPI."""
         return {"status": "ok"}
 
-    async def index(self, full_path: str) -> FileResponse:
+    async def index(self, full_path: str) -> Response:
         """Serve the React application's index file for all routes."""
         if os.path.exists(self.index_path):
             return FileResponse(self.index_path)
         self.logger.warning("UI index file '%s' not found", self.index_path)
         return FileResponse("", status_code=404)
+
