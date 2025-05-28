@@ -126,7 +126,7 @@ class SentimentFeatures(BaseFeature):
             'blogs': 0.60,
             'telegram': 0.50,
             'discord': 0.45
-        }
+        } 
         logger.info("SentimentFeatures initialized")
 
     async def calculate(self, data, **kwargs):
@@ -137,6 +137,7 @@ class SentimentFeatures(BaseFeature):
         symbol = symbol or "UNKNOWN"
         result = self.analyze_sentiment(symbol, lookback_hours=kwargs.get("lookback_hours", 24))
         return pd.DataFrame({"sentiment_score": [result.compound_score]}, index=[0])
+
     
     def analyze_sentiment(self, symbol: str, 
                          lookback_hours: int = 24,

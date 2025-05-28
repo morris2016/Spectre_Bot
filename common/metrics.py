@@ -51,13 +51,15 @@ class MetricsCollector:
     """Collects and manages system and trading metrics."""
 
     def __init__(self, namespace: str = "default"):
+
         """
         Initialize metrics collector.
         
         Args:
             namespace: Namespace for metrics
         """
-        self.namespace = namespace
+        self.namespace = namespace if subsystem is None else f"{namespace}.{subsystem}"
+
         self.counters = {}
         self.gauges = {}
         self.timers = {}
@@ -383,28 +385,13 @@ class MetricsCollector:
         """Record a timing measurement."""
         full_name = f"{self.namespace}.{metric_name}"
         if full_name not in self.timers:
-            self.timers[full_name] = {
-                'count': 0,
-                'sum': 0,
-                'min': float('inf'),
-                'max': 0,
-                'avg': 0,
-                'samples': []
-            }
-        
-        timer = self.timers[full_name]
-        timer['count'] += 1
-        timer['sum'] += duration
-        timer['min'] = min(timer['min'], duration)
-        timer['max'] = max(timer['max'], duration)
-        timer['avg'] = timer['sum'] / timer['count']
-        
-        # Keep limited samples for percentile calculations
-        timer['samples'].append(duration)
-        if len(timer['samples']) > 100:
-            timer['samples'].pop(0)
-            
-        return timer
+            self.timers[full_name] = []
+
+        self.timers[full_name].append(duration)
+        if len(self.timers[full_name]) > 1000:
+            self.timers[full_name] = self.timers[full_name][-1000:]
+
+        return self.timers[full_name]
     
     def get_percentile(self, metric_name, percentile):
         """Get a percentile value for a timing metric."""
@@ -533,14 +520,18 @@ class MetricsCollector:
 
 
     @contextmanager
-    def timing(self, metric_name):
-        """Context manager for timing an operation."""
+    def timing(self, metric_name, duration: float | None = None):
+        """Record timing either as context manager or direct call."""
+        if duration is not None:
+            self.record_timing(metric_name, duration)
+            yield
+            return
+
         start_time = time.time()
         try:
             yield
         finally:
-            duration = time.time() - start_time
-            self.record_timing(metric_name, duration)
+            self.record_timing(metric_name, time.time() - start_time)
         
     async def collect_metrics_task(self, interval=10):
         """
@@ -591,6 +582,8 @@ def get_default_collector():
 
 # Create a global performance tracker instance
 performance_tracker = MetricsCollector.get_instance("performance")
+
+_default_collector = get_default_collector()
 
 
 def calculate_timing(func=None, *, metric_name: Optional[str] = None,

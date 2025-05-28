@@ -61,8 +61,12 @@ The QuantumSpectre Elite Trading System is built with a modular, microservice-ba
    The `prophet` package now requires `cmdstanpy` and a C++ toolchain for
    compilation. If installation fails with pip, use conda:
    ```bash
-   conda install -c conda-forge prophet
-   ```
+  conda install -c conda-forge prophet
+  ```
+
+If certain optional dependencies like TensorFlow or PyTorch are missing,
+the system will automatically disable related features and continue to
+operate with the lightweight components used during testing.
 
 3. Run the environment setup script:
    ```bash
