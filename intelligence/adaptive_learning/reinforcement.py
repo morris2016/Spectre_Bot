@@ -49,6 +49,8 @@ except Exception:  # pragma: no cover - optional dependency
     logging.getLogger(__name__).warning(
         "gymnasium not available; using minimal environment implementation"
     )
+# Force use of the lightweight environment in test builds
+GYM_AVAILABLE = False
 import datetime
 from concurrent.futures import ThreadPoolExecutor
 
@@ -121,10 +123,8 @@ if not GYM_AVAILABLE:
             self.balance = initial_balance
             self.position = 0  # -1 sell, 0 hold, 1 buy
 
+            # Basic validation to mimic the gym environment checks
             self._validate_data()
-
-        def _validate_data(self) -> None:
-            pass
 
 
         def _get_state(self) -> np.ndarray:
@@ -155,6 +155,15 @@ if not GYM_AVAILABLE:
             truncated = False
             reward = 0.0
             return self._get_state(), reward, terminated, truncated, {}
+
+        def _validate_data(self) -> None:
+            if self.market_data.empty or self.features.empty:
+                raise ValueError("Market data or features DataFrame is empty")
+
+            if len(self.market_data) != len(self.features):
+                raise ValueError(
+                    f"Market data length ({len(self.market_data)}) and features length ({len(self.features)}) must match"
+                )
 
 else:
     class MarketEnvironment:

@@ -387,6 +387,23 @@ class OrderFlowBrain(StrategyBrain):
             self.logger.error(f"Error generating signal: {str(e)}")
             return None
 
+    async def generate_signals(self) -> List[Dict[str, Any]]:
+        """Generate one or more trading signals."""
+        signal = await self.generate_signal()
+        return [signal] if signal else []
+
+    async def on_regime_change(self, new_regime: str) -> None:
+        """React to market regime changes by adjusting thresholds."""
+        self.logger.info(f"OrderFlowBrain regime change: {new_regime}")
+        if new_regime.lower() == "volatile":
+            self.params["ob_imbalance_threshold"] = max(
+                1.0, self.params["ob_imbalance_threshold"] * 1.2
+            )
+        elif new_regime.lower() == "stable":
+            self.params["ob_imbalance_threshold"] = self.DEFAULT_PARAMS[
+                "ob_imbalance_threshold"
+            ]
+
     async def update_parameters(self, performance_metrics: Dict[str, float]) -> None:
         """
         Update strategy parameters based on recent performance.

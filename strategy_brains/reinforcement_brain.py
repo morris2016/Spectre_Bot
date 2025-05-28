@@ -84,10 +84,16 @@ class TradingEnvironment:
         self.initial_balance = initial_balance
         self.balance = initial_balance
         self.position = 0.0
+        self.feature_columns = [
+            col for col in data.columns
+            if col not in ['timestamp', 'open', 'high', 'low', 'close', 'volume']
+        ]
 
     def _get_observation(self) -> np.ndarray:
         start = self.current_step - self.window_size
-        return self.data.iloc[start:self.current_step].values.astype(np.float32)
+        obs = self.data.iloc[start:self.current_step][self.feature_columns]
+        return obs.values.astype(np.float32)
+
 
     def reset(self):
         self.current_step = self.window_size
