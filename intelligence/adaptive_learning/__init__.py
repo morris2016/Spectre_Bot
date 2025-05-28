@@ -87,7 +87,9 @@ def _discover_adaptive_learners() -> None:
                 register_adaptive_learner(item_name, item)
 
 # Auto-discover learners when the package is imported
-_discover_adaptive_learners()
+# Auto-discover learners when the package is imported unless disabled
+if os.environ.get("QS_DISABLE_ADAPTIVE_DISCOVERY") != "1":
+    _discover_adaptive_learners()
 
 # Define base class for all adaptive learners
 class BaseAdaptiveLearner:

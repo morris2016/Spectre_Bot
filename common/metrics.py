@@ -76,17 +76,20 @@ class MetricsCollector:
     """Collects and manages system and trading metrics."""
 
     def __init__(self, namespace):
+
         """
         Initialize metrics collector.
 
         Args:
             namespace: Namespace for metrics
+            subsystem: Optional subsystem name appended to the namespace
         """
-        self.namespace = namespace
+        self.namespace = namespace if subsystem is None else f"{namespace}.{subsystem}"
+
         self.counters = {}
         self.gauges = {}
-        self.timers = {}
-        self.histograms = {}
+        self.timers = defaultdict(list)
+        self.histograms = defaultdict(list)
         self.start_time = time.time()
         self.logger = get_logger(f"Metrics.{namespace}")
 
@@ -186,8 +189,6 @@ class MetricsCollector:
             value: Timer value (in seconds)
         """
         full_name = f"{self.namespace}.{metric_name}"
-        if full_name not in self.timers:
-            self.timers[full_name] = []
         self.timers[full_name].append(value)
         # Keep only the last 1000 values to limit memory usage
         if len(self.timers[full_name]) > 1000:
@@ -212,7 +213,6 @@ class MetricsCollector:
             self.histograms[full_name].extend(initial_values)
 
         return self.histograms[full_name]
-
 
     def get(self, metric_name, default=None):
         """
@@ -339,7 +339,7 @@ class MetricsCollector:
         if metric_type is None or metric_type == 'gauges':
             self.gauges = {}
         if metric_type is None or metric_type == 'timers':
-            self.timers = {}
+            self.timers = defaultdict(list)
         if metric_type is None or metric_type == 'histograms':
             self.histograms = {}
 
@@ -395,9 +395,9 @@ class MetricsCollector:
     def get_percentile(self, metric_name, percentile):
         """Get a percentile value for a timing metric."""
         full_name = f"{self.namespace}.{metric_name}"
-        if full_name in self.timers and self.timers[full_name]['samples']:
-            samples = sorted(self.timers[full_name]['samples'])
-            idx = int(len(samples) * (percentile / 100))
+        if full_name in self.timers and self.timers[full_name]:
+            samples = sorted(self.timers[full_name])
+            idx = int(round((len(samples) - 1) * (percentile / 100)))
             return samples[idx]
         return None
 
@@ -468,13 +468,19 @@ class MetricsCollector:
         result = {
             'timestamp': time.time(),
             'uptime': time.time() - self.start_time,
-            'counters': self.counters.copy(),  # Changed from self.metrics
+            'counters': self.counters.copy(),
             'gauges': self.gauges.copy(),
             'timers': {},
-            'histograms': {}
+            'histograms': {},
         }
 
+        for name in self.timers:
+            short_name = name.replace(f"{self.namespace}.", "")
+            result['timers'][name] = self.get_timer_stats(short_name)
 
+        for name in self.histograms:
+            short_name = name.replace(f"{self.namespace}.", "")
+            result['histograms'][name] = self.get_histogram_stats(short_name)
 
 
         # Simplify timer data for export
@@ -519,14 +525,20 @@ class MetricsCollector:
 
 
     @contextmanager
-    def timing(self, metric_name):
-        """Context manager for timing an operation."""
+    def timing(self, metric_name, duration: float | None = None):
+        """Record timing either as context manager or direct call."""
+        if duration is not None:
+            self.record_timing(metric_name, duration)
+            yield
+            return
+
         start_time = time.time()
         try:
             yield
         finally:
             duration = time.time() - start_time
             self.record_timing(metric_name, duration)
+
 
     async def collect_metrics_task(self, interval=10):
         """
@@ -580,6 +592,8 @@ def get_default_collector():
 _default_collector = MetricsCollector.get_instance("default")
 performance_tracker = MetricsCollector.get_instance("performance")
 
+_default_collector = get_default_collector()
+
 
 def calculate_timing(func=None, *, metric_name: Optional[str] = None,
                      collector: Optional[MetricsCollector] = None):
@@ -613,7 +627,7 @@ def calculate_timing(func=None, *, metric_name: Optional[str] = None,
             try:
                 return await func(*args, **kwargs)
             finally:
-                coll.record_timing(metric, time.perf_counter() - start)
+                coll.record_timer(metric, time.perf_counter() - start)
 
         return async_wrapper
 
@@ -623,7 +637,7 @@ def calculate_timing(func=None, *, metric_name: Optional[str] = None,
         try:
             return func(*args, **kwargs)
         finally:
-            coll.record_timing(metric, time.perf_counter() - start)
+            coll.record_timer(metric, time.perf_counter() - start)
 
     return sync_wrapper
 
