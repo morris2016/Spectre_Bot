@@ -17,7 +17,6 @@ import traceback
 from typing import Any
 from concurrent.futures import ThreadPoolExecutor
 
-from common.utils import safe_nltk_download
 import multiprocessing as mp
 try:
     import nltk  # type: ignore
@@ -30,10 +29,7 @@ except ImportError:  # pragma: no cover - optional dependency
     )
 import ssl
 import importlib
-
-
 from common.utils import safe_nltk_download
-
 
 # Internal imports
 from config import Config, load_config
@@ -43,13 +39,11 @@ from common.constants import (
     LOG_LEVELS, DEFAULT_CONFIG_PATH, VERSION
 )
 from common.metrics import MetricsCollector
-from common.utils import safe_nltk_download
 from common.exceptions import ConfigurationError, ServiceStartupError, SystemCriticalError
 from common.async_utils import run_with_timeout
 from common.redis_client import RedisClient
 from common.db_client import DatabaseClient, get_db_client
 from common.security import SecureCredentialManager
-from common.utils import safe_nltk_download
 
 # Service imports
 
