@@ -383,14 +383,12 @@ class DQNAgent(RLAgent):
             self.weights[:, action] += self.learning_rate * (target - q_current) * state
         return 0.0
 
-    def train_step(self) -> float | None:
-        """Perform one training step and softly update the target network."""
+    def train_step(self) -> None:
+        """Execute a single training iteration."""
         loss = self.update_model()
         if TORCH_AVAILABLE and loss is not None:
-            with torch.no_grad():
-                for tgt, src in zip(self.target_net.parameters(), self.policy_net.parameters()):
-                    tgt.data.copy_(self.tau * src.data + (1 - self.tau) * tgt.data)
-        return loss
+            for t_param, param in zip(self.target_net.parameters(), self.policy_net.parameters()):
+                t_param.data.copy_((1 - self.tau) * t_param.data + self.tau * param.data)
 
 
 

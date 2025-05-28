@@ -110,7 +110,8 @@ class SentimentFeatures(BaseFeature):
         Args:
             ts_storage: TimeSeriesStorage instance for accessing historical data
         """
-        super().__init__(ts_storage)
+        super().__init__()
+        self.ts_storage = ts_storage
         self.sentiment_cache = {}  # Cache for sentiment calculations
         self.sources_reliability = {  # Initial source reliability scores
             'financial_news': 0.85,
@@ -129,14 +130,17 @@ class SentimentFeatures(BaseFeature):
         } 
         logger.info("SentimentFeatures initialized")
 
-    async def calculate(self, data, **kwargs):
-        """Return a simple sentiment score for the provided symbol."""
-        symbol = kwargs.get("symbol")
-        if symbol is None and hasattr(data, "columns") and "symbol" in data.columns:
-            symbol = data["symbol"].iloc[0]
-        symbol = symbol or "UNKNOWN"
-        result = self.analyze_sentiment(symbol, lookback_hours=kwargs.get("lookback_hours", 24))
-        return pd.DataFrame({"sentiment_score": [result.compound_score]}, index=[0])
+    async def calculate(self, symbol: str, lookback_hours: int = 24,
+                         include_sources: Optional[List[str]] | None = None) -> Dict[str, float]:
+        """Asynchronously compute sentiment metrics for a symbol."""
+        result = self.analyze_sentiment(symbol, lookback_hours, include_sources)
+        return {
+            "compound": result.compound_score,
+            "positive": result.positive_score,
+            "negative": result.negative_score,
+            "neutral": result.neutral_score,
+            "confidence": result.confidence,
+        }
 
     
     def analyze_sentiment(self, symbol: str, 

@@ -91,6 +91,17 @@ class OrderFlowBrain(StrategyBrain):
         "volume_lookback": 20,                # Lookback periods for volume comparison
     }
 
+    async def generate_signals(self) -> List[Dict[str, Any]]:
+        """Generate a list with a single order flow signal."""
+        signal = await self.generate_signal()
+        return [signal] if signal else []
+
+    async def on_regime_change(self, new_regime: str) -> None:
+        """Reset state when a new market regime is detected."""
+        self.logger.info("Adapting to regime change: %s", new_regime)
+        await self._reset_session_data()
+    
+
     def __init__(self, config: Config, asset_id: str, timeframe: str, **kwargs):
         """
         Initialize the Order Flow Brain strategy.

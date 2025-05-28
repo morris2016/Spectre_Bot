@@ -84,6 +84,73 @@ class TradingEnvironment:
         self.initial_balance = initial_balance
         self.balance = initial_balance
         self.position = 0.0
+        self.max_position = max_position
+        self.transaction_fee = transaction_fee
+        self.reward_function = reward_function
+        self.use_position_info = use_position_info
+        self.action_type = action_type
+        self.feature_columns = [
+            col for col in data.columns if col not in ['timestamp', 'open', 'high', 'low', 'close', 'volume']
+        ]
+        self.n_features = len(self.feature_columns)
+        if self.use_position_info:
+            self.observation_space = spaces.Box(
+                low=-np.inf,
+                high=np.inf,
+                shape=(self.window_size, self.n_features + 2),
+                dtype=np.float32,
+            )
+        else:
+            self.observation_space = spaces.Box(
+                low=-np.inf,
+                high=np.inf,
+                shape=(self.window_size, self.n_features),
+                dtype=np.float32,
+            )
+        if self.action_type == 'discrete':
+            self.action_space = spaces.Discrete(3)
+        else:
+            self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(1,), dtype=np.float32)
+        self.position_value = 0.0
+        self.entry_price = 0.0
+        self.trades = []
+        self.portfolio_values = []
+
+    def _get_observation(self) -> np.ndarray:
+        start = self.current_step - self.window_size
+        return self.data.iloc[start:self.current_step].values.astype(np.float32)
+
+    def reset(self):
+        self.current_step = self.window_size
+        return self._get_observation(), {}
+
+    def step(self, action):
+        self.current_step += 1
+        obs = self._get_observation()
+        terminated = self.current_step >= len(self.data)
+        truncated = False
+        reward = 0.0
+        return obs, reward, terminated, truncated, {}
+        """
+        Initialize the trading environment with historical data and parameters.
+        
+        Args:
+            data: DataFrame with OHLCV and feature data
+            initial_balance: Starting account balance
+            max_position: Maximum allowed position size as a fraction of balance
+            transaction_fee: Fee per transaction as a fraction
+            reward_function: Type of reward function to use
+            window_size: Number of past candles to use for state
+            use_position_info: Whether to include position info in state
+            action_type: 'discrete' or 'continuous'
+        """
+        super(TradingEnvironment, self).__init__()
+        
+        self.data = data
+
+        self.initial_balance = initial_balance
+        self.balance = initial_balance
+        self.position = 0.0
 
     def _get_observation(self) -> np.ndarray:
         start = self.current_step - self.window_size
