@@ -615,8 +615,20 @@ class FeatureImportanceAnalyzer:
             else:
                 plt.close(fig)
                 return None
-                
+
         except Exception as e:
             logger.error(f"Error generating feature importance plot: {str(e)}")
             if return_figure:
                 return None
+
+
+def calculate_feature_importance(model: Any, feature_names: List[str], model_type: str, method: str = "permutation") -> Dict[str, Any]:
+    """Convenience wrapper to compute feature importance synchronously."""
+    analyzer = FeatureImportanceAnalyzer(model_type)
+    dummy_X = np.zeros((1, len(feature_names)))
+    dummy_y = np.zeros(1)
+    try:
+        result = analyzer._model_feature_importance(model, dummy_X, dummy_y, feature_names)
+        return result
+    except Exception:
+        return {}
