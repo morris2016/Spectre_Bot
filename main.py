@@ -644,11 +644,11 @@ def setup_nltk_data():
                 f"NLTK package '{package}' not found; NLP features may be limited"
             )
 
-
     logger.info("NLTK setup complete")
 
 
 async def startup():
+
     """
     Main system startup sequence.
     """
