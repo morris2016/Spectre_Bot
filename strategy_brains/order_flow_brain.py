@@ -131,6 +131,9 @@ class OrderFlowBrain(StrategyBrain):
         # Data storage
         self.market_data = MarketDataStorage(config)
 
+        # Track current market regime for risk adjustments
+        self.current_regime: str | None = None
+        
         # Memory structures for tracking order flow patterns
         self.order_book_imbalances = deque(maxlen=self.params["memory_length"])
         self.delta_history = deque(maxlen=self.params["memory_length"])
@@ -399,21 +402,15 @@ class OrderFlowBrain(StrategyBrain):
             return None
 
     async def generate_signals(self) -> List[Dict[str, Any]]:
-        """Generate one or more trading signals."""
+        """Return a list of generated signals for compatibility."""
+
         signal = await self.generate_signal()
         return [signal] if signal else []
 
     async def on_regime_change(self, new_regime: str) -> None:
-        """React to market regime changes by adjusting thresholds."""
-        self.logger.info(f"OrderFlowBrain regime change: {new_regime}")
-        if new_regime.lower() == "volatile":
-            self.params["ob_imbalance_threshold"] = max(
-                1.0, self.params["ob_imbalance_threshold"] * 1.2
-            )
-        elif new_regime.lower() == "stable":
-            self.params["ob_imbalance_threshold"] = self.DEFAULT_PARAMS[
-                "ob_imbalance_threshold"
-            ]
+        """React to market regime changes by updating internal state."""
+        self.logger.info(f"Market regime changed to {new_regime}")
+        self.current_regime = new_regime
 
     async def update_parameters(self, performance_metrics: Dict[str, float]) -> None:
         """
