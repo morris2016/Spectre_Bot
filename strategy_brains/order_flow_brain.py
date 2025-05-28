@@ -32,9 +32,14 @@ from config import Config
 from common.logger import get_logger
 from common.utils import normalize_data, timeit, calculate_dynamic_threshold
 from data_storage.market_data import MarketDataStorage
-from feature_service.features.order_flow import (
-    OrderFlowFeatures, VolumeProfileFeatures, OrderBookFeatures
-)
+try:
+    from feature_service.features.order_flow import (
+        OrderFlowFeatures, VolumeProfileFeatures, OrderBookFeatures
+    )
+except Exception:  # pragma: no cover - optional dependency
+    from feature_service.features.order_flow import OrderFlowFeatures
+    VolumeProfileFeatures = None  # type: ignore
+    OrderBookFeatures = None  # type: ignore
 from strategy_brains.base_brain import StrategyBrain
 from intelligence.loophole_detection.microstructure import MicrostructureAnalyzer
 
@@ -113,6 +118,9 @@ class OrderFlowBrain(StrategyBrain):
         
         # Data storage
         self.market_data = MarketDataStorage(config)
+
+        # Track current market regime for risk adjustments
+        self.current_regime: str | None = None
         
         # Memory structures for tracking order flow patterns
         self.order_book_imbalances = deque(maxlen=self.params["memory_length"])
@@ -379,6 +387,16 @@ class OrderFlowBrain(StrategyBrain):
         except Exception as e:
             self.logger.error(f"Error generating signal: {str(e)}")
             return None
+
+    async def generate_signals(self) -> List[Dict[str, Any]]:
+        """Return a list of generated signals for compatibility."""
+        signal = await self.generate_signal()
+        return [signal] if signal else []
+
+    async def on_regime_change(self, new_regime: str) -> None:
+        """React to market regime changes by updating internal state."""
+        self.logger.info(f"Market regime changed to {new_regime}")
+        self.current_regime = new_regime
     
     async def update_parameters(self, performance_metrics: Dict[str, float]) -> None:
         """
