@@ -625,7 +625,7 @@ def calculate_timing(func=None, *, metric_name: Optional[str] = None,
             try:
                 return await func(*args, **kwargs)
             finally:
-                coll.record_timing(metric, time.perf_counter() - start)
+                coll.record_timer(metric, time.perf_counter() - start)
 
         return async_wrapper
 
@@ -635,7 +635,7 @@ def calculate_timing(func=None, *, metric_name: Optional[str] = None,
         try:
             return func(*args, **kwargs)
         finally:
-            coll.record_timing(metric, time.perf_counter() - start)
+            coll.record_timer(metric, time.perf_counter() - start)
 
     return sync_wrapper
 

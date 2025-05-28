@@ -164,6 +164,7 @@ class OrderFlowBrain(StrategyBrain):
         }
         
         self.logger.info("OrderFlowBrain initialization complete")
+
     
     async def initialize(self) -> bool:
         """
@@ -1750,4 +1751,5 @@ class OrderFlowBrain(StrategyBrain):
     async def on_regime_change(self, new_regime: str) -> None:
         """Handle market regime changes by logging the event."""
         self.logger.info(f"Regime changed to {new_regime}")
+
 
