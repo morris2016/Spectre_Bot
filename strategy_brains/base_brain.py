@@ -151,6 +151,7 @@ class StrategyBrain(HistoricalMemoryMixin, ABC):
         config.risk_per_trade = risk
 
         max_pos = getattr(config, "max_position_size", 1.0)
+
         if max_pos <= 0:
             raise ValueError("max_position_size must be positive")
         config.max_position_size = max_pos

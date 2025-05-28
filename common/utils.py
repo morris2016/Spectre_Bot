@@ -2212,14 +2212,20 @@ def calculate_risk_reward(*args: Union[str, float]) -> float:
 
     if len(args) == 3:
         entry_price, stop_loss, take_profit = args
+        action = "buy"
     elif len(args) == 4:
-        _, entry_price, stop_loss, take_profit = args
+        action, entry_price, stop_loss, take_profit = args
     else:
         raise ValueError("calculate_risk_reward expects 3 or 4 arguments")
 
     try:
-        risk = abs(entry_price - stop_loss)
-        reward = abs(take_profit - entry_price)
+        if str(action).lower() == "sell":
+            reward = abs(stop_loss - take_profit)
+            risk = abs(stop_loss - entry_price)
+        else:
+            reward = abs(take_profit - entry_price)
+            risk = abs(entry_price - stop_loss)
+
     except Exception:
         return 0.0
 
