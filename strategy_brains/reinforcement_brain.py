@@ -79,17 +79,27 @@ class TradingEnvironment:
         action_type: str = "discrete",
     ) -> None:
         self.data = data.reset_index(drop=True)
-        self.window_size = window_size
-        self.current_step = window_size
+        self.initial_balance = initial_balance
         self.balance = initial_balance
+        self.max_position = max_position
+        self.transaction_fee = transaction_fee
+        self.reward_function = reward_function
+        self.window_size = window_size
+        self.use_position_info = use_position_info
+        self.action_type = action_type
+        self.current_step = min(window_size, len(self.data))
         self.position = 0.0
 
     def _get_observation(self) -> np.ndarray:
         start = self.current_step - self.window_size
+        if start < 0:
+            padding = np.zeros((-start, self.data.shape[1]), dtype=np.float32)
+            window = self.data.iloc[0:self.current_step].values.astype(np.float32)
+            return np.vstack((padding, window))
         return self.data.iloc[start:self.current_step].values.astype(np.float32)
 
     def reset(self):
-        self.current_step = self.window_size
+        self.current_step = min(self.window_size, len(self.data))
         return self._get_observation(), {}
 
     def step(self, action):
@@ -177,7 +187,7 @@ class TradingEnvironment:
         self.position = 0.0
         self.position_value = 0.0
         self.entry_price = 0.0
-        self.current_step = self.window_size
+        self.current_step = min(self.window_size, len(self.data))
         self.trades = []
         self.portfolio_values = [self.initial_balance]
         
@@ -190,29 +200,13 @@ class TradingEnvironment:
         Returns:
             observation: Current state features
         """
-        # Get window of features
-        features = self.data.iloc[self.current_step - self.window_size:self.current_step][self.feature_columns].values
-        
-        if self.use_position_info:
-            # Add position information to each timestep
-            position_info = np.ones((self.window_size, 2))
-            position_info[:, 0] = self.position / self.max_position  # Normalized position
-            
-            # Set entry price relative to current price for normalization
-            current_price = self.data.iloc[self.current_step-1]['close']
-            if self.entry_price > 0:
-                normalized_entry_price = (current_price - self.entry_price) / current_price
-            else:
-                normalized_entry_price = 0
-            
-            position_info[:, 1] = normalized_entry_price
-            
-            # Combine features with position info
-            observation = np.hstack((features, position_info))
-        else:
-            observation = features
-            
-        return observation.astype(np.float32)
+        start = self.current_step - self.window_size
+        if start < 0:
+            padding = np.zeros((-start, self.data.shape[1]), dtype=np.float32)
+            window = self.data.iloc[0:self.current_step].values.astype(np.float32)
+            return np.vstack((padding, window))
+        window = self.data.iloc[start:self.current_step]
+        return window.values.astype(np.float32)
     
     def _calculate_reward(self, action, prev_portfolio_value, current_portfolio_value):
         """
