@@ -23,7 +23,7 @@ from common.exceptions import (
 
 from data_feeds.base_feed import BaseFeed
 from data_feeds.binance_feed import BinanceFeed
-from data_feeds.deriv_feed import DerivFeed
+from data_feeds.deriv_feed import DerivFeed, DerivCredentials, DerivFeedOptions
 
 
 class DataFeedService:
