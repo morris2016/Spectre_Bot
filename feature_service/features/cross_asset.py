@@ -26,20 +26,26 @@ def _align_series(
     data2: Union[pd.DataFrame, pd.Series],
     column: str,
 ) -> Optional[Tuple[pd.Series, pd.Series]]:
-    """Return aligned series for the specified column."""
+    """Return aligned series for the specified column or raw series."""
     if isinstance(data1, pd.Series) and isinstance(data2, pd.Series):
-        s1, s2 = data1, data2
-    else:
-        if column not in data1.columns or column not in data2.columns:
-            raise ValueError(f"Column '{column}' missing from input data")
-        s1 = data1[column]
-        s2 = data2[column]
+        length = min(len(data1), len(data2))
+        if length == 0:
+            return None
+        return data1.iloc[-length:], data2.iloc[-length:]
+
+    if not isinstance(data1, pd.DataFrame) or not isinstance(data2, pd.DataFrame):
+        raise TypeError("data1 and data2 must both be Series or DataFrame")
+
+    if column not in data1.columns or column not in data2.columns:
+        raise ValueError(f"Column '{column}' missing from input data")
+
+    s1 = data1[column]
+    s2 = data2[column]
+
     length = min(len(s1), len(s2))
     if length == 0:
         return None
-    s1 = s1.iloc[-length:]
-    s2 = s2.iloc[-length:]
-    return s1, s2
+    return s1.iloc[-length:], s2.iloc[-length:]
 
 
 def compute_pair_correlation(
@@ -48,14 +54,15 @@ def compute_pair_correlation(
     column: str = "close",
     window: int | None = None,
 ) -> Union[float, pd.Series]:
-    """Compute correlation or rolling correlation for two asset series."""
+    """Compute Pearson correlation for two aligned asset series."""
+
     series = _align_series(data1, data2, column)
     if series is None:
         return float("nan")
     s1, s2 = series
     if window:
-        corr = s1.rolling(window).corr(s2)
-        return corr
+        return s1.rolling(window).corr(s2)
+
     if s1.isna().all() or s2.isna().all():
         return float("nan")
     return float(np.corrcoef(s1, s2)[0, 1])

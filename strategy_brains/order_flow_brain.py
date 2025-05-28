@@ -1777,12 +1777,28 @@ class OrderFlowBrain(StrategyBrain):
             self.logger.warning(f"Could not load saved state: {str(e)}")
 
     async def generate_signals(self) -> List[Dict[str, Any]]:
-        """Wrapper to provide list-based API."""
-
-        signal = await self.generate_signal()
-        return [signal] if signal else []
+        """Generate basic momentum signals from recent close prices."""
+        if not self.initialized:
+            return []
+        candles = await self.market_data.get_candles(self.asset_id, self.timeframe, limit=2)
+        if len(candles) < 2:
+            return []
+        prev_close = candles[-2]["close"]
+        last_close = candles[-1]["close"]
+        timestamp = candles[-1]["timestamp"]
+        if last_close > prev_close:
+            signal = {"type": "buy", "timestamp": timestamp}
+        elif last_close < prev_close:
+            signal = {"type": "sell", "timestamp": timestamp}
+        else:
+            return []
+        self.signal_performance["total"] += 1
+        return [signal]
 
     async def on_regime_change(self, new_regime: str) -> None:
-        """Handle external regime change notifications."""
-        self.logger.info(f"Regime changed to {new_regime}")
+        """Respond to market regime shifts by resetting trackers."""
+        self.logger.info("Regime changed to %s", new_regime)
+        await self._reset_session_data()
+        self.current_regime = new_regime
+
 
