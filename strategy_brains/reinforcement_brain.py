@@ -67,7 +67,6 @@ logger = get_logger("ReinforcementBrain")
 class TradingEnvironment:
     """Simplified trading environment used for testing."""
 
-
     def __init__(
         self,
         data: pd.DataFrame,
@@ -81,16 +80,24 @@ class TradingEnvironment:
     ) -> None:
         self.data = data.reset_index(drop=True)
         self.window_size = window_size
-        self.current_step = window_size
-        self.balance = initial_balance
-        self.position = 0.0
 
+        self.initial_balance = initial_balance
+        self.balance = initial_balance
+        self.max_position = max_position
+        self.transaction_fee = transaction_fee
+        self.reward_function = reward_function
+        self.use_position_info = use_position_info
+        self.action_type = action_type
+        self.current_step = window_size
+        self.position = 0.0
 
     def _get_observation(self) -> np.ndarray:
         start = self.current_step - self.window_size
         return self.data.iloc[start:self.current_step].values.astype(np.float32)
 
     def reset(self):
+        self.balance = self.initial_balance
+        self.position = 0.0
         self.current_step = self.window_size
         return self._get_observation(), {}
 
@@ -101,31 +108,11 @@ class TradingEnvironment:
         truncated = False
         reward = 0.0
         return obs, reward, terminated, truncated, {}
+    
+    def reset(self):
         """
-        Initialize the trading environment with historical data and parameters.
-        
-        Args:
-            data: DataFrame with OHLCV and feature data
-            initial_balance: Starting account balance
-            max_position: Maximum allowed position size as a fraction of balance
-            transaction_fee: Fee per transaction as a fraction
-            reward_function: Type of reward function to use
-            window_size: Number of past candles to use for state
-            use_position_info: Whether to include position info in state
-            action_type: 'discrete' or 'continuous'
-        """
-        super(TradingEnvironment, self).__init__()
-        
-        self.data = data
+        Reset the environment to initial state.
 
-        self.initial_balance = initial_balance
-        self.balance = initial_balance
-        self.max_position = max_position
-        self.transaction_fee = transaction_fee
-        self.reward_function = reward_function
-        self.use_position_info = use_position_info
-        self.action_type = action_type
-        self.position = 0.0
 
     def _get_observation(self) -> np.ndarray:
         start = self.current_step - self.window_size

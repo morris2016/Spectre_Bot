@@ -34,7 +34,10 @@ from common.utils import normalize_data, timeit, calculate_dynamic_threshold
 from data_storage.market_data import MarketDataStorage
 try:
     from feature_service.features.order_flow import (
-        OrderFlowFeatures, VolumeProfileFeatures, OrderBookFeatures
+        OrderFlowFeatures,
+        VolumeProfileFeatures,
+        OrderBookFeatures,
+
     )
 except Exception:  # pragma: no cover - optional dependency
     from feature_service.features.order_flow import OrderFlowFeatures
@@ -1743,13 +1746,13 @@ class OrderFlowBrain(StrategyBrain):
         except Exception as e:
             self.logger.warning(f"Could not load saved state: {str(e)}")
 
-    async def generate_signals(self) -> list[dict[str, Any]]:
-        """Return a list with a single generated signal if available."""
+    async def generate_signals(self) -> List[Dict[str, Any]]:
+        """Wrapper to provide list-based API."""
+
         signal = await self.generate_signal()
         return [signal] if signal else []
 
     async def on_regime_change(self, new_regime: str) -> None:
-        """Handle market regime changes by logging the event."""
+        """Handle external regime change notifications."""
         self.logger.info(f"Regime changed to {new_regime}")
-
 

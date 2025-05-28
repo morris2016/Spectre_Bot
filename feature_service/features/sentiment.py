@@ -129,11 +129,13 @@ class SentimentFeatures(BaseFeature):
         }
         logger.info("SentimentFeatures initialized")
 
-    async def calculate(self, symbol: str, **kwargs) -> SentimentAnalysisResult:
-        """Return sentiment analysis for *symbol* using :meth:`analyze_sentiment`."""
-        lookback = int(kwargs.get("lookback_hours", 24))
-        include_sources = kwargs.get("include_sources")
-        return self.analyze_sentiment(symbol, lookback, include_sources)
+    async def calculate(self, data=None, **kwargs):
+        """Async wrapper to satisfy BaseFeature interface."""
+        symbol = kwargs.get("symbol")
+        hours = kwargs.get("lookback_hours", 24)
+        sources = kwargs.get("include_sources")
+        return self.analyze_sentiment(symbol, hours, sources)
+
     
     def analyze_sentiment(self, symbol: str, 
                          lookback_hours: int = 24,

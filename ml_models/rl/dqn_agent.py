@@ -354,6 +354,22 @@ class DQNAgent(RLAgent):
         q_values = np.dot(state, self.weights)
         return int(np.argmax(q_values))
 
+    def train_step(self) -> None:
+        """Minimal training step to satisfy abstract interface."""
+        if TORCH_AVAILABLE:
+            if len(self.memory) < self.batch_size:
+                return
+            self.update_model()
+        else:
+            if len(self.memory) < self.batch_size:
+                return
+            batch = random.sample(self.memory, self.batch_size)
+            for state, action, reward, next_state, done in batch:
+                q_current = np.dot(state, self.weights)[action]
+                q_next = np.max(np.dot(next_state, self.weights)) if not done else 0.0
+                target = reward + self.gamma * q_next
+                self.weights[:, action] += self.learning_rate * (target - q_current) * state
+
 
     def store_transition(self, state: Any, action: int, reward: float, next_state: Any, done: bool) -> None:
         if TORCH_AVAILABLE:
