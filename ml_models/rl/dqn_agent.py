@@ -338,6 +338,7 @@ class DQNAgent(RLAgent):
         q_values = np.dot(state, self.weights)
         return int(np.argmax(q_values))
 
+
     def store_transition(self, state: Any, action: int, reward: float, next_state: Any, done: bool) -> None:
         if TORCH_AVAILABLE:
             if self.prioritized_replay:
@@ -432,3 +433,4 @@ class DQNAgent(RLAgent):
         else:
             with open(path, "rb") as f:
                 self.weights = np.load(f)
+

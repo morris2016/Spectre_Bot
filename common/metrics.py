@@ -58,6 +58,7 @@ class MetricsCollector:
             namespace: Namespace for metrics
         """
         self.namespace = namespace if subsystem is None else f"{namespace}.{subsystem}"
+
         self.counters = {}
         self.gauges = {}
         self.timers = {}
@@ -518,14 +519,18 @@ class MetricsCollector:
 
 
     @contextmanager
-    def timing(self, metric_name):
-        """Context manager for timing an operation."""
+    def timing(self, metric_name, duration: float | None = None):
+        """Record timing either as context manager or direct call."""
+        if duration is not None:
+            self.record_timing(metric_name, duration)
+            yield
+            return
+
         start_time = time.time()
         try:
             yield
         finally:
-            duration = time.time() - start_time
-            self.record_timing(metric_name, duration)
+            self.record_timing(metric_name, time.time() - start_time)
         
     async def collect_metrics_task(self, interval=10):
         """
@@ -577,6 +582,8 @@ def get_default_collector():
 # Create a global performance tracker instance
 performance_tracker = MetricsCollector.get_instance("performance")
 
+_default_collector = get_default_collector()
+
 
 def calculate_timing(func=None, *, metric_name: Optional[str] = None,
                      collector: Optional[MetricsCollector] = None):
@@ -610,7 +617,7 @@ def calculate_timing(func=None, *, metric_name: Optional[str] = None,
             try:
                 return await func(*args, **kwargs)
             finally:
-                coll.record_timing(metric, time.perf_counter() - start)
+                coll.record_timer(metric, time.perf_counter() - start)
 
         return async_wrapper
 
@@ -620,7 +627,7 @@ def calculate_timing(func=None, *, metric_name: Optional[str] = None,
         try:
             return func(*args, **kwargs)
         finally:
-            coll.record_timing(metric, time.perf_counter() - start)
+            coll.record_timer(metric, time.perf_counter() - start)
 
     return sync_wrapper
 
