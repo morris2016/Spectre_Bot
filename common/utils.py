@@ -2554,6 +2554,29 @@ def calculate_volatility(
     return float(returns.std() * np.sqrt(len(returns)))
 
 
+def is_categorical(series: pd.Series) -> bool:
+    """Determine if a pandas Series is categorical."""
+    return series.dtype.name == 'category' or series.dtype == object
+
+
+def is_cyclical(series: pd.Series, name: str = "") -> bool:
+    """Heuristic check for cyclical data like hours or months."""
+    if series.empty:
+        return False
+    unique = series.dropna().unique()
+    if series.dtype.kind in {'i', 'u'}:
+        if name.lower() in {"month", "day", "hour", "minute", "second"}:
+            return True
+        if unique.min() == 0 and unique.max() in {11, 23, 59}:
+            return True
+    return False
+
+
+def is_ordinal(series: pd.Series) -> bool:
+    """Check if a Series represents ordinal values."""
+    return pd.api.types.is_integer_dtype(series) and series.nunique() / len(series) < 0.5
+
+
 def calculate_correlation(
     series1: Union[pd.Series, List[float]],
     series2: Union[pd.Series, List[float]],

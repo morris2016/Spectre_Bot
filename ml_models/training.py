@@ -81,8 +81,6 @@ from feature_service.feature_extraction import FeatureExtractor
 from ml_models.models.regression import create_regression_model
 from ml_models.models.classification import create_classification_model
 from ml_models.models.time_series import create_time_series_model
-from ml_models.models.deep_learning import create_deep_learning_model
-from ml_models.models.ensemble import create_ensemble_model
 from ml_models.preprocessing.scaling import get_scaler
 from ml_models.preprocessing.encoding import encode_features
 from ml_models.preprocessing.sampling import balance_dataset
@@ -91,6 +89,18 @@ from ml_models.feature_importance import calculate_feature_importance
 
 # Configure logger
 logger = get_logger("ml_models.training")
+
+try:
+    from ml_models.models.ensemble import create_ensemble_model
+except Exception as e:  # pragma: no cover - optional dependency
+    create_ensemble_model = None  # type: ignore
+    logger.warning(f"Ensemble models not available: {e}")
+
+try:
+    from ml_models.models.deep_learning import create_deep_learning_model
+except Exception as e:  # pragma: no cover - optional dependency
+    create_deep_learning_model = None  # type: ignore
+    logger.warning(f"Deep learning models not available: {e}")
 
 class ModelTrainer:
     """
@@ -112,8 +122,10 @@ class ModelTrainer:
         self.feature_extractor = FeatureExtractor(config)
         self.redis_client = RedisClient(config)
         self.use_gpu = config.get("ml_models.use_gpu", True)
-        self.cuda_available = torch.cuda.is_available()
-        self.tf_gpu_available = tf.config.list_physical_devices('GPU')
+        self.cuda_available = torch.cuda.is_available() if torch else False
+        self.tf_gpu_available = (
+            tf.config.list_physical_devices('GPU') if tf else []
+        )
         
         # Configure GPU usage
         if self.use_gpu:
@@ -857,18 +869,20 @@ class ModelTrainer:
                 return lgb.LGBMRegressor(**params, random_state=42)
         
         elif model_type in ['lstm', 'gru', 'cnn']:
-            # Create a deep learning model
-            if len(np.unique(y_train)) <= 10:  # Classification
+            if not create_deep_learning_model:
+                raise ModelTrainingError('Deep learning support is not available')
+
+            if len(np.unique(y_train)) <= 10:
                 problem_type = 'classification'
-            else:  # Regression
+            else:
                 problem_type = 'regression'
-            
+
             return create_deep_learning_model(
-                model_type=model_type, 
+                model_type=model_type,
                 input_shape=X_train.shape[1:],
-                output_shape=1,  # Assuming single target
+                output_shape=1,
                 problem_type=problem_type,
-                hyperparams=params
+                hyperparams=params,
             )
         
         else:
@@ -925,6 +939,9 @@ class ModelTrainer:
             )
         
         elif model_type in ['lstm', 'gru', 'cnn', 'mlp', 'transformer']:
+            if not create_deep_learning_model:
+                raise ModelTrainingError('Deep learning support is not available')
+
             model = await run_in_thread_pool(
                 create_deep_learning_model,
                 model_type,
@@ -932,13 +949,16 @@ class ModelTrainer:
                 1 if problem_type == 'regression' else n_unique_targets,
                 problem_type,
                 hyperparams,
-                self.use_gpu
+                self.use_gpu,
             )
         
         elif model_type == 'ensemble':
             if not ensemble_models:
                 raise ValueError("Ensemble models list must be provided for ensemble model type")
-            
+
+            if not create_ensemble_model:
+                raise ModelTrainingError('Ensemble model support is not available')
+
             model = await run_in_thread_pool(
                 create_ensemble_model,
                 ensemble_models,

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 """
 QuantumSpectre Elite Trading System
 Time Series Forecasting Models
@@ -39,6 +40,12 @@ try:
         LayerNormalization, Add, Activation
     )
     from tensorflow.keras.optimizers import Adam, RMSprop
+    from tensorflow.keras.callbacks import (
+        EarlyStopping,
+        ModelCheckpoint,
+        ReduceLROnPlateau,
+    )
+    from tensorflow.keras.regularizers import l1_l2
     TF_AVAILABLE = True
 except Exception:  # pragma: no cover - optional dependency
     tf = None  # type: ignore
@@ -48,9 +55,9 @@ except Exception:  # pragma: no cover - optional dependency
     TimeDistributed = Attention = MultiHeadAttention = None  # type: ignore
     LayerNormalization = Add = Activation = None  # type: ignore
     Adam = RMSprop = None  # type: ignore
+    EarlyStopping = ModelCheckpoint = ReduceLROnPlateau = None  # type: ignore
+    l1_l2 = None  # type: ignore
     TF_AVAILABLE = False
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
-from tensorflow.keras.regularizers import l1_l2
 
 # PyTorch
 try:
