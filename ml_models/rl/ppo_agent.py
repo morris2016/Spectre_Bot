@@ -128,7 +128,6 @@ class PPOAgent(RLAgent):
         self.actions.append(action)
         return action
 
-
     def store_reward(self, reward: float, done: bool) -> None:
         self.rewards.append(reward)
         self.dones.append(done)

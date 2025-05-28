@@ -127,7 +127,7 @@ class SentimentFeatures(BaseFeature):
             'blogs': 0.60,
             'telegram': 0.50,
             'discord': 0.45
-        }
+        } 
         logger.info("SentimentFeatures initialized")
 
     async def calculate(self, symbol: str, lookback_hours: int = 24,
@@ -141,6 +141,7 @@ class SentimentFeatures(BaseFeature):
             "neutral": result.neutral_score,
             "confidence": result.confidence,
         }
+
     
     def analyze_sentiment(self, symbol: str, 
                          lookback_hours: int = 24,

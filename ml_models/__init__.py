@@ -34,7 +34,13 @@ except Exception as exc:  # pragma: no cover - optional dependency
     ModelTrainer = None  # type: ignore
     logger.warning("ModelTrainer unavailable: %s", exc)
 
-from ml_models.rl.trainer import RLTradingAgent
+RLTradingAgent = None  # type: ignore
+if os.environ.get("QS_DISABLE_RL_TRAINER") != "1":
+    try:
+        from ml_models.rl.trainer import RLTradingAgent  # type: ignore
+    except Exception as exc:  # pragma: no cover - optional dependency
+        RLTradingAgent = None  # type: ignore
+        logger.warning("RLTradingAgent unavailable: %s", exc)
 from ml_models.rl import RLAgent, DQNAgent, PPOAgent
 
 # Model type constants

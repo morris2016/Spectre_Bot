@@ -21,7 +21,6 @@ except ImportError:  # pragma: no cover - optional dependency
     F = None  # type: ignore
     TORCH_AVAILABLE = False
 
-from .base_agent import BaseAgent
 from .base_agent import RLAgent
 
 # Constants
@@ -216,7 +215,6 @@ if TORCH_AVAILABLE:
             self.fc3.reset_noise()
             self.fc4.reset_noise()
 
-
     class NoisyDuelingDQN(nn.Module):
         def __init__(self, state_dim: int, action_dim: int, hidden_dim: int = 128) -> None:
             super().__init__()
@@ -285,11 +283,10 @@ class DQNAgent(RLAgent):
         self.dueling_network = dueling_network
         self.double_dqn = double_dqn
         self.noisy_nets = noisy_nets
+
         if TORCH_AVAILABLE:
-            if device is None:
-                self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            else:
-                self.device = torch.device(device)
+            device_str = device or ("cuda" if torch.cuda.is_available() else "cpu")
+            self.device = torch.device(device_str)
             self._setup_networks()
             self._setup_memory(memory_size)
             self.optimizer = optim.Adam(self.policy_net.parameters(), lr=learning_rate)
@@ -299,19 +296,6 @@ class DQNAgent(RLAgent):
             self.weights = np.zeros((state_dim, action_dim))
 
         self.steps_done = 0
-
-        if TORCH_AVAILABLE:
-            if device is None:
-                self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            else:
-                self.device = torch.device(device)
-            self._setup_networks()
-            self._setup_memory(memory_size)
-            self.optimizer = optim.Adam(self.policy_net.parameters(), lr=learning_rate)
-        else:
-            self.device = "cpu"
-            self.memory = deque(maxlen=memory_size)
-            self.weights = np.zeros((state_dim, action_dim))
 
     def _setup_networks(self) -> None:
         if not TORCH_AVAILABLE:
@@ -407,6 +391,7 @@ class DQNAgent(RLAgent):
                 t_param.data.copy_((1 - self.tau) * t_param.data + self.tau * param.data)
 
 
+
     def save(self, path: str) -> None:
         if TORCH_AVAILABLE:
             torch.save(
@@ -448,3 +433,4 @@ class DQNAgent(RLAgent):
         else:
             with open(path, "rb") as f:
                 self.weights = np.load(f)
+
