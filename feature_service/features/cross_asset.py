@@ -5,7 +5,8 @@ Utilities for analyzing relationships between two assets, including rolling
 correlation and cointegration tests.
 """
 
-from typing import Optional, Tuple, Union
+from typing import Optional, Sequence, Tuple, Union
+
 
 import logging
 
@@ -22,25 +23,21 @@ __all__ = ["compute_pair_correlation", "cointegration_score"]
 
 
 def _align_series(
-    data1: Union[pd.DataFrame, pd.Series],
-    data2: Union[pd.DataFrame, pd.Series],
-    column: str,
+    data1: Union[pd.DataFrame, pd.Series, Sequence[float]],
+    data2: Union[pd.DataFrame, pd.Series, Sequence[float]],
+    column: str = "close",
 ) -> Optional[Tuple[pd.Series, pd.Series]]:
-    """Return aligned series for the specified column or raw series."""
+    """Return aligned series for the specified column."""
     if isinstance(data1, pd.Series) and isinstance(data2, pd.Series):
-        length = min(len(data1), len(data2))
-        if length == 0:
-            return None
-        return data1.iloc[-length:], data2.iloc[-length:]
-
-    if not isinstance(data1, pd.DataFrame) or not isinstance(data2, pd.DataFrame):
-        raise TypeError("data1 and data2 must both be Series or DataFrame")
-
-    if column not in data1.columns or column not in data2.columns:
-        raise ValueError(f"Column '{column}' missing from input data")
-
-    s1 = data1[column]
-    s2 = data2[column]
+        s1, s2 = data1, data2
+    elif isinstance(data1, pd.DataFrame) and isinstance(data2, pd.DataFrame):
+        if column not in data1.columns or column not in data2.columns:
+            raise ValueError(f"Column '{column}' missing from input data")
+        s1 = data1[column]
+        s2 = data2[column]
+    else:
+        s1 = pd.Series(data1)
+        s2 = pd.Series(data2)
 
     length = min(len(s1), len(s2))
     if length == 0:
@@ -49,12 +46,15 @@ def _align_series(
 
 
 def compute_pair_correlation(
-    data1: Union[pd.DataFrame, pd.Series],
-    data2: Union[pd.DataFrame, pd.Series],
+    data1: Union[pd.DataFrame, pd.Series, Sequence[float]],
+    data2: Union[pd.DataFrame, pd.Series, Sequence[float]],
     column: str = "close",
     window: int | None = None,
 ) -> Union[float, pd.Series]:
-    """Compute Pearson correlation for two aligned asset series."""
+    """Compute Pearson correlation for two aligned asset series.
+
+    If *window* is provided, a rolling correlation ``pd.Series`` is returned.
+    """
 
     series = _align_series(data1, data2, column)
     if series is None:
@@ -69,8 +69,8 @@ def compute_pair_correlation(
 
 
 def cointegration_score(
-    data1: Union[pd.DataFrame, pd.Series],
-    data2: Union[pd.DataFrame, pd.Series],
+    data1: Union[pd.DataFrame, pd.Series, Sequence[float]],
+    data2: Union[pd.DataFrame, pd.Series, Sequence[float]],
 
     column: str = "close",
 ) -> float:

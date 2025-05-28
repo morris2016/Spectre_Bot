@@ -49,8 +49,9 @@ class Timer:
 
 class MetricsCollector:
     """Collects and manages system and trading metrics."""
-    
-    def __init__(self, namespace: str, subsystem: str | None = None):
+
+    def __init__(self, namespace: str = "default"):
+
         """
         Initialize metrics collector.
         

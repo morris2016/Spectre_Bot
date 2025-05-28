@@ -80,6 +80,43 @@ class TradingEnvironment:
     ) -> None:
         self.data = data.reset_index(drop=True)
         self.window_size = window_size
+        self.current_step = window_size
+        self.initial_balance = initial_balance
+        self.balance = initial_balance
+        self.position = 0.0
+
+    def _get_observation(self) -> np.ndarray:
+        start = self.current_step - self.window_size
+        return self.data.iloc[start:self.current_step].values.astype(np.float32)
+
+    def reset(self):
+        self.current_step = self.window_size
+        return self._get_observation(), {}
+
+    def step(self, action):
+        self.current_step += 1
+        obs = self._get_observation()
+        terminated = self.current_step >= len(self.data)
+        truncated = False
+        reward = 0.0
+        return obs, reward, terminated, truncated, {}
+        """
+        Initialize the trading environment with historical data and parameters.
+        
+        Args:
+            data: DataFrame with OHLCV and feature data
+            initial_balance: Starting account balance
+            max_position: Maximum allowed position size as a fraction of balance
+            transaction_fee: Fee per transaction as a fraction
+            reward_function: Type of reward function to use
+            window_size: Number of past candles to use for state
+            use_position_info: Whether to include position info in state
+            action_type: 'discrete' or 'continuous'
+        """
+        super(TradingEnvironment, self).__init__()
+        
+        self.data = data
+
         self.initial_balance = initial_balance
         self.balance = initial_balance
         self.position = 0.0

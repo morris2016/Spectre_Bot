@@ -118,14 +118,18 @@ if not GYM_AVAILABLE:
         ) -> None:
             self.market_data = market_data.reset_index(drop=True)
             self.features = features.reset_index(drop=True)
+            self.initial_balance = initial_balance
             self.state_lookback = state_lookback
             self.current_idx = state_lookback
             self.balance = initial_balance
             self.position = 0  # -1 sell, 0 hold, 1 buy
             self._validate_data()
 
-            # Basic validation to mimic the gym environment checks
-            self._validate_data()
+        def _validate_data(self) -> None:
+            if self.market_data.empty or self.features.empty:
+                raise ValueError("Market data or features cannot be empty")
+            if len(self.market_data) != len(self.features):
+                raise ValueError("Market data and features length mismatch")
 
 
         def _get_state(self) -> np.ndarray:
