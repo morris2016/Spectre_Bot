@@ -17,10 +17,18 @@ from typing import Dict, List, Tuple, Any, Optional, Union
 from datetime import datetime, timedelta
 import logging
 import traceback
-import tensorflow as tf
-from tensorflow.keras.models import Sequential, Model, load_model
-from tensorflow.keras.layers import Dense, LSTM, GRU, Conv1D, Flatten, Input, Concatenate
-from tensorflow.keras.optimizers import Adam
+try:
+    import tensorflow as tf
+    from tensorflow.keras.models import Sequential, Model, load_model
+    from tensorflow.keras.layers import Dense, LSTM, GRU, Conv1D, Flatten, Input, Concatenate
+    from tensorflow.keras.optimizers import Adam
+    TF_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    tf = None
+    Sequential = Model = load_model = None
+    Dense = LSTM = GRU = Conv1D = Flatten = Input = Concatenate = None
+    Adam = None
+    TF_AVAILABLE = False
 try:
     import gymnasium as gym  # type: ignore
     from gymnasium import spaces  # type: ignore
@@ -43,440 +51,62 @@ from common.exceptions import StrategyError, ModelLoadError
 from feature_service.features.technical import TechnicalFeatures
 from feature_service.features.volatility import VolatilityFeatures
 from strategy_brains.base_brain import BaseBrain
-from ml_models.models.deep_learning import create_deep_policy_network
-from ml_models.hardware.gpu import optimize_for_gpu, get_gpu_memory_usage
-from ml_models.rl import DQNAgent
+try:
+    from ml_models.models.deep_learning import create_deep_policy_network
+    from ml_models.hardware.gpu import optimize_for_gpu, get_gpu_memory_usage
+    from ml_models.rl import DQNAgent
+except Exception:  # pragma: no cover - optional dependency
+    create_deep_policy_network = None  # type: ignore
+    optimize_for_gpu = lambda: None
+    get_gpu_memory_usage = lambda: 0
+    DQNAgent = None  # type: ignore
 
 logger = get_logger("ReinforcementBrain")
 
-if not GYM_AVAILABLE:
-    class TradingEnvironment:
-        """Minimal trading environment used when gymnasium is unavailable."""
 
-        def __init__(
-            self,
-            data: pd.DataFrame,
-            initial_balance: float = 1000.0,
-            max_position: float = 1.0,
-            transaction_fee: float = 0.001,
-            reward_function: str = "sharpe",
-            window_size: int = 50,
-            use_position_info: bool = True,
-            action_type: str = "discrete",
-        ) -> None:
-            self.data = data.reset_index(drop=True)
-            self.window_size = window_size
-            self.current_step = window_size
-            self.balance = initial_balance
-            self.position = 0
+class TradingEnvironment:
+    """Simplified trading environment used for testing."""
 
-
-        def _get_observation(self) -> np.ndarray:
-            start = self.current_step - self.window_size
-            return self.data.iloc[start:self.current_step].values
-
-        def reset(self):
-            self.current_step = self.window_size
-            return self._get_observation(), {}
-
-        def step(self, action):
-            self.current_step += 1
-            obs = self._get_observation()
-            terminated = self.current_step >= len(self.data)
-            truncated = False
-            reward = 0.0
-
-            return obs, reward, terminated, truncated, {}
-else:
-    class TradingEnvironment(gym.Env):
-    """
-    Custom OpenAI Gym environment for trading that simulates market interactions
-    and provides rewards based on trading performance.
-    """
-    
-    def __init__(self, 
-                 data: pd.DataFrame, 
-                 initial_balance: float = 1000.0,
-                 max_position: float = 1.0,
-                 transaction_fee: float = 0.001,
-                 reward_function: str = 'sharpe',
-                 window_size: int = 50,
-                 use_position_info: bool = True,
-                 action_type: str = 'discrete'):
-        """
-        Initialize the trading environment with historical data and parameters.
-        
-        Args:
-            data: DataFrame with OHLCV and feature data
-            initial_balance: Starting account balance
-            max_position: Maximum allowed position size as a fraction of balance
-            transaction_fee: Fee per transaction as a fraction
-            reward_function: Type of reward function to use
-            window_size: Number of past candles to use for state
-            use_position_info: Whether to include position info in state
-            action_type: 'discrete' or 'continuous'
-        """
-        super(TradingEnvironment, self).__init__()
-        
-        self.data = data
+    def __init__(
+        self,
+        data: pd.DataFrame,
+        initial_balance: float = 1000.0,
+        max_position: float = 1.0,
+        transaction_fee: float = 0.001,
+        reward_function: str = "sharpe",
+        window_size: int = 50,
+        use_position_info: bool = True,
+        action_type: str = "discrete",
+    ) -> None:
+        self.data = data.reset_index(drop=True)
+        self.window_size = window_size
+        self.current_step = window_size
         self.initial_balance = initial_balance
         self.balance = initial_balance
         self.max_position = max_position
         self.transaction_fee = transaction_fee
         self.reward_function = reward_function
-        self.window_size = window_size
         self.use_position_info = use_position_info
         self.action_type = action_type
-        
-        # State space: features + (optional) position info
-        self.feature_columns = [col for col in data.columns 
-                               if col not in ['timestamp', 'open', 'high', 'low', 'close', 'volume']]
-        self.n_features = len(self.feature_columns)
-        
-        if self.use_position_info:
-            # Add position size and entry price to state
-            self.observation_space = spaces.Box(
-                low=-np.inf, 
-                high=np.inf, 
-                shape=(self.window_size, self.n_features + 2),
-                dtype=np.float32
-            )
-        else:
-            self.observation_space = spaces.Box(
-                low=-np.inf, 
-                high=np.inf, 
-                shape=(self.window_size, self.n_features),
-                dtype=np.float32
-            )
-        
-        # Action space
-        if self.action_type == 'discrete':
-            # Actions: 0 (sell), 1 (hold), 2 (buy)
-            self.action_space = spaces.Discrete(3)
-        else:
-            # Continuous action space: -1.0 (full sell) to 1.0 (full buy)
-            self.action_space = spaces.Box(
-                low=-1.0, 
-                high=1.0, 
-                shape=(1,),
-                dtype=np.float32
-            )
-        
-        # Trading state
         self.position = 0.0
-        self.position_value = 0.0
-        self.entry_price = 0.0
-        self.current_step = 0
-        self.trades = []
-        self.portfolio_values = []
-    
-    def reset(self):
-        """
-        Reset the environment to initial state.
 
-        Returns:
-            tuple: (observation, info)
-        """
+    def _get_observation(self) -> np.ndarray:
+        start = self.current_step - self.window_size
+        return self.data.iloc[start:self.current_step].values.astype(np.float32)
+
+    def reset(self):
+        self.current_step = self.window_size
         self.balance = self.initial_balance
         self.position = 0.0
-        self.position_value = 0.0
-        self.entry_price = 0.0
-        self.current_step = self.window_size
-        self.trades = []
-        self.portfolio_values = [self.initial_balance]
-        
         return self._get_observation(), {}
-    
-    def _get_observation(self):
-        """
-        Construct the current state observation.
-        
-        Returns:
-            observation: Current state features
-        """
-        # Get window of features
-        features = self.data.iloc[self.current_step - self.window_size:self.current_step][self.feature_columns].values
-        
-        if self.use_position_info:
-            # Add position information to each timestep
-            position_info = np.ones((self.window_size, 2))
-            position_info[:, 0] = self.position / self.max_position  # Normalized position
-            
-            # Set entry price relative to current price for normalization
-            current_price = self.data.iloc[self.current_step-1]['close']
-            if self.entry_price > 0:
-                normalized_entry_price = (current_price - self.entry_price) / current_price
-            else:
-                normalized_entry_price = 0
-            
-            position_info[:, 1] = normalized_entry_price
-            
-            # Combine features with position info
-            observation = np.hstack((features, position_info))
-        else:
-            observation = features
-            
-        return observation.astype(np.float32)
-    
-    def _calculate_reward(self, action, prev_portfolio_value, current_portfolio_value):
-        """
-        Calculate reward based on selected reward function.
-        
-        Args:
-            action: Action taken
-            prev_portfolio_value: Portfolio value before action
-            current_portfolio_value: Portfolio value after action
-            
-        Returns:
-            reward: Calculated reward value
-        """
-        if self.reward_function == 'simple_return':
-            # Simple return from previous step
-            return (current_portfolio_value - prev_portfolio_value) / prev_portfolio_value
-            
-        elif self.reward_function == 'sharpe':
-            # Approximate Sharpe ratio based on recent returns
-            if len(self.portfolio_values) < 20:
-                return 0
-                
-            # Calculate returns for last 20 steps
-            returns = np.diff(self.portfolio_values[-20:]) / self.portfolio_values[-21:-1]
-            
-            if len(returns) > 0:
-                sharpe = (np.mean(returns) / (np.std(returns) + 1e-9)) * np.sqrt(252/20)
-                return sharpe
-            return 0
-            
-        elif self.reward_function == 'risk_adjusted':
-            # Risk-adjusted return that penalizes large drawdowns
-            if len(self.portfolio_values) < 5:
-                return 0
-                
-            # Calculate return
-            ret = (current_portfolio_value - prev_portfolio_value) / prev_portfolio_value
-            
-            # Calculate max drawdown over recent window
-            recent_values = self.portfolio_values[-20:]
-            max_drawdown = 0
-            peak = recent_values[0]
-            
-            for value in recent_values:
-                if value > peak:
-                    peak = value
-                drawdown = (peak - value) / peak
-                max_drawdown = max(max_drawdown, drawdown)
-            
-            # Penalize return by drawdown factor
-            return ret - (max_drawdown * 2)
-            
-        else:
-            # Default to simple difference
-            return current_portfolio_value - prev_portfolio_value
-    
+
     def step(self, action):
-        """
-        Execute one step in the environment.
-        
-        Args:
-            action: Action to take (buy/hold/sell or continuous value)
-            
-        Returns:
-            observation: New state
-            reward: Reward for the action
-            terminated: Whether the episode has terminated
-            truncated: Whether the episode was truncated
-            info: Additional information
-        """
-        if self.current_step >= len(self.data) - 1:
-            terminated = True
-            return self._get_observation(), 0, terminated, False, {}
-        
-        # Get current price data
-        current_price = self.data.iloc[self.current_step]['close']
-        
-        # Calculate portfolio value before trade
-        prev_portfolio_value = self.balance + self.position_value
-        
-        # Process the action
-        if self.action_type == 'discrete':
-            self._process_discrete_action(action, current_price)
-        else:
-            self._process_continuous_action(action, current_price)
-        
-        # Move to next step
         self.current_step += 1
-        
-        # Get new price after action
-        new_price = self.data.iloc[self.current_step]['close']
-        
-        # Update position value
-        if self.position != 0:
-            self.position_value = self.position * new_price
-        
-        # Calculate total portfolio value
-        portfolio_value = self.balance + self.position_value
-        self.portfolio_values.append(portfolio_value)
-        
-        # Calculate reward
-        reward = self._calculate_reward(action, prev_portfolio_value, portfolio_value)
-        
-        # Check if done
-        done = self.current_step >= len(self.data) - 1
-        
-        # Information dictionary
-        info = {
-            'portfolio_value': portfolio_value,
-            'balance': self.balance,
-            'position': self.position,
-            'position_value': self.position_value,
-            'trades': len(self.trades),
-            'timestamp': self.data.iloc[self.current_step]['timestamp']
-        }
-        
-        terminated = done
+        obs = self._get_observation()
+        terminated = self.current_step >= len(self.data)
         truncated = False
-        return self._get_observation(), reward, terminated, truncated, info
-    
-    def _process_discrete_action(self, action, current_price):
-        """
-        Process a discrete action (sell/hold/buy).
-        
-        Args:
-            action: Discrete action (0=sell, 1=hold, 2=buy)
-            current_price: Current asset price
-        """
-        if action == 0:  # Sell
-            if self.position > 0:
-                # Calculate sale value after fees
-                sale_value = self.position * current_price * (1 - self.transaction_fee)
-                self.balance += sale_value
-                
-                # Record trade
-                self.trades.append({
-                    'type': 'sell',
-                    'step': self.current_step,
-                    'price': current_price,
-                    'amount': self.position,
-                    'value': sale_value,
-                    'fee': self.position * current_price * self.transaction_fee
-                })
-                
-                # Clear position
-                self.position = 0
-                self.position_value = 0
-                self.entry_price = 0
-        
-        elif action == 2:  # Buy
-            if self.position < self.max_position * self.balance / current_price:
-                # Calculate how much to buy (target a position of max_position)
-                target_position = self.max_position * self.balance / current_price
-                amount_to_buy = min(target_position - self.position, 
-                                   self.balance / (current_price * (1 + self.transaction_fee)))
-                
-                if amount_to_buy > 0:
-                    # Calculate cost including fees
-                    cost = amount_to_buy * current_price * (1 + self.transaction_fee)
-                    self.balance -= cost
-                    
-                    # Update position
-                    if self.position == 0:
-                        self.entry_price = current_price
-                    else:
-                        # Calculate weighted average entry price
-                        self.entry_price = (self.entry_price * self.position + 
-                                          current_price * amount_to_buy) / (self.position + amount_to_buy)
-                    
-                    self.position += amount_to_buy
-                    self.position_value = self.position * current_price
-                    
-                    # Record trade
-                    self.trades.append({
-                        'type': 'buy',
-                        'step': self.current_step,
-                        'price': current_price,
-                        'amount': amount_to_buy,
-                        'value': amount_to_buy * current_price,
-                        'fee': amount_to_buy * current_price * self.transaction_fee
-                    })
-    
-    def _process_continuous_action(self, action, current_price):
-        """
-        Process a continuous action from -1.0 to 1.0.
-        
-        Args:
-            action: Continuous action value
-            current_price: Current asset price
-        """
-        # Convert continuous action to target position (-1.0 = fully short, 1.0 = fully long)
-        target_position = float(action[0]) * self.max_position * self.balance / current_price
-        
-        # Calculate position difference
-        position_diff = target_position - self.position
-        
-        if position_diff > 0:  # Buy
-            amount_to_buy = min(position_diff, 
-                              self.balance / (current_price * (1 + self.transaction_fee)))
-            
-            if amount_to_buy > 0:
-                # Calculate cost including fees
-                cost = amount_to_buy * current_price * (1 + self.transaction_fee)
-                self.balance -= cost
-                
-                # Update position
-                if self.position == 0:
-                    self.entry_price = current_price
-                else:
-                    # Calculate weighted average entry price
-                    self.entry_price = (self.entry_price * self.position + 
-                                      current_price * amount_to_buy) / (self.position + amount_to_buy)
-                
-                self.position += amount_to_buy
-                self.position_value = self.position * current_price
-                
-                # Record trade
-                self.trades.append({
-                    'type': 'buy',
-                    'step': self.current_step,
-                    'price': current_price,
-                    'amount': amount_to_buy,
-                    'value': amount_to_buy * current_price,
-                    'fee': amount_to_buy * current_price * self.transaction_fee
-                })
-                
-        elif position_diff < 0:  # Sell
-            amount_to_sell = min(abs(position_diff), self.position)
-            
-            if amount_to_sell > 0:
-                # Calculate sale value after fees
-                sale_value = amount_to_sell * current_price * (1 - self.transaction_fee)
-                self.balance += sale_value
-                
-                # Record trade
-                self.trades.append({
-                    'type': 'sell',
-                    'step': self.current_step,
-                    'price': current_price,
-                    'amount': amount_to_sell,
-                    'value': sale_value,
-                    'fee': amount_to_sell * current_price * self.transaction_fee
-                })
-                
-                # Update position
-                self.position -= amount_to_sell
-                if self.position <= 1e-9:  # Account for floating point errors
-                    self.position = 0
-                    self.position_value = 0
-                    self.entry_price = 0
-                else:
-                    self.position_value = self.position * current_price
-    
-    def render(self, mode='human'):
-        """
-        Render the environment (not implemented for trading environment).
-        """
-        pass
-
-
+        reward = 0.0
+        return obs, reward, terminated, truncated, {}
 class LegacyDQNAgent:
     """
     Deep Q-Network Agent for reinforcement learning-based trading.

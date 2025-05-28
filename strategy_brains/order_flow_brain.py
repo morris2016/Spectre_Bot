@@ -32,9 +32,14 @@ from config import Config
 from common.logger import get_logger
 from common.utils import normalize_data, timeit, calculate_dynamic_threshold
 from data_storage.market_data import MarketDataStorage
-from feature_service.features.order_flow import (
-    OrderFlowFeatures, VolumeProfileFeatures, OrderBookFeatures
-)
+try:
+    from feature_service.features.order_flow import (
+        OrderFlowFeatures, VolumeProfileFeatures, OrderBookFeatures
+    )
+except Exception:  # pragma: no cover - optional dependency
+    from feature_service.features.order_flow import OrderFlowFeatures
+    VolumeProfileFeatures = None  # type: ignore
+    OrderBookFeatures = None  # type: ignore
 from strategy_brains.base_brain import StrategyBrain
 from intelligence.loophole_detection.microstructure import MicrostructureAnalyzer
 
@@ -1737,4 +1742,22 @@ class OrderFlowBrain(StrategyBrain):
                 self.logger.info(f"Loaded saved state for {self.asset_id} on {self.timeframe}")
         except Exception as e:
             self.logger.warning(f"Could not load saved state: {str(e)}")
+
+    async def generate_signals(self) -> List[Dict[str, Any]]:
+        """Generate trading signals from analyzed order flow."""
+        signals: List[Dict[str, Any]] = []
+        if self.significant_transactions:
+            txn = self.significant_transactions[-1]
+            direction = "buy" if txn.get("buy_volume", 0) >= txn.get("sell_volume", 0) else "sell"
+            signals.append({
+                "timestamp": txn["timestamp"],
+                "signal": direction,
+                "reasons": txn["reasons"],
+            })
+        return signals
+
+    async def on_regime_change(self, new_regime: str) -> None:
+        """React to market regime changes by resetting session data."""
+        await self._reset_session_data()
+        self.logger.info(f"Switched to regime: {new_regime}")
 
