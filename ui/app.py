@@ -6,7 +6,7 @@ import os
 from typing import Any, Optional
 
 import uvicorn
-from fastapi import FastAPI, Response
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, Response
 
@@ -42,7 +42,6 @@ class UIService:
             self.app.mount("/static", StaticFiles(directory=static_dir), name="static")
         else:
             self.logger.warning("UI static directory '%s' does not exist", static_dir)
-
 
         self.app.add_api_route("/{full_path:path}", self.index, methods=["GET"])
 
@@ -83,9 +82,7 @@ class UIService:
 
     async def index(self, full_path: str) -> Response:
         """Serve the React application's index file for all routes."""
-<<<<<< j18dr6-codex/fix-errors-and-enhance-trading-bot-system
         if not os.path.isfile(self.index_path):
             self.logger.warning("UI index file '%s' not found", self.index_path)
             return Response(status_code=404)
         return FileResponse(self.index_path)
-
