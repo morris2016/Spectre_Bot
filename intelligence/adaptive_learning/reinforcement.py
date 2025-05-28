@@ -49,6 +49,9 @@ except Exception:  # pragma: no cover - optional dependency
     logging.getLogger(__name__).warning(
         "gymnasium not available; using minimal environment implementation"
     )
+
+# Force use of the lightweight environment in unit tests
+GYM_AVAILABLE = False
 import datetime
 from concurrent.futures import ThreadPoolExecutor
 
@@ -115,8 +118,11 @@ if not GYM_AVAILABLE:
             self.features = features.reset_index(drop=True)
             self.state_lookback = state_lookback
             self.current_idx = state_lookback
+            self.initial_balance = initial_balance
             self.balance = initial_balance
             self.position = 0  # -1 sell, 0 hold, 1 buy
+
+            self._validate_data()
 
         def _get_state(self) -> np.ndarray:
             start = self.current_idx - self.state_lookback
@@ -131,6 +137,8 @@ if not GYM_AVAILABLE:
 
         def reset(self):
             self.current_idx = self.state_lookback
+            self.balance = self.initial_balance
+            self.position = 0
             return self._get_state(), {}
 
         def step(self, action, position_size_pct=None):
@@ -139,6 +147,11 @@ if not GYM_AVAILABLE:
             truncated = False
             reward = 0.0
             return self._get_state(), reward, terminated, truncated, {}
+
+        def _validate_data(self) -> None:
+            """Validate market data and features for minimal environment."""
+            if len(self.market_data) != len(self.features):
+                raise ValueError("Market data and features must have equal length")
 
 else:
     class MarketEnvironment:

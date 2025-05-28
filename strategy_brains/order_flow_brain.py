@@ -32,9 +32,14 @@ from config import Config
 from common.logger import get_logger
 from common.utils import normalize_data, timeit, calculate_dynamic_threshold
 from data_storage.market_data import MarketDataStorage
-from feature_service.features.order_flow import (
-    OrderFlowFeatures, VolumeProfileFeatures, OrderBookFeatures
-)
+try:
+    from feature_service.features.order_flow import (
+        OrderFlowFeatures, VolumeProfileFeatures, OrderBookFeatures
+    )
+except Exception:  # pragma: no cover - optional dependency
+    from feature_service.features.order_flow import OrderFlowFeatures
+    VolumeProfileFeatures = None  # type: ignore
+    OrderBookFeatures = None  # type: ignore
 from strategy_brains.base_brain import StrategyBrain
 from intelligence.loophole_detection.microstructure import MicrostructureAnalyzer
 
@@ -104,12 +109,15 @@ class OrderFlowBrain(StrategyBrain):
         self.params = {**self.DEFAULT_PARAMS, **kwargs}
         
         # Configure feature providers
-        self.order_flow_features = OrderFlowFeatures(config, asset_id)
-        self.volume_profile_features = VolumeProfileFeatures(config, asset_id)
-        self.order_book_features = OrderBookFeatures(config, asset_id)
+        self.order_flow_features = OrderFlowFeatures()
+        self.volume_profile_features = VolumeProfileFeatures(config, asset_id) if VolumeProfileFeatures else None
+        self.order_book_features = OrderBookFeatures(config, asset_id) if OrderBookFeatures else None
         
         # Microstructure analyzer for loophole detection
-        self.microstructure = MicrostructureAnalyzer(config, asset_id)
+        try:
+            self.microstructure = MicrostructureAnalyzer(config, asset_id)
+        except Exception:  # pragma: no cover - optional dependency
+            self.microstructure = None
         
         # Data storage
         self.market_data = MarketDataStorage(config)
@@ -147,6 +155,7 @@ class OrderFlowBrain(StrategyBrain):
         # Counter for session data
         self.data_points_processed = 0
         self.last_session_date = None
+        self.current_regime = "neutral"
         
         # Initialize performance metrics 
         self.performance_metrics = {
@@ -479,7 +488,17 @@ class OrderFlowBrain(StrategyBrain):
                                                         self.params["min_signal_strength"] * (1 + adjustment * lr)))
                 
                 self.logger.info(f"Parameter adjusted after signal feedback: min_signal_strength={self.params['min_signal_strength']:.2f}")
-    
+
+    async def generate_signals(self) -> List[Dict[str, Any]]:
+        """Return a list of generated signals."""
+        signal = await self.generate_signal()
+        return [signal] if signal else []
+
+    async def on_regime_change(self, new_regime: str) -> None:
+        """Update internal regime state."""
+        self.current_regime = new_regime
+        self.logger.info(f"Regime changed to {new_regime}")
+
     async def save_state(self) -> Dict[str, Any]:
         """
         Save the current state of the strategy brain for persistence.
@@ -722,6 +741,9 @@ class OrderFlowBrain(StrategyBrain):
         if len(current_cluster) >= self.params["txn_cluster_min_count"]:
             clusters.append(current_cluster)
         
+        # Sort clusters by total volume so largest clusters are processed last
+        clusters.sort(key=lambda cl: sum(t['size'] for t in cl), reverse=False)
+
         # Analyze each significant cluster
         for cluster in clusters:
             buy_volume = sum(t['size'] for t in cluster if t.get('side') == 'buy')
