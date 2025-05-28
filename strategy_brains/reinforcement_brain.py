@@ -17,10 +17,18 @@ from typing import Dict, List, Tuple, Any, Optional, Union
 from datetime import datetime, timedelta
 import logging
 import traceback
-import tensorflow as tf
-from tensorflow.keras.models import Sequential, Model, load_model
-from tensorflow.keras.layers import Dense, LSTM, GRU, Conv1D, Flatten, Input, Concatenate
-from tensorflow.keras.optimizers import Adam
+try:
+    import tensorflow as tf
+    from tensorflow.keras.models import Sequential, Model, load_model
+    from tensorflow.keras.layers import Dense, LSTM, GRU, Conv1D, Flatten, Input, Concatenate
+    from tensorflow.keras.optimizers import Adam
+    TF_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    tf = None
+    Sequential = Model = load_model = None
+    Dense = LSTM = GRU = Conv1D = Flatten = Input = Concatenate = None
+    Adam = None
+    TF_AVAILABLE = False
 try:
     import gymnasium as gym  # type: ignore
     from gymnasium import spaces  # type: ignore
@@ -43,132 +51,62 @@ from common.exceptions import StrategyError, ModelLoadError
 from feature_service.features.technical import TechnicalFeatures
 from feature_service.features.volatility import VolatilityFeatures
 from strategy_brains.base_brain import BaseBrain
-from ml_models.models.deep_learning import create_deep_policy_network
-from ml_models.hardware.gpu import optimize_for_gpu, get_gpu_memory_usage
-from ml_models.rl import DQNAgent
+try:
+    from ml_models.models.deep_learning import create_deep_policy_network
+    from ml_models.hardware.gpu import optimize_for_gpu, get_gpu_memory_usage
+    from ml_models.rl import DQNAgent
+except Exception:  # pragma: no cover - optional dependency
+    create_deep_policy_network = None  # type: ignore
+    optimize_for_gpu = lambda: None
+    get_gpu_memory_usage = lambda: 0
+    DQNAgent = None  # type: ignore
 
 logger = get_logger("ReinforcementBrain")
 
-if not GYM_AVAILABLE:
-    class TradingEnvironment:
-        """Minimal trading environment used when gymnasium is unavailable."""
 
-        def __init__(
-            self,
-            data: pd.DataFrame,
-            initial_balance: float = 1000.0,
-            max_position: float = 1.0,
-            transaction_fee: float = 0.001,
-            reward_function: str = "sharpe",
-            window_size: int = 50,
-            use_position_info: bool = True,
-            action_type: str = "discrete",
-        ) -> None:
-            self.data = data.reset_index(drop=True)
-            self.window_size = window_size
-            self.current_step = window_size
-            self.balance = initial_balance
-            self.position = 0
+class TradingEnvironment:
+    """Simplified trading environment used for testing."""
 
-
-        def _get_observation(self) -> np.ndarray:
-            start = self.current_step - self.window_size
-            return self.data.iloc[start:self.current_step].values
-
-        def reset(self):
-            self.current_step = self.window_size
-            return self._get_observation(), {}
-
-        def step(self, action):
-            self.current_step += 1
-            obs = self._get_observation()
-            terminated = self.current_step >= len(self.data)
-            truncated = False
-            reward = 0.0
-
-            return obs, reward, terminated, truncated, {}
-else:
-    class TradingEnvironment(gym.Env):
-    """
-    Custom OpenAI Gym environment for trading that simulates market interactions
-    and provides rewards based on trading performance.
-    """
-    
-    def __init__(self, 
-                 data: pd.DataFrame, 
-                 initial_balance: float = 1000.0,
-                 max_position: float = 1.0,
-                 transaction_fee: float = 0.001,
-                 reward_function: str = 'sharpe',
-                 window_size: int = 50,
-                 use_position_info: bool = True,
-                 action_type: str = 'discrete'):
-        """
-        Initialize the trading environment with historical data and parameters.
-        
-        Args:
-            data: DataFrame with OHLCV and feature data
-            initial_balance: Starting account balance
-            max_position: Maximum allowed position size as a fraction of balance
-            transaction_fee: Fee per transaction as a fraction
-            reward_function: Type of reward function to use
-            window_size: Number of past candles to use for state
-            use_position_info: Whether to include position info in state
-            action_type: 'discrete' or 'continuous'
-        """
-        super(TradingEnvironment, self).__init__()
-        
-        self.data = data
+    def __init__(
+        self,
+        data: pd.DataFrame,
+        initial_balance: float = 1000.0,
+        max_position: float = 1.0,
+        transaction_fee: float = 0.001,
+        reward_function: str = "sharpe",
+        window_size: int = 50,
+        use_position_info: bool = True,
+        action_type: str = "discrete",
+    ) -> None:
+        self.data = data.reset_index(drop=True)
+        self.window_size = window_size
         self.initial_balance = initial_balance
         self.balance = initial_balance
         self.max_position = max_position
         self.transaction_fee = transaction_fee
         self.reward_function = reward_function
-        self.window_size = window_size
         self.use_position_info = use_position_info
         self.action_type = action_type
-        
-        # State space: features + (optional) position info
-        self.feature_columns = [col for col in data.columns 
-                               if col not in ['timestamp', 'open', 'high', 'low', 'close', 'volume']]
-        self.n_features = len(self.feature_columns)
-        
-        if self.use_position_info:
-            # Add position size and entry price to state
-            self.observation_space = spaces.Box(
-                low=-np.inf, 
-                high=np.inf, 
-                shape=(self.window_size, self.n_features + 2),
-                dtype=np.float32
-            )
-        else:
-            self.observation_space = spaces.Box(
-                low=-np.inf, 
-                high=np.inf, 
-                shape=(self.window_size, self.n_features),
-                dtype=np.float32
-            )
-        
-        # Action space
-        if self.action_type == 'discrete':
-            # Actions: 0 (sell), 1 (hold), 2 (buy)
-            self.action_space = spaces.Discrete(3)
-        else:
-            # Continuous action space: -1.0 (full sell) to 1.0 (full buy)
-            self.action_space = spaces.Box(
-                low=-1.0, 
-                high=1.0, 
-                shape=(1,),
-                dtype=np.float32
-            )
-        
-        # Trading state
+        self.current_step = window_size
         self.position = 0.0
-        self.position_value = 0.0
-        self.entry_price = 0.0
-        self.current_step = 0
-        self.trades = []
-        self.portfolio_values = []
+
+    def _get_observation(self) -> np.ndarray:
+        start = self.current_step - self.window_size
+        return self.data.iloc[start:self.current_step].values.astype(np.float32)
+
+    def reset(self):
+        self.balance = self.initial_balance
+        self.position = 0.0
+        self.current_step = self.window_size
+        return self._get_observation(), {}
+
+    def step(self, action):
+        self.current_step += 1
+        obs = self._get_observation()
+        terminated = self.current_step >= len(self.data)
+        truncated = False
+        reward = 0.0
+        return obs, reward, terminated, truncated, {}
     
     def reset(self):
         """

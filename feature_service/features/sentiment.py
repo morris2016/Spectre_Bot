@@ -128,6 +128,13 @@ class SentimentFeatures(BaseFeature):
             'discord': 0.45
         }
         logger.info("SentimentFeatures initialized")
+
+    async def calculate(self, data=None, **kwargs):
+        """Async wrapper to satisfy BaseFeature interface."""
+        symbol = kwargs.get("symbol")
+        hours = kwargs.get("lookback_hours", 24)
+        sources = kwargs.get("include_sources")
+        return self.analyze_sentiment(symbol, hours, sources)
     
     def analyze_sentiment(self, symbol: str, 
                          lookback_hours: int = 24,

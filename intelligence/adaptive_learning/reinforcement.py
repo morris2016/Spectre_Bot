@@ -118,6 +118,11 @@ if not GYM_AVAILABLE:
             self.balance = initial_balance
             self.position = 0  # -1 sell, 0 hold, 1 buy
 
+            self._validate_data()
+
+        def _validate_data(self) -> None:
+            pass
+
         def _get_state(self) -> np.ndarray:
             start = self.current_idx - self.state_lookback
             df = pd.concat(

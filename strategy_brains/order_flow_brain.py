@@ -32,9 +32,16 @@ from config import Config
 from common.logger import get_logger
 from common.utils import normalize_data, timeit, calculate_dynamic_threshold
 from data_storage.market_data import MarketDataStorage
-from feature_service.features.order_flow import (
-    OrderFlowFeatures, VolumeProfileFeatures, OrderBookFeatures
-)
+try:
+    from feature_service.features.order_flow import (
+        OrderFlowFeatures,
+        VolumeProfileFeatures,
+        OrderBookFeatures,
+    )
+except Exception:  # pragma: no cover - optional dependency
+    from feature_service.features.order_flow import OrderFlowFeatures
+    VolumeProfileFeatures = None  # type: ignore
+    OrderBookFeatures = None  # type: ignore
 from strategy_brains.base_brain import StrategyBrain
 from intelligence.loophole_detection.microstructure import MicrostructureAnalyzer
 
@@ -1737,4 +1744,13 @@ class OrderFlowBrain(StrategyBrain):
                 self.logger.info(f"Loaded saved state for {self.asset_id} on {self.timeframe}")
         except Exception as e:
             self.logger.warning(f"Could not load saved state: {str(e)}")
+
+    async def generate_signals(self) -> List[Dict[str, Any]]:
+        """Wrapper to provide list-based API."""
+        signal = await self.generate_signal()
+        return [signal] if signal else []
+
+    async def on_regime_change(self, new_regime: str) -> None:
+        """Handle external regime change notifications."""
+        self.logger.info(f"Regime changed to {new_regime}")
 

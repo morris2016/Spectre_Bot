@@ -117,7 +117,7 @@ class ModelTrainer:
             metrics_collector: Optional metrics collector for performance tracking
         """
         self.config = config
-        self.metrics_collector = metrics_collector or MetricsCollector()
+        self.metrics_collector = metrics_collector or MetricsCollector("ml_models", "trainer")
         self.market_data_repo = MarketDataRepository(config)
         self.feature_extractor = FeatureExtractor(config)
         self.redis_client = RedisClient(config)
