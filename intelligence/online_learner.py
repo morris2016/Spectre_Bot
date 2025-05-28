@@ -24,12 +24,27 @@ import asyncio
 import concurrent.futures
 
 # ML/AI imports
-import tensorflow as tf
-from tensorflow.keras import layers, models, optimizers, callbacks
-from tensorflow.keras.regularizers import l1_l2
-import torch
-import torch.nn as nn
-import torch.optim as optim
+try:
+    import tensorflow as tf
+    from tensorflow.keras import layers, models, optimizers, callbacks
+    from tensorflow.keras.regularizers import l1_l2
+    TENSORFLOW_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    tf = None
+    layers = models = optimizers = callbacks = None
+    l1_l2 = None
+    TENSORFLOW_AVAILABLE = False
+
+try:
+    import torch
+    import torch.nn as nn
+    import torch.optim as optim
+    TORCH_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    torch = None
+    nn = None
+    optim = None
+    TORCH_AVAILABLE = False
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingRegressor
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import TimeSeriesSplit
