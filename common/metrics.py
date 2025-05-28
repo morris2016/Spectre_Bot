@@ -50,12 +50,16 @@ class Timer:
 class MetricsCollector:
     """Collects and manages system and trading metrics."""
 
-    def __init__(self, namespace: str, subsystem: str | None = None):
-        """Initialize metrics collector with optional subsystem."""
-        if subsystem:
-            self.namespace = f"{namespace}.{subsystem}"
-        else:
-            self.namespace = namespace
+    def __init__(self, namespace: str = "default"):
+
+        """
+        Initialize metrics collector.
+        
+        Args:
+            namespace: Namespace for metrics
+        """
+        self.namespace = namespace if subsystem is None else f"{namespace}.{subsystem}"
+
         self.counters = {}
         self.gauges = {}
         self.timers = {}
@@ -381,28 +385,13 @@ class MetricsCollector:
         """Record a timing measurement."""
         full_name = f"{self.namespace}.{metric_name}"
         if full_name not in self.timers:
-            self.timers[full_name] = {
-                'count': 0,
-                'sum': 0,
-                'min': float('inf'),
-                'max': 0,
-                'avg': 0,
-                'samples': []
-            }
-        
-        timer = self.timers[full_name]
-        timer['count'] += 1
-        timer['sum'] += duration
-        timer['min'] = min(timer['min'], duration)
-        timer['max'] = max(timer['max'], duration)
-        timer['avg'] = timer['sum'] / timer['count']
-        
-        # Keep limited samples for percentile calculations
-        timer['samples'].append(duration)
-        if len(timer['samples']) > 100:
-            timer['samples'].pop(0)
-            
-        return timer
+            self.timers[full_name] = []
+
+        self.timers[full_name].append(duration)
+        if len(self.timers[full_name]) > 1000:
+            self.timers[full_name] = self.timers[full_name][-1000:]
+
+        return self.timers[full_name]
     
     def get_percentile(self, metric_name, percentile):
         """Get a percentile value for a timing metric."""

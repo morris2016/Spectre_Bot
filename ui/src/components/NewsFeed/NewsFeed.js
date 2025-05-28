@@ -12,6 +12,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+
 } from '@mui/material';
 import { api } from '../../api';
 
@@ -28,12 +29,14 @@ const NewsFeed = ({ limit = 20 }) => {
     { value: 'stocks', label: 'Stocks' },
   ];
 
+
   useEffect(() => {
     const loadNews = async () => {
       setLoading(true);
       setError(null);
       try {
         const { data } = await api.market.getMarketNews({ limit, category });
+
         setNews(data || []);
       } catch (err) {
         console.error('Failed to load market news', err);
@@ -45,6 +48,8 @@ const NewsFeed = ({ limit = 20 }) => {
 
     loadNews();
   }, [limit, category]);
+
+  
 
   if (loading) {
     return (
@@ -82,6 +87,7 @@ const NewsFeed = ({ limit = 20 }) => {
           ))}
         </Select>
       </FormControl>
+
       <List dense>
         {news.map((item) => (
           <ListItem key={item.id} divider>

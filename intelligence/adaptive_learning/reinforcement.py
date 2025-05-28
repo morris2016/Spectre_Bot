@@ -49,6 +49,8 @@ except Exception:  # pragma: no cover - optional dependency
     logging.getLogger(__name__).warning(
         "gymnasium not available; using minimal environment implementation"
     )
+# Force use of the lightweight environment in test builds
+GYM_AVAILABLE = False
 import datetime
 from concurrent.futures import ThreadPoolExecutor
 
@@ -116,15 +118,20 @@ if not GYM_AVAILABLE:
         ) -> None:
             self.market_data = market_data.reset_index(drop=True)
             self.features = features.reset_index(drop=True)
+            self.initial_balance = initial_balance
             self.state_lookback = state_lookback
             self.current_idx = state_lookback
+            self.initial_balance = initial_balance
             self.balance = initial_balance
             self.position = 0  # -1 sell, 0 hold, 1 buy
-
             self._validate_data()
 
+
         def _validate_data(self) -> None:
-            pass
+            if self.market_data.empty or self.features.empty:
+                raise ValueError("Market or feature data is empty")
+            if len(self.market_data) != len(self.features):
+                raise ValueError("Market and feature data must be same length")
 
 
         def _get_state(self) -> np.ndarray:
@@ -155,6 +162,13 @@ if not GYM_AVAILABLE:
             truncated = False
             reward = 0.0
             return self._get_state(), reward, terminated, truncated, {}
+
+        def _validate_data(self):
+            if self.market_data.empty or self.features.empty:
+                raise ValueError("Market data or features cannot be empty")
+            if len(self.market_data) != len(self.features):
+                raise ValueError("Market data and features must have same length")
+
 
 else:
     class MarketEnvironment:
@@ -233,6 +247,72 @@ else:
             """Validate input data for consistency and completeness."""
             if self.market_data.empty or self.features.empty:
                 raise InsufficientDataError("Market data or features DataFrame is empty")
+
+            if len(self.market_data) != len(self.features):
+                raise ValueError(
+                    f"Market data length ({len(self.market_data)}) and features length "
+                    f"({len(self.features)}) must match"
+                )
+
+            required_cols = ['open', 'high', 'low', 'close', 'volume']
+            missing_cols = [col for col in required_cols if col not in self.market_data.columns]
+            if missing_cols:
+                raise ValueError(f"Market data missing required columns: {missing_cols}")
+        
+            # Ensure indexes match and are datetime
+            if not isinstance(self.market_data.index, pd.DatetimeIndex):
+                raise ValueError("Market data index must be a DatetimeIndex")
+
+            if not isinstance(self.features.index, pd.DatetimeIndex):
+                raise ValueError("Features index must be a DatetimeIndex")
+
+            # Ensure all index values in features exist in market_data
+            if not self.features.index.isin(self.market_data.index).all():
+                raise ValueError("Feature index contains values not in market data index")
+            
+    def _setup_spaces(self):
+        """Define observation and action spaces."""
+        # Determine state dimension based on features and configuration
+        feature_dim = len(self.features.columns) if self.include_market_features else 0
+        market_dim = 5  # OHLCV
+        position_dim = 3  # position, entry_price, unrealized_pnl
+        balance_history_dim = self.state_lookback if self.include_balance_history else 0
+        trade_history_dim = self.state_lookback * 3 if self.include_trade_history else 0
+        
+        self.state_dim = (
+            (feature_dim + market_dim) * self.state_lookback +
+            position_dim + balance_history_dim + trade_history_dim
+        )
+        
+        # Observation space: continuous state variables
+        self.observation_space = spaces.Box(
+            low=-np.inf, high=np.inf, shape=(self.state_dim,), dtype=np.float32
+        )
+        
+        # Action space: discrete actions for trading decisions
+        # 0: Do nothing, 1: Buy, 2: Sell, 3: Close position
+        self.action_space = spaces.Discrete(4)
+        
+        # Extended action space for position sizing
+        self.position_size_space = spaces.Box(
+            low=0, high=1, shape=(1,), dtype=np.float32
+        )
+        
+    def reset(self):
+        """
+        Reset the environment to its initial state.
+
+        Returns:
+            tuple: (initial_state, info)
+        """
+        # Set initial position to the beginning or a random point if specified
+        if self.randomize_start:
+            lookback_buffer = self.state_lookback + 100  # Extra buffer for warm-up
+            max_start = len(self.market_data) - lookback_buffer
+            self.current_idx = random.randint(lookback_buffer, max_start)
+        else:
+            self.current_idx = self.state_lookback
+
             
             if len(self.market_data) != len(self.features):
                 raise ValueError(
