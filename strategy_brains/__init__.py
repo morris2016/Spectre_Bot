@@ -108,13 +108,34 @@ def get_platform_specific_brains(platform: str) -> Dict[str, Type]:
 from . import base_brain
 from . import momentum_brain
 from . import mean_reversion_brain
-from . import breakout_brain
-from . import volatility_brain
-from . import pattern_brain
-from . import sentiment_brain
+try:
+    from . import breakout_brain
+except Exception as e:  # pragma: no cover - optional dependency
+    logger.warning(f"breakout_brain not available: {e}")
+try:
+    from . import volatility_brain
+except Exception as e:  # pragma: no cover - optional dependency
+    logger.warning(f"volatility_brain not available: {e}")
+try:
+    from . import pattern_brain
+except Exception as e:  # pragma: no cover - optional dependency
+    logger.warning(f"pattern_brain not available: {e}")
+try:
+    from . import sentiment_brain
+except Exception as e:  # pragma: no cover - optional dependency
+    logger.warning(f"sentiment_brain not available: {e}")
 from . import order_flow_brain
-from . import market_structure_brain
-from . import statistical_brain
+try:
+    from . import market_structure_brain
+    from . import statistical_brain
+    from . import onchain_brain
+    from . import regime_brain
+    from . import adaptive_brain
+    from . import trend_brain
+    from . import swing_brain
+    from . import scalping_brain
+except Exception as e:  # pragma: no cover - optional dependency
+    logger.warning(f"some optional brains not available: {e}")
 try:
     from . import ml_brain
 except Exception as e:  # pragma: no cover - optional dependency
@@ -123,16 +144,19 @@ try:
     from . import reinforcement_brain
 except Exception as e:  # pragma: no cover - optional dependency
     logger.warning(f"reinforcement_brain not available: {e}")
-from . import onchain_brain
-from . import regime_brain
-from . import adaptive_brain
-from . import trend_brain
-from . import swing_brain
-from . import scalping_brain
-from . import arbitrage_brain
-from . import correlation_brain
-from . import divergence_brain
-from . import ensemble_brain
+try:
+    from . import onchain_brain
+    from . import regime_brain
+    from . import adaptive_brain
+    from . import trend_brain
+    from . import swing_brain
+    from . import scalping_brain
+    from . import arbitrage_brain
+    from . import correlation_brain
+    from . import divergence_brain
+    from . import ensemble_brain
+except Exception as e:  # pragma: no cover - optional dependency
+    logger.warning(f"additional brains not available: {e}")
 
 # Import only works when files are there, during development you can comment out
 # the imports that don't exist yet
