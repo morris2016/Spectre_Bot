@@ -5,7 +5,8 @@ Utilities for analyzing relationships between two assets, including rolling
 correlation and cointegration tests.
 """
 
-from typing import Optional, Tuple, Union
+from typing import Optional, Sequence, Tuple, Union
+
 
 import logging
 
@@ -22,48 +23,54 @@ __all__ = ["compute_pair_correlation", "cointegration_score"]
 
 
 def _align_series(
-    data1: Union[pd.DataFrame, pd.Series],
-    data2: Union[pd.DataFrame, pd.Series],
-    column: str,
+    data1: Union[pd.DataFrame, pd.Series, Sequence[float]],
+    data2: Union[pd.DataFrame, pd.Series, Sequence[float]],
+    column: str = "close",
 ) -> Optional[Tuple[pd.Series, pd.Series]]:
     """Return aligned series for the specified column."""
     if isinstance(data1, pd.Series) and isinstance(data2, pd.Series):
         s1, s2 = data1, data2
-    else:
+    elif isinstance(data1, pd.DataFrame) and isinstance(data2, pd.DataFrame):
         if column not in data1.columns or column not in data2.columns:
             raise ValueError(f"Column '{column}' missing from input data")
         s1 = data1[column]
         s2 = data2[column]
+    else:
+        s1 = pd.Series(data1)
+        s2 = pd.Series(data2)
+
     length = min(len(s1), len(s2))
     if length == 0:
         return None
-    s1 = s1.iloc[-length:]
-    s2 = s2.iloc[-length:]
-    return s1, s2
+    return s1.iloc[-length:], s2.iloc[-length:]
 
 
 def compute_pair_correlation(
-    data1: Union[pd.DataFrame, pd.Series],
-    data2: Union[pd.DataFrame, pd.Series],
+    data1: Union[pd.DataFrame, pd.Series, Sequence[float]],
+    data2: Union[pd.DataFrame, pd.Series, Sequence[float]],
     column: str = "close",
     window: int | None = None,
 ) -> Union[float, pd.Series]:
-    """Compute correlation or rolling correlation for two asset series."""
+    """Compute Pearson correlation for two aligned asset series.
+
+    If *window* is provided, a rolling correlation ``pd.Series`` is returned.
+    """
+
     series = _align_series(data1, data2, column)
     if series is None:
         return float("nan")
     s1, s2 = series
     if window:
-        corr = s1.rolling(window).corr(s2)
-        return corr
+        return s1.rolling(window).corr(s2)
+
     if s1.isna().all() or s2.isna().all():
         return float("nan")
     return float(np.corrcoef(s1, s2)[0, 1])
 
 
 def cointegration_score(
-    data1: Union[pd.DataFrame, pd.Series],
-    data2: Union[pd.DataFrame, pd.Series],
+    data1: Union[pd.DataFrame, pd.Series, Sequence[float]],
+    data2: Union[pd.DataFrame, pd.Series, Sequence[float]],
 
     column: str = "close",
 ) -> float:

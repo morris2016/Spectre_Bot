@@ -141,17 +141,20 @@ class StrategyBrain(HistoricalMemoryMixin, ABC):
         }
         
         # Strategy parameters
-        self.parameters = self.config.parameters
+        self.parameters = getattr(self.config, "parameters", {})
 
     def _validate_config(self, config: BrainConfig) -> None:
-        """Validate core configuration options with safe defaults."""
+        """Validate core configuration options."""
         risk = getattr(config, "risk_per_trade", 0.01)
         if risk <= 0 or risk > 1:
             raise ValueError("risk_per_trade must be between 0 and 1")
+        config.risk_per_trade = risk
 
-        max_pos = getattr(config, "max_position_size", 0.05)
+        max_pos = getattr(config, "max_position_size", 1.0)
+
         if max_pos <= 0:
             raise ValueError("max_position_size must be positive")
+        config.max_position_size = max_pos
         
     async def initialize(self):
         """Initialize the strategy brain."""
