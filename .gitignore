@@ -4,6 +4,8 @@ __pycache__/
 .env
 build/
 dist/
+!ui/dist/
+!ui/dist/index.html
 
 node_modules/
 ui/node_modules/
