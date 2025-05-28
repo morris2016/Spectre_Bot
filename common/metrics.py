@@ -14,6 +14,7 @@ import asyncio
 import statistics
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Union, Tuple
+from collections import defaultdict
 import psutil
 from contextlib import contextmanager
 from functools import wraps
@@ -63,8 +64,8 @@ class MetricsCollector:
 
         self.counters = {}
         self.gauges = {}
-        self.timers = {}
-        self.histograms = {}
+        self.timers = defaultdict(list)
+        self.histograms = defaultdict(list)
         self.start_time = time.time()
         self.logger = get_logger(f"Metrics.{self.namespace}")
         
@@ -164,8 +165,6 @@ class MetricsCollector:
             value: Timer value (in seconds)
         """
         full_name = f"{self.namespace}.{metric_name}"
-        if full_name not in self.timers:
-            self.timers[full_name] = []
         self.timers[full_name].append(value)
         # Keep only the last 1000 values to limit memory usage
         if len(self.timers[full_name]) > 1000:
@@ -183,12 +182,9 @@ class MetricsCollector:
             Histogram data structure
         """
         full_name = f"{self.namespace}.{metric_name}"
-        if full_name not in self.histograms:
-            self.histograms[full_name] = []
-            
         if initial_values:
             self.histograms[full_name].extend(initial_values)
-            
+
         return self.histograms[full_name]
         
     def record_histogram(self, metric_name, value):
@@ -200,8 +196,6 @@ class MetricsCollector:
             value: Histogram value
         """
         full_name = f"{self.namespace}.{metric_name}"
-        if full_name not in self.histograms:
-            self.histograms[full_name] = []
         self.histograms[full_name].append(value)
         # Keep only the last 1000 values to limit memory usage
         if len(self.histograms[full_name]) > 1000:
@@ -356,9 +350,9 @@ class MetricsCollector:
         if metric_type is None or metric_type == 'gauges':
             self.gauges = {}
         if metric_type is None or metric_type == 'timers':
-            self.timers = {}
+            self.timers = defaultdict(list)
         if metric_type is None or metric_type == 'histograms':
-            self.histograms = {}
+            self.histograms = defaultdict(list)
             
     def export_json(self, file_path=None):
         """
@@ -385,12 +379,7 @@ class MetricsCollector:
     def record_timing(self, metric_name, duration):
         """Record a timing measurement."""
         full_name = f"{self.namespace}.{metric_name}"
-        if full_name not in self.timers:
-            self.timers[full_name] = []
-
-        self.timers[full_name].append(duration)
-        if len(self.timers[full_name]) > 1000:
-            self.timers[full_name] = self.timers[full_name][-1000:]
+        self.record_timer(metric_name, duration)
 
         return self.timers[full_name]
     
