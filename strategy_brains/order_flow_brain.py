@@ -32,9 +32,14 @@ from config import Config
 from common.logger import get_logger
 from common.utils import normalize_data, timeit, calculate_dynamic_threshold
 from data_storage.market_data import MarketDataStorage
-from feature_service.features.order_flow import (
-    OrderFlowFeatures, VolumeProfileFeatures, OrderBookFeatures
-)
+try:
+    from feature_service.features.order_flow import (
+        OrderFlowFeatures, VolumeProfileFeatures, OrderBookFeatures
+    )
+except Exception:  # pragma: no cover - optional dependency
+    from feature_service.features.order_flow import OrderFlowFeatures
+    VolumeProfileFeatures = None  # type: ignore
+    OrderBookFeatures = None  # type: ignore
 from strategy_brains.base_brain import StrategyBrain
 from intelligence.loophole_detection.microstructure import MicrostructureAnalyzer
 
@@ -379,6 +384,23 @@ class OrderFlowBrain(StrategyBrain):
         except Exception as e:
             self.logger.error(f"Error generating signal: {str(e)}")
             return None
+
+    async def generate_signals(self) -> List[Dict[str, Any]]:
+        """Generate one or more trading signals."""
+        signal = await self.generate_signal()
+        return [signal] if signal else []
+
+    async def on_regime_change(self, new_regime: str) -> None:
+        """React to market regime changes by adjusting thresholds."""
+        self.logger.info(f"OrderFlowBrain regime change: {new_regime}")
+        if new_regime.lower() == "volatile":
+            self.params["ob_imbalance_threshold"] = max(
+                1.0, self.params["ob_imbalance_threshold"] * 1.2
+            )
+        elif new_regime.lower() == "stable":
+            self.params["ob_imbalance_threshold"] = self.DEFAULT_PARAMS[
+                "ob_imbalance_threshold"
+            ]
     
     async def update_parameters(self, performance_metrics: Dict[str, float]) -> None:
         """
