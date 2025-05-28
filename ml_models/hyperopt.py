@@ -59,7 +59,7 @@ class HyperparameterOptimizer:
         metrics: MetricsCollector | None = None,
         direction: str = "maximize",
     ) -> None:
-        self.metrics = metrics or MetricsCollector(namespace="ml_models", subsystem="hyperopt")
+        self.metrics = metrics or MetricsCollector("ml_models.hyperopt")
         self.direction = direction
 
     def _iter_grid(self, search_space: Dict[str, Iterable[Any]]) -> Iterable[Dict[str, Any]]:

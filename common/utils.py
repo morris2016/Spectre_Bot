@@ -2225,6 +2225,7 @@ def calculate_risk_reward(*args: Union[str, float]) -> float:
         else:
             reward = abs(take_profit - entry_price)
             risk = abs(entry_price - stop_loss)
+
     except Exception:
         return 0.0
 

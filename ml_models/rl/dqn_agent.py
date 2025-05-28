@@ -455,3 +455,7 @@ class DQNAgent(RLAgent):
             self.steps_done = checkpoint["steps_done"]
         else:
             self.weights = np.load(path)
+
+    def train_step(self) -> float | None:
+        """Alias of :meth:`update_model` for :class:`RLAgent` compliance."""
+        return self.update_model()

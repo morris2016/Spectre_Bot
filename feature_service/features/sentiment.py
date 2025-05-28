@@ -135,6 +135,7 @@ class SentimentFeatures(BaseFeature):
         hours = kwargs.get("lookback_hours", 24)
         sources = kwargs.get("include_sources")
         return self.analyze_sentiment(symbol, hours, sources)
+
     
     def analyze_sentiment(self, symbol: str, 
                          lookback_hours: int = 24,

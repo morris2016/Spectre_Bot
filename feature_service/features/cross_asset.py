@@ -64,22 +64,28 @@ def compute_pair_correlation(
 def cointegration_score(
     data1: Union[pd.DataFrame, pd.Series],
     data2: Union[pd.DataFrame, pd.Series],
+
     column: str = "close",
 ) -> float:
     """Return the Engle-Granger cointegration p-value for two assets."""
-    series = _align_series(data1, data2, column)
-    if series is None:
-        return float("nan")
-    s1, s2 = series
-    s1 = s1.dropna()
-    s2 = s2.dropna()
+    if isinstance(data1, pd.Series) and isinstance(data2, pd.Series):
+        s1, s2 = data1, data2
+    else:
+        series = _align_series(data1, data2, column)
+        if series is None:
+            return float("nan")
+        s1, s2 = series
+    s1 = pd.Series(s1).dropna()
+    s2 = pd.Series(s2).dropna()
     min_len = min(len(s1), len(s2))
     if min_len < 2:
         return float("nan")
     if STATSMODELS_AVAILABLE and coint is not None:
         result = coint(s1.iloc[-min_len:], s2.iloc[-min_len:])
         return float(result[1])
+
     logging.getLogger(__name__).warning(
-        "statsmodels not available; cointegration score set to NaN"
+        "statsmodels not available; falling back to correlation heuristic"
     )
-    return float("nan")
+    corr = np.corrcoef(s1.iloc[-min_len:], s2.iloc[-min_len:])[0, 1]
+    return float(max(0.0, min(1.0, 1 - abs(corr))))
