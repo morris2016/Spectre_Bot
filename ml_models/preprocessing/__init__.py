@@ -1,5 +1,3 @@
-y
-
 #!/usr/bin/env python3
 """
 QuantumSpectre Elite Trading System
@@ -88,7 +86,6 @@ DEFAULT_SAMPLING_CONFIGS = {
 }
 
 # Import submodules to register preprocessors
-from . import scaling  # noqa
 
 # Register all preprocessors automatically
 def register_preprocessor(name: str, preprocessor: Any) -> None:
@@ -166,3 +163,6 @@ def get_default_config(config_type: str, feature_type: str) -> Dict[str, Any]:
 
 # Version information
 __version__ = '1.0.0'
+
+# Import submodules after registry functions are defined
+from . import scaling  # noqa

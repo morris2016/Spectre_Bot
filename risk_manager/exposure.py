@@ -10,7 +10,7 @@ including monitoring and controlling risk across different assets, platforms,
 and account sizes.
 """
 
-from typing import Dict, List, Optional, Tuple, Union, Any, Type
+from typing import Dict, List, Optional, Any, Type
 
 
 class BaseExposureManager:
@@ -29,14 +29,13 @@ class BaseExposureManager:
 import logging
 import asyncio
 import numpy as np
+import pandas as pd
 from decimal import Decimal
 
 
-from common.constants import PLATFORMS
+from common.constants import Exchange, ASSETS
 
-from common.constants import Exchange
-
-from common.utils import calculate_correlation_matrix
+from common.utils import calculate_correlation_matrix, calculate_volatility
 from common.async_utils import run_in_threadpool
 from data_storage.market_data import MarketDataRepository
 
@@ -657,14 +656,60 @@ class ExposureManager(BaseExposureManager):
     async def _calculate_volatility_multiplier(self) -> float:
         """
         Calculate a multiplier for exposure limits based on current market volatility.
-        
+
         Returns:
             Volatility multiplier (0.7-1.2)
         """
-        # For now, return a neutral value
-        # In a real implementation, this would analyze current market volatility
-        # across key assets and adjust exposure accordingly
-        return 1.0
+        try:
+            assets = self.config.get("volatility_assets") or ASSETS[:5]
+            short_window = self.config.get("volatility_short_window", 20)
+            long_window = self.config.get("volatility_long_window", 60)
+            ratios = []
+
+            market_data = MarketDataRepository()
+            for asset in assets:
+                candles = await market_data.get_ohlcv_data(
+                    asset_id=asset,
+                    timeframe="1h",
+                    limit=long_window + 1,
+                )
+
+                closes: List[float]
+                if isinstance(candles, pd.DataFrame):
+                    if candles.empty:
+                        continue
+                    closes = candles["close"].astype(float).tolist()
+                elif candles:
+                    closes = [
+                        float(c.close if hasattr(c, "close") else c["close"])
+                        for c in candles
+                    ]
+                else:
+                    continue
+
+                series = pd.Series(closes)
+                short_vol = calculate_volatility(series[-short_window:], window=short_window)
+                long_vol = calculate_volatility(series, window=long_window)
+
+                if long_vol == 0:
+                    continue
+
+                ratios.append(short_vol / long_vol)
+
+            if not ratios:
+                return 1.0
+
+            avg_ratio = float(np.mean(ratios))
+
+            if avg_ratio >= 1.0:
+                multiplier = 1.0 - min(0.3, (avg_ratio - 1.0) * 0.3)
+            else:
+                multiplier = 1.0 + min(0.2, (1.0 - avg_ratio) * 0.2)
+
+            return max(0.7, min(1.2, multiplier))
+        except Exception as e:  # pragma: no cover - graceful fallback
+            logger.error(f"Error calculating volatility multiplier: {e}")
+            return 1.0
     
     def _calculate_risk_multiplier(self) -> float:
         """

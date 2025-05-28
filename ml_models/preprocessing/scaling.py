@@ -1007,3 +1007,13 @@ register_preprocessor('z_score_cap_scaler', ZScoreOutlierScaler)
 register_preprocessor('relative_scaler', PriceRelativeScaler)
 register_preprocessor('composite_scaler', CompositeScaler)
 register_preprocessor('create_scaler', create_scaler)
+
+
+def get_scaler(name: str, **kwargs) -> Any:
+    """Retrieve a scaler from the registry by name."""
+    scaler_cls = PREPROCESSOR_REGISTRY.get(name)
+    if scaler_cls is None:
+        raise ValueError(f"Unknown scaler: {name}")
+    if isinstance(scaler_cls, type):
+        return scaler_cls(**kwargs)
+    return scaler_cls(**kwargs)

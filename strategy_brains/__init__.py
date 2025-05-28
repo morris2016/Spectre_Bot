@@ -115,8 +115,14 @@ from . import sentiment_brain
 from . import order_flow_brain
 from . import market_structure_brain
 from . import statistical_brain
-from . import ml_brain
-from . import reinforcement_brain
+try:
+    from . import ml_brain
+except Exception as e:  # pragma: no cover - optional dependency
+    logger.warning(f"ml_brain not available: {e}")
+try:
+    from . import reinforcement_brain
+except Exception as e:  # pragma: no cover - optional dependency
+    logger.warning(f"reinforcement_brain not available: {e}")
 from . import onchain_brain
 from . import regime_brain
 from . import adaptive_brain

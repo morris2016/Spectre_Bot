@@ -42,16 +42,20 @@ except Exception:  # pragma: no cover - optional dependency
     TF_AVAILABLE = False
 
 from ml_models.models.regression import AdvancedRegressionModel
-from ml_models.models.classification import AdvancedClassificationModel
-from ml_models.models.time_series import TimeSeriesModel
-from ml_models.models.deep_learning import DeepLearningModel
-from ml_models.preprocessing.scaling import AdvancedScaler
+from ml_models.models.classification import ClassificationModel
+from ml_models.models.time_series import EnsembleTimeSeriesModel
 from common.utils import calculate_sharpe_ratio
 from common.logger import get_logger
 from common.exceptions import ModelTrainingError, ModelPredictionError, InvalidParameterError
 from common.constants import MODEL_SAVE_PATH, TRADING_CUTOFFS
 
 logger = get_logger(__name__)
+
+try:
+    from ml_models.models.deep_learning import DeepLearningModel
+except Exception as e:  # pragma: no cover - optional dependency
+    DeepLearningModel = None  # type: ignore
+    logger.warning(f"DeepLearningModel not available: {e}")
 
 class EnsembleWeighter:
     """
@@ -1307,7 +1311,7 @@ class AdvancedEnsembleFactory:
                 gpu_acceleration=gpu_acceleration
             ),
             # Time series specific model
-            TimeSeriesModel(
+            EnsembleTimeSeriesModel(
                 model_type="arimax",
                 forecast_horizon=prediction_horizon,
                 seasonal=True,
@@ -1422,7 +1426,7 @@ class AdvancedEnsembleFactory:
                 random_state=42
             ),
             # GARCH-like model for time-varying volatility
-            TimeSeriesModel(
+            EnsembleTimeSeriesModel(
                 model_type="garch",
                 forecast_horizon=prediction_horizon,
                 p=1, q=1,  # GARCH(1,1) is often sufficient

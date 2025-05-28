@@ -186,10 +186,17 @@ def init_model_registry() -> None:
     """
     Initialize the model registry by automatically registering models from submodules.
     """
-    from ml_models.models import regression, classification, time_series, deep_learning, ensemble
-    
-    # List of modules containing models
-    modules = [regression, classification, time_series, deep_learning, ensemble]
+    from ml_models.models import regression, classification, time_series, ensemble
+
+    modules = [regression, classification, time_series]
+
+    try:
+        from ml_models.models import deep_learning
+        modules.append(deep_learning)
+    except Exception as e:  # pragma: no cover - optional dependency
+        logger.warning(f"Deep learning models not available: {e}")
+
+    modules.append(ensemble)
     
     # Number of models registered
     count = 0

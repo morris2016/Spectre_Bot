@@ -921,3 +921,33 @@ def get_encoder_for_task(task: str, **kwargs) -> Union[EncodingManager, Advanced
     else:
         return EncodingManager()
 
+
+def encode_features(
+    train_df: pd.DataFrame,
+    val_df: pd.DataFrame,
+    test_df: pd.DataFrame,
+    method: str = "onehot",
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, Any]:
+    """Simple wrapper to encode categorical features."""
+    if method != "onehot":
+        raise ValueError("Only onehot encoding is supported")
+
+    encoder = OneHotEncoder(sparse=False, handle_unknown="ignore")
+    encoder.fit(pd.concat([train_df, val_df]))
+    train_enc = pd.DataFrame(
+        encoder.transform(train_df),
+        index=train_df.index,
+        columns=encoder.get_feature_names_out(train_df.columns),
+    )
+    val_enc = pd.DataFrame(
+        encoder.transform(val_df),
+        index=val_df.index,
+        columns=encoder.get_feature_names_out(val_df.columns),
+    )
+    test_enc = pd.DataFrame(
+        encoder.transform(test_df),
+        index=test_df.index,
+        columns=encoder.get_feature_names_out(test_df.columns),
+    )
+    return train_enc, val_enc, test_enc, encoder
+
