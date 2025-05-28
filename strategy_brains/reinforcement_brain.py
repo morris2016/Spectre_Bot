@@ -82,21 +82,16 @@ class TradingEnvironment:
         self.window_size = window_size
         self.initial_balance = initial_balance
         self.balance = initial_balance
-        self.max_position = max_position
-        self.transaction_fee = transaction_fee
-        self.reward_function = reward_function
-        self.use_position_info = use_position_info
-        self.action_type = action_type
-        self.current_step = window_size
         self.position = 0.0
+        self.feature_columns = [c for c in self.data.columns if c not in ['timestamp']]
+        self.n_features = len(self.feature_columns)
 
     def _get_observation(self) -> np.ndarray:
         start = self.current_step - self.window_size
         return self.data.iloc[start:self.current_step].values.astype(np.float32)
 
+
     def reset(self):
-        self.balance = self.initial_balance
-        self.position = 0.0
         self.current_step = self.window_size
         return self._get_observation(), {}
 
@@ -107,11 +102,76 @@ class TradingEnvironment:
         truncated = False
         reward = 0.0
         return obs, reward, terminated, truncated, {}
-    
+        """
+        Initialize the trading environment with historical data and parameters.
+
+        Args:
+            data: DataFrame with OHLCV and feature data
+            initial_balance: Starting account balance
+            max_position: Maximum allowed position size as a fraction of balance
+            transaction_fee: Fee per transaction as a fraction
+            reward_function: Type of reward function to use
+            window_size: Number of past candles to use for state
+            use_position_info: Whether to include position info in state
+            action_type: 'discrete' or 'continuous'
+        """
+        super(TradingEnvironment, self).__init__()
+
+        self.data = data
+
+        self.initial_balance = initial_balance
+        self.balance = initial_balance
+        self.max_position = max_position
+        self.transaction_fee = transaction_fee
+        self.reward_function = reward_function
+        self.use_position_info = use_position_info
+        self.action_type = action_type
+
+        # State space: features + (optional) position info
+        self.feature_columns = [col for col in data.columns
+                               if col not in ['timestamp', 'open', 'high', 'low', 'close', 'volume']]
+        self.n_features = len(self.feature_columns)
+
+        if self.use_position_info:
+            # Add position size and entry price to state
+            self.observation_space = spaces.Box(
+                low=-np.inf,
+                high=np.inf,
+                shape=(self.window_size, self.n_features + 2),
+                dtype=np.float32
+            )
+        else:
+            self.observation_space = spaces.Box(
+                low=-np.inf,
+                high=np.inf,
+                shape=(self.window_size, self.n_features),
+                dtype=np.float32
+            )
+
+        # Action space
+        if self.action_type == 'discrete':
+            # Actions: 0 (sell), 1 (hold), 2 (buy)
+            self.action_space = spaces.Discrete(3)
+        else:
+            # Continuous action space: -1.0 (full sell) to 1.0 (full buy)
+            self.action_space = spaces.Box(
+                low=-1.0,
+                high=1.0,
+                shape=(1,),
+                dtype=np.float32
+            )
+
+        # Trading state
+        self.position = 0.0
+        self.position_value = 0.0
+        self.entry_price = 0.0
+        self.current_step = 0
+        self.trades = []
+        self.portfolio_values = []
+
     def reset(self):
         """
         Reset the environment to initial state.
-
         Returns:
             tuple: (observation, info)
         """
@@ -134,12 +194,12 @@ class TradingEnvironment:
         """
         # Get window of features
         features = self.data.iloc[self.current_step - self.window_size:self.current_step][self.feature_columns].values
-        
+
         if self.use_position_info:
             # Add position information to each timestep
             position_info = np.ones((self.window_size, 2))
             position_info[:, 0] = self.position / self.max_position  # Normalized position
-            
+
             # Set entry price relative to current price for normalization
             current_price = self.data.iloc[self.current_step-1]['close']
             if self.entry_price > 0:
@@ -148,7 +208,7 @@ class TradingEnvironment:
                 normalized_entry_price = 0
             
             position_info[:, 1] = normalized_entry_price
-            
+
             # Combine features with position info
             observation = np.hstack((features, position_info))
         else:
@@ -159,19 +219,19 @@ class TradingEnvironment:
     def _calculate_reward(self, action, prev_portfolio_value, current_portfolio_value):
         """
         Calculate reward based on selected reward function.
-        
+
         Args:
             action: Action taken
             prev_portfolio_value: Portfolio value before action
             current_portfolio_value: Portfolio value after action
-            
+
         Returns:
             reward: Calculated reward value
         """
         if self.reward_function == 'simple_return':
             # Simple return from previous step
             return (current_portfolio_value - prev_portfolio_value) / prev_portfolio_value
-            
+
         elif self.reward_function == 'sharpe':
             # Approximate Sharpe ratio based on recent returns
             if len(self.portfolio_values) < 20:
@@ -179,12 +239,12 @@ class TradingEnvironment:
                 
             # Calculate returns for last 20 steps
             returns = np.diff(self.portfolio_values[-20:]) / self.portfolio_values[-21:-1]
-            
+
             if len(returns) > 0:
                 sharpe = (np.mean(returns) / (np.std(returns) + 1e-9)) * np.sqrt(252/20)
                 return sharpe
             return 0
-            
+
         elif self.reward_function == 'risk_adjusted':
             # Risk-adjusted return that penalizes large drawdowns
             if len(self.portfolio_values) < 5:
@@ -192,12 +252,12 @@ class TradingEnvironment:
                 
             # Calculate return
             ret = (current_portfolio_value - prev_portfolio_value) / prev_portfolio_value
-            
+
             # Calculate max drawdown over recent window
             recent_values = self.portfolio_values[-20:]
             max_drawdown = 0
             peak = recent_values[0]
-            
+
             for value in recent_values:
                 if value > peak:
                     peak = value
@@ -218,6 +278,7 @@ class TradingEnvironment:
         Args:
             action: Action to take (buy/hold/sell or continuous value)
             
+
         Returns:
             observation: New state
             reward: Reward for the action
@@ -227,14 +288,13 @@ class TradingEnvironment:
         """
         if self.current_step >= len(self.data) - 1:
             terminated = True
-            return self._get_observation(), 0, terminated, False, {}
-        
+            return self._get_observation(), 0, terminated, False, {}        
         # Get current price data
         current_price = self.data.iloc[self.current_step]['close']
         
         # Calculate portfolio value before trade
         prev_portfolio_value = self.balance + self.position_value
-        
+
         # Process the action
         if self.action_type == 'discrete':
             self._process_discrete_action(action, current_price)
@@ -261,6 +321,7 @@ class TradingEnvironment:
         # Check if done
         done = self.current_step >= len(self.data) - 1
         
+
         # Information dictionary
         info = {
             'portfolio_value': portfolio_value,
@@ -415,13 +476,14 @@ class TradingEnvironment:
         pass
 
 
+
 class LegacyDQNAgent:
     """
     Deep Q-Network Agent for reinforcement learning-based trading.
     """
-    
-    def __init__(self, 
-                state_size: Tuple[int, int], 
+
+    def __init__(self,
+                state_size: Tuple[int, int],
                 action_size: int,
                 learning_rate: float = 0.001,
                 gamma: float = 0.95,
@@ -432,7 +494,7 @@ class LegacyDQNAgent:
                 memory_size: int = 10000):
         """
         Initialize the DQN Agent.
-        
+
         Args:
             state_size: Shape of the state observation
             action_size: Number of possible actions
@@ -453,63 +515,63 @@ class LegacyDQNAgent:
         self.epsilon_decay = epsilon_decay
         self.batch_size = batch_size
         self.memory = deque(maxlen=memory_size)
-        
+
         # Build main model and target model
         self.model = self._build_model()
         self.target_model = self._build_model()
         self.update_target_model()
-        
+
         # Tracking variables
         self.target_update_counter = 0
         self.losses = []
-    
+
     def _build_model(self):
         """
         Build the neural network model for the agent.
-        
+
         Returns:
             model: Compiled Keras model
         """
         # Use GPU optimization if available
         optimize_for_gpu()
-        
+
         # Get state shape
         timesteps, features = self.state_size
-        
+
         # Input layer
         input_layer = Input(shape=(timesteps, features))
-        
+
         # Feature extraction layers
         conv1 = Conv1D(filters=64, kernel_size=3, padding='same', activation='relu')(input_layer)
         conv2 = Conv1D(filters=128, kernel_size=5, padding='same', activation='relu')(conv1)
-        
+
         # Sequential processing
         lstm1 = LSTM(128, return_sequences=True)(conv2)
         lstm2 = LSTM(64)(lstm1)
-        
+
         # Action value prediction
         dense1 = Dense(64, activation='relu')(lstm2)
         output = Dense(self.action_size, activation='linear')(dense1)
-        
+
         # Compile model
         model = Model(inputs=input_layer, outputs=output)
         model.compile(
             loss='mse',
             optimizer=Adam(learning_rate=self.learning_rate)
         )
-        
+
         return model
-    
+
     def update_target_model(self):
         """
         Copy weights from main model to target model.
         """
         self.target_model.set_weights(self.model.get_weights())
-    
+
     def remember(self, state, action, reward, next_state, done):
         """
         Store experience in replay memory.
-        
+
         Args:
             state: Current state
             action: Action taken
@@ -518,99 +580,99 @@ class LegacyDQNAgent:
             done: Whether the episode is done
         """
         self.memory.append((state, action, reward, next_state, done))
-    
+
     def act(self, state, training=True):
         """
         Determine action based on current state.
-        
+
         Args:
             state: Current state observation
             training: Whether the agent is in training mode
-            
+
         Returns:
             action: Selected action
         """
         # Reshape state if needed
         if len(state.shape) == 2:
             state = np.expand_dims(state, axis=0)
-            
+
         # Exploration during training
         if training and np.random.rand() <= self.epsilon:
             return random.randrange(self.action_size)
-            
+
         # Exploitation - use model to predict best action
         act_values = self.model.predict(state, verbose=0)
         return np.argmax(act_values[0])
-    
+
     def replay(self, batch_size=None):
         """
         Train the model using experience replay.
-        
+
         Args:
             batch_size: Size of the training batch
-            
+
         Returns:
             loss: Training loss value
         """
         if batch_size is None:
             batch_size = self.batch_size
-            
+
         if len(self.memory) < batch_size:
             return 0
-            
+
         # Sample random batch from memory
         minibatch = random.sample(self.memory, batch_size)
-        
+
         # Extract batch data
         states = np.zeros((batch_size, *self.state_size))
         next_states = np.zeros((batch_size, *self.state_size))
-        
+
         for i, (state, action, reward, next_state, done) in enumerate(minibatch):
             states[i] = state
             next_states[i] = next_state
-        
+
         # Predict Q-values
         targets = self.model.predict(states, verbose=0)
         next_targets = self.target_model.predict(next_states, verbose=0)
-        
+
         # Update targets for actions taken
         for i, (state, action, reward, next_state, done) in enumerate(minibatch):
             if done:
                 targets[i, action] = reward
             else:
                 targets[i, action] = reward + self.gamma * np.max(next_targets[i])
-        
+
         # Train the model
         history = self.model.fit(states, targets, epochs=1, verbose=0, batch_size=batch_size)
         loss = history.history['loss'][0]
         self.losses.append(loss)
-        
+
         # Decay epsilon
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
-            
+
         # Periodically update target network
         self.target_update_counter += 1
         if self.target_update_counter >= 10:
             self.update_target_model()
             self.target_update_counter = 0
-            
+
         return loss
-    
+
     def load(self, name):
         """
         Load model weights from file.
-        
+
         Args:
             name: Filename to load weights from
         """
         self.model.load_weights(name)
         self.update_target_model()
-    
+
     def save(self, name):
         """
         Save model weights to file.
-        
+
         Args:
             name: Filename to save weights to
         """
@@ -621,9 +683,9 @@ class DDPGAgent:
     """
     Deep Deterministic Policy Gradient Agent for continuous action reinforcement learning.
     """
-    
-    def __init__(self, 
-                state_size: Tuple[int, int], 
+
+    def __init__(self,
+                state_size: Tuple[int, int],
                 action_size: int,
                 actor_learning_rate: float = 0.0001,
                 critic_learning_rate: float = 0.001,
@@ -634,7 +696,7 @@ class DDPGAgent:
                 noise_std: float = 0.1):
         """
         Initialize the DDPG Agent.
-        
+
         Args:
             state_size: Shape of the state observation
             action_size: Dimension of the action space
@@ -650,7 +712,7 @@ class DDPGAgent:
         if action_size != 1:
             action_size = 1
             logger.warning(f"Action size set to 1 for DDPG trading agent")
-        
+
         self.state_size = state_size
         self.action_size = action_size
         self.actor_learning_rate = actor_learning_rate
@@ -660,98 +722,98 @@ class DDPGAgent:
         self.batch_size = batch_size
         self.noise_std = noise_std
         self.memory = deque(maxlen=memory_size)
-        
+
         # Optimize for GPU
         optimize_for_gpu()
-        
+
         # Build actor and critic models
         self.actor = self._build_actor()
         self.critic = self._build_critic()
         self.target_actor = self._build_actor()
         self.target_critic = self._build_critic()
-        
+
         # Copy initial weights to target networks
         self.target_actor.set_weights(self.actor.get_weights())
         self.target_critic.set_weights(self.critic.get_weights())
-        
+
         # Tracking variables
         self.actor_losses = []
         self.critic_losses = []
-    
+
     def _build_actor(self):
         """
         Build the actor network that selects actions.
-        
+
         Returns:
             model: Compiled Keras model
         """
         # Get state shape
         timesteps, features = self.state_size
-        
+
         # Input layer
         input_layer = Input(shape=(timesteps, features))
-        
+
         # Feature extraction layers
         conv1 = Conv1D(filters=64, kernel_size=3, padding='same', activation='relu')(input_layer)
         conv2 = Conv1D(filters=128, kernel_size=5, padding='same', activation='relu')(conv1)
-        
+
         # Sequential processing
         lstm1 = LSTM(128, return_sequences=True)(conv2)
         lstm2 = LSTM(64)(lstm1)
-        
+
         # Action output (-1 to 1)
         dense1 = Dense(64, activation='relu')(lstm2)
         output = Dense(self.action_size, activation='tanh')(dense1)
-        
+
         # Compile model
         model = Model(inputs=input_layer, outputs=output)
         model.compile(optimizer=Adam(learning_rate=self.actor_learning_rate))
-        
+
         return model
-    
+
     def _build_critic(self):
         """
         Build the critic network that evaluates actions.
-        
+
         Returns:
             model: Compiled Keras model
         """
         # Get state shape
         timesteps, features = self.state_size
-        
+
         # State input
         state_input = Input(shape=(timesteps, features))
-        
+
         # Action input
         action_input = Input(shape=(self.action_size,))
-        
+
         # State processing
         conv1 = Conv1D(filters=64, kernel_size=3, padding='same', activation='relu')(state_input)
         conv2 = Conv1D(filters=128, kernel_size=5, padding='same', activation='relu')(conv1)
         lstm1 = LSTM(128, return_sequences=True)(conv2)
         lstm2 = LSTM(64)(lstm1)
-        
+
         # Combine state and action
         action_dense = Dense(64, activation='relu')(action_input)
         merged = Concatenate()([lstm2, action_dense])
-        
+
         # Q-value output
         dense1 = Dense(64, activation='relu')(merged)
         output = Dense(1, activation='linear')(dense1)
-        
+
         # Compile model
         model = Model(inputs=[state_input, action_input], outputs=output)
         model.compile(
             loss='mse',
             optimizer=Adam(learning_rate=self.critic_learning_rate)
         )
-        
+
         return model
-    
+
     def remember(self, state, action, reward, next_state, done):
         """
         Store experience in replay memory.
-        
+
         Args:
             state: Current state
             action: Action taken
@@ -760,99 +822,99 @@ class DDPGAgent:
             done: Whether the episode is done
         """
         self.memory.append((state, action, reward, next_state, done))
-    
+
     def act(self, state, training=True):
         """
         Determine action based on current state.
-        
+
         Args:
             state: Current state observation
             training: Whether the agent is in training mode
-            
+
         Returns:
             action: Selected action
         """
         # Reshape state if needed
         if len(state.shape) == 2:
             state = np.expand_dims(state, axis=0)
-            
+
         # Get action from actor
         action = self.actor.predict(state, verbose=0)[0]
-        
+
         # Add exploration noise during training
         if training:
             noise = np.random.normal(0, self.noise_std, size=self.action_size)
             action = np.clip(action + noise, -1.0, 1.0)
-            
+
         return action
-    
+
     def _update_target_network(self, target_network, source_network):
         """
         Soft update target network weights.
-        
+
         Args:
             target_network: Target network to update
             source_network: Source network to get weights from
         """
         target_weights = target_network.get_weights()
         source_weights = source_network.get_weights()
-        
+
         for i in range(len(target_weights)):
             target_weights[i] = self.tau * source_weights[i] + (1 - self.tau) * target_weights[i]
-            
+
         target_network.set_weights(target_weights)
-    
+
     def replay(self, batch_size=None):
         """
         Train the models using experience replay.
-        
+
         Args:
             batch_size: Size of the training batch
-            
+
         Returns:
             loss: Dictionary with critic and actor losses
         """
         if batch_size is None:
             batch_size = self.batch_size
-            
+
         if len(self.memory) < batch_size:
             return {'critic_loss': 0, 'actor_loss': 0}
-            
+
         # Sample random batch from memory
         minibatch = random.sample(self.memory, batch_size)
-        
+
         # Extract batch data
         states = np.zeros((batch_size, *self.state_size))
         actions = np.zeros((batch_size, self.action_size))
         rewards = np.zeros((batch_size, 1))
         next_states = np.zeros((batch_size, *self.state_size))
         dones = np.zeros((batch_size, 1))
-        
+
         for i, (state, action, reward, next_state, done) in enumerate(minibatch):
             states[i] = state
             actions[i] = action
             rewards[i] = reward
             next_states[i] = next_state
             dones[i] = done
-        
+
         # Get target actions and Q-values
         target_actions = self.target_actor.predict(next_states, verbose=0)
         target_q_values = self.target_critic.predict([next_states, target_actions], verbose=0)
-        
+
         # Calculate critic targets
         critic_targets = rewards + self.gamma * target_q_values * (1 - dones)
-        
+
         # Train critic
         critic_history = self.critic.fit(
-            [states, actions], 
-            critic_targets, 
-            epochs=1, 
-            verbose=0, 
+            [states, actions],
+            critic_targets,
+            epochs=1,
+            verbose=0,
             batch_size=batch_size
         )
         critic_loss = critic_history.history['loss'][0]
         self.critic_losses.append(critic_loss)
-        
+
         # Train actor using critic gradients
         # This is done by defining a custom training function
         with tf.GradientTape() as tape:
@@ -860,30 +922,30 @@ class DDPGAgent:
             pred_actions = self.actor(states)
             # Get critic's evaluation
             actor_loss = -tf.reduce_mean(self.critic([states, pred_actions]))
-        
+
         # Get actor gradients
         actor_gradients = tape.gradient(actor_loss, self.actor.trainable_variables)
-        
+
         # Apply gradients
         self.actor.optimizer.apply_gradients(
             zip(actor_gradients, self.actor.trainable_variables)
         )
-        
+
         self.actor_losses.append(actor_loss.numpy())
-        
+
         # Update target networks
         self._update_target_network(self.target_actor, self.actor)
         self._update_target_network(self.target_critic, self.critic)
-        
+
         return {
             'critic_loss': critic_loss,
             'actor_loss': actor_loss.numpy()
         }
-    
+
     def load(self, actor_name, critic_name):
         """
         Load model weights from files.
-        
+
         Args:
             actor_name: Filename to load actor weights from
             critic_name: Filename to load critic weights from
@@ -892,11 +954,11 @@ class DDPGAgent:
         self.critic.load_weights(critic_name)
         self.target_actor.load_weights(actor_name)
         self.target_critic.load_weights(critic_name)
-    
+
     def save(self, actor_name, critic_name):
         """
         Save model weights to files.
-        
+
         Args:
             actor_name: Filename to save actor weights to
             critic_name: Filename to save critic weights to
@@ -910,8 +972,8 @@ class ReinforcementBrain(BaseBrain):
     Trading strategy brain based on reinforcement learning that adapts
     to market conditions through experience.
     """
-    
-    def __init__(self, 
+
+    def __init__(self,
                  name: str,
                  exchange: str,
                  symbol: str,
@@ -919,7 +981,7 @@ class ReinforcementBrain(BaseBrain):
                  config: Dict[str, Any] = None):
         """
         Initialize the reinforcement learning brain.
-        
+
         Args:
             name: Name of the brain
             exchange: Exchange to trade on
@@ -928,7 +990,7 @@ class ReinforcementBrain(BaseBrain):
             config: Configuration dictionary
         """
         super().__init__(name, exchange, symbol, timeframe, config)
-        
+
         # Default configuration
         self.default_config = {
             'model_type': 'dqn',  # 'dqn' or 'ddpg'
@@ -954,14 +1016,14 @@ class ReinforcementBrain(BaseBrain):
             'use_price_normalization': True,
             'replay_start_size': 1000
         }
-        
+
         # Update with provided config
         self.config = {**self.default_config, **(config or {})}
-        
+
         # Initialize feature generators
         self.technical_features = TechnicalFeatures()
         self.volatility_features = VolatilityFeatures()
-        
+
         # Initialize state
         self.agent = None
         self.env = None
@@ -977,7 +1039,7 @@ class ReinforcementBrain(BaseBrain):
         self.current_episode = 0
         self.episode_rewards = []
         self.model_updated = False
-        
+
         # Configure GPU if available
         if self.config['enable_gpu']:
             try:
@@ -985,42 +1047,42 @@ class ReinforcementBrain(BaseBrain):
                 logger.info(f"GPU optimization enabled for {self.name}")
             except Exception as e:
                 logger.warning(f"Failed to enable GPU: {str(e)}")
-        
+
         # Create model directory if it doesn't exist
         os.makedirs(self.config['model_save_dir'], exist_ok=True)
-        
+
         # Set model paths
         self.model_prefix = f"{self.exchange}_{self.symbol}_{self.timeframe}"
         if self.config['model_type'] == 'dqn':
             self.model_path = os.path.join(
-                self.config['model_save_dir'], 
+                self.config['model_save_dir'],
                 f"{self.model_prefix}_dqn.h5"
             )
         else:
             self.actor_path = os.path.join(
-                self.config['model_save_dir'], 
+                self.config['model_save_dir'],
                 f"{self.model_prefix}_ddpg_actor.h5"
             )
             self.critic_path = os.path.join(
-                self.config['model_save_dir'], 
+                self.config['model_save_dir'],
                 f"{self.model_prefix}_ddpg_critic.h5"
             )
-        
+
         logger.info(f"Initialized {self.__class__.__name__} for {exchange}:{symbol}:{timeframe}")
-    
+
     def preprocess_data(self, data: pd.DataFrame) -> pd.DataFrame:
         """
         Preprocess raw OHLCV data to create features.
-        
+
         Args:
             data: Raw OHLCV data
-            
+
         Returns:
             processed_data: Data with additional features
         """
         # Clone the data to avoid modifying the original
         df = data.copy()
-        
+
         # Add technical features
         for feature in self.config['technical_features']:
             try:
@@ -1032,7 +1094,7 @@ class ReinforcementBrain(BaseBrain):
             except Exception as e:
                 logger.error(f"Error calculating {feature}: {str(e)}")
                 logger.error(traceback.format_exc())
-        
+
         # Add volatility features
         for feature in self.config['volatility_features']:
             try:
@@ -1044,34 +1106,34 @@ class ReinforcementBrain(BaseBrain):
             except Exception as e:
                 logger.error(f"Error calculating {feature}: {str(e)}")
                 logger.error(traceback.format_exc())
-        
+
         # Drop rows with NaN values
         df = df.dropna()
-        
+
         # Normalize price-related features if enabled
         if self.config['use_price_normalization']:
             # Find columns that might be price-related
             price_cols = [col for col in df.columns if any(
-                substring in col.lower() for substring in 
+                substring in col.lower() for substring in
                 ['price', 'open', 'high', 'low', 'close', 'volume']
             )]
-            
+
             # Normalize by dividing by the first value
             for col in price_cols:
                 if col in df.columns and df[col].dtype in [np.float64, np.float32, np.int64, np.int32]:
                     first_valid = df[col].iloc[0]
                     if first_valid != 0:
                         df[col] = df[col] / first_valid
-        
+
         # Store the preprocessed data
         self.feature_data = df
-        
+
         return df
-    
+
     def initialize_environment(self, data: pd.DataFrame):
         """
         Initialize the trading environment with preprocessed data.
-        
+
         Args:
             data: Preprocessed data with features
         """
@@ -1086,14 +1148,14 @@ class ReinforcementBrain(BaseBrain):
             use_position_info=self.config['use_position_info'],
             action_type=self.config['action_type']
         )
-        
+
         # Reset the environment to get initial state
         initial_state, _ = self.env.reset()
         self.current_state = initial_state
-        
+
         # Determine state and action dimensions
         state_shape = initial_state.shape
-        
+
         # Initialize the agent based on model type
         if self.config['model_type'] == 'dqn':
             flat_state = state_shape[0] * state_shape[1]
@@ -1121,10 +1183,10 @@ class ReinforcementBrain(BaseBrain):
                 memory_size=self.config['memory_size'],
                 noise_std=0.1
             )
-        
+
         # Load existing model if available
         self._load_model()
-    
+
     def _load_model(self):
         """
         Attempt to load saved model weights if they exist.
@@ -1145,7 +1207,7 @@ class ReinforcementBrain(BaseBrain):
         except Exception as e:
             logger.error(f"Failed to load model: {str(e)}")
             logger.error(traceback.format_exc())
-    
+
     def _save_model(self):
         """
         Save the current model weights.
@@ -1161,25 +1223,25 @@ class ReinforcementBrain(BaseBrain):
         except Exception as e:
             logger.error(f"Failed to save model: {str(e)}")
             logger.error(traceback.format_exc())
-    
+
     def train(self, data: pd.DataFrame, episodes: int = 10) -> Dict[str, Any]:
         """
         Train the reinforcement learning agent on historical data.
-        
+
         Args:
             data: Historical OHLCV data
             episodes: Number of training episodes
-            
+
         Returns:
             metrics: Training performance metrics
         """
         # Preprocess data
         processed_data = self.preprocess_data(data)
-        
+
         # Initialize environment if not already done
         if self.env is None or self.agent is None:
             self.initialize_environment(processed_data)
-        
+
         # Training metrics
         metrics = {
             'episode_rewards': [],
@@ -1189,27 +1251,27 @@ class ReinforcementBrain(BaseBrain):
             'sharpe_ratio': 0,
             'max_drawdown': 0
         }
-        
+
         # Training loop
         for episode in range(episodes):
             self.current_episode = episode
             # Reset environment
             state, _ = self.env.reset()
             self.current_state = state
-            
+
             done = False
             episode_reward = 0
             trades = []
-            
+
             # Run one episode
             while not done:
                 # Select action
                 action = self.agent.select_action(state, test_mode=False)
-                
+
                 # Take action
                 next_state, reward, terminated, truncated, info = self.env.step(action)
                 done = terminated or truncated
-                
+
                 # Store in replay memory
                 if self.config['model_type'] == 'dqn':
                     self.agent.store_transition(state, action, reward, next_state, done)
@@ -1218,12 +1280,12 @@ class ReinforcementBrain(BaseBrain):
                     if not isinstance(action, np.ndarray):
                         action = np.array([action])
                     self.agent.remember(state, action, reward, next_state, done)
-                
+
                 # Update state
                 state = next_state
                 self.current_state = state
                 episode_reward += reward
-                
+
                 # Train if we have enough samples
                 if len(self.agent.memory) > self.config['replay_start_size']:
                     loss = self.agent.update_model()
@@ -1232,62 +1294,62 @@ class ReinforcementBrain(BaseBrain):
                     else:
                         metrics['losses'].append(loss)
                     self.training_steps += 1
-                
+
                 # Record trade if action resulted in a trade
                 if info.get('trades', 0) > len(trades):
                     trades.append(info)
-            
+
             # Episode completed
             metrics['episode_rewards'].append(episode_reward)
             metrics['final_portfolio_values'].append(info['portfolio_value'])
-            
+
             # Log episode results
             logger.info(f"Episode {episode+1}/{episodes}: Reward={episode_reward:.2f}, "
                        f"Final Value=${info['portfolio_value']:.2f}, "
                        f"Trades={len(trades)}")
-            
+
             # Save model periodically
             if (episode + 1) % 5 == 0 or episode == episodes - 1:
                 self._save_model()
-        
+
         # Calculate performance metrics
         if len(metrics['final_portfolio_values']) > 0:
             # Filter trades that have profit data
             if hasattr(self.env, 'trades') and len(self.env.trades) > 0:
-                profitable_trades = sum(1 for t in self.env.trades if 
+                profitable_trades = sum(1 for t in self.env.trades if
                                       (t['type'] == 'sell' and t['price'] > self.env.entry_price))
                 total_trades = len(self.env.trades)
                 metrics['win_rate'] = profitable_trades / total_trades if total_trades > 0 else 0
-            
+
             # Calculate Sharpe ratio if we have enough portfolio values
             if len(self.env.portfolio_values) > 2:
                 returns = np.diff(self.env.portfolio_values) / self.env.portfolio_values[:-1]
                 metrics['sharpe_ratio'] = calculate_sharpe_ratio(returns)
                 metrics['max_drawdown'] = calculate_max_drawdown(self.env.portfolio_values)
-        
+
         # Update state
         self.is_trained = True
         self.episode_rewards = metrics['episode_rewards']
-        
+
         return metrics
-    
+
     def analyze(self, data: pd.DataFrame) -> pd.DataFrame:
         """
         Analyze market data using the reinforcement learning model.
-        
+
         Args:
             data: OHLCV data to analyze
-            
+
         Returns:
             analysis: DataFrame with analysis results including signals
         """
         # Preprocess data
         processed_data = self.preprocess_data(data)
-        
+
         # Initialize environment if not already done
         if self.env is None or self.agent is None:
             self.initialize_environment(processed_data)
-        
+
         # Create environment for analysis (no training)
         analysis_env = TradingEnvironment(
             data=processed_data,
@@ -1299,16 +1361,16 @@ class ReinforcementBrain(BaseBrain):
             use_position_info=self.config['use_position_info'],
             action_type=self.config['action_type']
         )
-        
+
         # Reset environment
         state, _ = analysis_env.reset()
-        
+
         # Analysis results
         actions = []
         rewards = []
         portfolio_values = []
         positions = []
-        
+
         # Run through all data points
         done = False
         while not done:
@@ -1318,7 +1380,7 @@ class ReinforcementBrain(BaseBrain):
             # Take action
             next_state, reward, terminated, truncated, info = analysis_env.step(action)
             done = terminated or truncated
-            
+
             # Record results
             if self.config['action_type'] == 'discrete':
                 # Convert discrete action to signal
@@ -1331,18 +1393,18 @@ class ReinforcementBrain(BaseBrain):
             else:
                 # Convert continuous action to signal
                 signal = float(action[0])  # -1.0 to 1.0
-            
+
             actions.append(signal)
             rewards.append(reward)
             portfolio_values.append(info['portfolio_value'])
             positions.append(info['position'])
-            
+
             # Update state
             state = next_state
-        
+
         # Create analysis DataFrame
         analysis = data.copy()
-        
+
         # Add analysis results
         analysis_start_idx = self.config['window_size']
         if len(analysis) >= analysis_start_idx + len(actions):
@@ -1350,37 +1412,37 @@ class ReinforcementBrain(BaseBrain):
             analysis.loc[analysis.index[analysis_start_idx:analysis_start_idx + len(actions)], 'reward'] = rewards
             analysis.loc[analysis.index[analysis_start_idx:analysis_start_idx + len(actions)], 'portfolio_value'] = portfolio_values
             analysis.loc[analysis.index[analysis_start_idx:analysis_start_idx + len(actions)], 'position'] = positions
-        
+
         # Fill NaN values
         analysis['signal'] = analysis['signal'].fillna(0)
         analysis['reward'] = analysis['reward'].fillna(0)
         analysis['portfolio_value'] = analysis['portfolio_value'].fillna(1000.0)
         analysis['position'] = analysis['position'].fillna(0)
-        
+
         return analysis
-    
+
     def update(self, data: pd.DataFrame) -> Dict[str, Any]:
         """
         Update the brain with new data and optionally train.
-        
+
         Args:
             data: New OHLCV data
-            
+
         Returns:
             update_info: Information about the update
         """
         # Preprocess new data
         processed_data = self.preprocess_data(data)
-        
+
         # Initialize environment if not already done
         if self.env is None or self.agent is None:
             self.initialize_environment(processed_data)
-        
+
         # Update state
         try:
             # Get current candle features
             current_features = processed_data.iloc[-1]
-            
+
             # If training is enabled, perform online training
             if self.config['enable_training']:
                 # If we have a current state and last action, we can update
@@ -1392,38 +1454,38 @@ class ReinforcementBrain(BaseBrain):
                         reward = (self.last_price - current_features['close']) / self.last_price
                     else:  # No position
                         reward = 0
-                    
+
                     # Apply transaction fee penalty for trades
                     if self.last_signal != self.last_last_signal:
                         reward -= self.config['transaction_fee']
-                    
+
                     # Create next state (simplified)
                     next_state = self.current_state.copy()
                     next_state = np.roll(next_state, -1, axis=0)
                     next_state[-1] = current_features[self.feature_data.columns].values
-                    
+
                     # Store in replay memory
                     self.agent.store_transition(self.current_state, self.last_action, reward, next_state, False)
-                    
+
                     # Periodically train if we have enough samples
                     self.step_counter += 1
-                    if (self.step_counter % self.config['training_frequency'] == 0 and 
+                    if (self.step_counter % self.config['training_frequency'] == 0 and
                         len(self.agent.memory) > self.config['replay_start_size']):
                         loss = self.agent.update_model()
                         self.training_steps += 1
-                        
+
                         # Save model periodically
                         if self.training_steps % 100 == 0:
                             self._save_model()
-                    
+
                     # Update current state
                     self.current_state = next_state
                     self.total_reward += reward
-            
+
             # Generate prediction for new data
             if self.current_state is not None:
                 action = self.agent.select_action(self.current_state, test_mode=True)
-                
+
                 # Convert action to signal
                 if self.config['action_type'] == 'discrete':
                     if action == 0:  # Sell
@@ -1434,7 +1496,7 @@ class ReinforcementBrain(BaseBrain):
                         signal = 0
                 else:
                     signal = float(action[0])  # -1.0 to 1.0
-                
+
                 # Store for next update
                 self.last_last_signal = self.last_signal
                 self.last_signal = signal
@@ -1442,12 +1504,12 @@ class ReinforcementBrain(BaseBrain):
                 self.last_price = current_features['close']
             else:
                 signal = 0
-        
+
         except Exception as e:
             logger.error(f"Error updating reinforcement brain: {str(e)}")
             logger.error(traceback.format_exc())
             signal = 0
-        
+
         # Return information about the update
         update_info = {
             'signal': signal,
@@ -1457,25 +1519,25 @@ class ReinforcementBrain(BaseBrain):
             'total_reward': self.total_reward,
             'model_updated': self.model_updated
         }
-        
+
         # Reset model updated flag
         self.model_updated = False
-        
+
         return update_info
-    
+
     def get_signal(self, data: pd.DataFrame) -> Dict[str, Any]:
         """
         Generate a trading signal for the current market data.
-        
+
         Args:
             data: Current OHLCV data
-            
+
         Returns:
             signal_info: Trading signal information
         """
         # Update brain with new data
         update_info = self.update(data)
-        
+
         # Enhanced signal information
         signal_info = {
             'signal': update_info['signal'],
@@ -1495,12 +1557,12 @@ class ReinforcementBrain(BaseBrain):
                 'current_episode': self.current_episode
             }
         }
-        
+
         # Add risk analysis
         try:
             # Calculate potential risk/reward
             last_close = data['close'].iloc[-1]
-            
+
             # If we have volatility features, use them for risk estimation
             if 'atr' in data.columns:
                 atr = data['atr'].iloc[-1]
@@ -1516,31 +1578,31 @@ class ReinforcementBrain(BaseBrain):
                     'take_profit': last_close * 1.03 if signal_info['signal'] > 0 else last_close * 0.97,
                     'risk_reward_ratio': 1.5  # 3%/2%
                 }
-            
+
             signal_info['risk_analysis'] = risk_info
-            
+
         except Exception as e:
             logger.error(f"Error calculating risk analysis: {str(e)}")
-        
+
         return signal_info
-    
+
     def save(self) -> bool:
         """
         Save the brain's state and model.
-        
+
         Returns:
             success: Whether the save was successful
         """
         try:
             # Save model weights
             self._save_model()
-            
+
             # Save brain state
             state_path = os.path.join(
-                self.config['model_save_dir'], 
+                self.config['model_save_dir'],
                 f"{self.model_prefix}_state.json"
             )
-            
+
             state = {
                 'is_trained': self.is_trained,
                 'training_steps': self.training_steps,
@@ -1551,36 +1613,36 @@ class ReinforcementBrain(BaseBrain):
                 'episode_rewards': self.episode_rewards,
                 'config': self.config
             }
-            
+
             with open(state_path, 'w') as f:
                 json.dump(state, f)
-            
+
             logger.info(f"Saved brain state to {state_path}")
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to save brain state: {str(e)}")
             logger.error(traceback.format_exc())
             return False
-    
+
     def load(self) -> bool:
         """
         Load the brain's state and model.
-        
+
         Returns:
             success: Whether the load was successful
         """
         try:
             # Load brain state
             state_path = os.path.join(
-                self.config['model_save_dir'], 
+                self.config['model_save_dir'],
                 f"{self.model_prefix}_state.json"
             )
-            
+
             if os.path.exists(state_path):
                 with open(state_path, 'r') as f:
                     state = json.load(f)
-                
+
                 self.is_trained = state.get('is_trained', False)
                 self.training_steps = state.get('training_steps', 0)
                 self.total_reward = state.get('total_reward', 0)
@@ -1588,20 +1650,20 @@ class ReinforcementBrain(BaseBrain):
                 self.last_price = state.get('last_price')
                 self.current_episode = state.get('current_episode', 0)
                 self.episode_rewards = state.get('episode_rewards', [])
-                
+
                 # Update config with saved values if any
                 if 'config' in state:
                     for key, value in state['config'].items():
                         if key in self.config:
                             self.config[key] = value
-                
+
                 logger.info(f"Loaded brain state from {state_path}")
-            
+
             # Load model weights
             self._load_model()
-            
+
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to load brain state: {str(e)}")
             logger.error(traceback.format_exc())
@@ -1613,24 +1675,24 @@ if __name__ == "__main__":
     import pandas as pd
     import numpy as np
     from datetime import datetime, timedelta
-    
+
     # Create sample OHLCV data
     n = 1000
     np.random.seed(42)
     dates = [datetime.now() - timedelta(minutes=i) for i in range(n, 0, -1)]
-    
+
     # Create a trending market with some noise
     close = np.cumsum(np.random.normal(0, 1, n)) + 1000
     # Add a trend
     close = close + np.linspace(0, 50, n)
     # Add seasonality
     close = close + 20 * np.sin(np.linspace(0, 8 * np.pi, n))
-    
+
     high = close + np.random.normal(0, 5, n)
     low = close - np.random.normal(0, 5, n)
     open_price = close - np.random.normal(0, 2, n)
     volume = np.random.normal(1000, 100, n) + 200 * np.sin(np.linspace(0, 6 * np.pi, n)) + 1000
-    
+
     df = pd.DataFrame({
         'timestamp': dates,
         'open': open_price,
@@ -1639,7 +1701,7 @@ if __name__ == "__main__":
         'close': close,
         'volume': volume
     })
-    
+
     # Initialize and test the reinforcement brain
     config = {
         'model_type': 'dqn',
@@ -1648,7 +1710,7 @@ if __name__ == "__main__":
         'batch_size': 32,
         'model_save_dir': './test_models'
     }
-    
+
     brain = ReinforcementBrain(
         name="TestReinforcementBrain",
         exchange="binance",
@@ -1656,20 +1718,20 @@ if __name__ == "__main__":
         timeframe="1h",
         config=config
     )
-    
+
     # Train on historical data
     train_data = df.iloc[:-100]
     metrics = brain.train(train_data, episodes=5)
     print(f"Training metrics: {metrics}")
-    
+
     # Analyze recent data
     test_data = df.iloc[-150:]
     analysis = brain.analyze(test_data)
     print(f"Analysis results: {analysis.tail()}")
-    
+
     # Get current signal
     signal_info = brain.get_signal(df.iloc[-50:])
     print(f"Current signal: {signal_info}")
-    
+
     # Save the brain
     brain.save()
