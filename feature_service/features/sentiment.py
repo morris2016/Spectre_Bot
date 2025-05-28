@@ -128,6 +128,15 @@ class SentimentFeatures(BaseFeature):
             'discord': 0.45
         }
         logger.info("SentimentFeatures initialized")
+
+    async def calculate(self, data, **kwargs):
+        """Return a simple sentiment score for the provided symbol."""
+        symbol = kwargs.get("symbol")
+        if symbol is None and hasattr(data, "columns") and "symbol" in data.columns:
+            symbol = data["symbol"].iloc[0]
+        symbol = symbol or "UNKNOWN"
+        result = self.analyze_sentiment(symbol, lookback_hours=kwargs.get("lookback_hours", 24))
+        return pd.DataFrame({"sentiment_score": [result.compound_score]}, index=[0])
     
     def analyze_sentiment(self, symbol: str, 
                          lookback_hours: int = 24,
