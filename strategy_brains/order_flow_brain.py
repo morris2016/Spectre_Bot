@@ -35,6 +35,7 @@ from data_storage.market_data import MarketDataStorage
 try:
     from feature_service.features.order_flow import (
         OrderFlowFeatures, VolumeProfileFeatures, OrderBookFeatures
+
     )
 except Exception:  # pragma: no cover - optional dependency
     from feature_service.features.order_flow import OrderFlowFeatures
@@ -183,13 +184,13 @@ class OrderFlowBrain(StrategyBrain):
             )
 
             if len(candles) < 10:  # Need some minimum data
-                self.logger.warning(f"Insufficient historical data for initialization")
+                self.logger.warning("Insufficient historical data for initialization")
                 return False
 
             # Initialize order book state
             orderbook = await self.market_data.get_order_book_snapshot(self.asset_id)
             if not orderbook:
-                self.logger.warning(f"Could not retrieve order book snapshot")
+                self.logger.warning("Could not retrieve order book snapshot")
                 return False
 
             # Process historical data
@@ -210,6 +211,7 @@ class OrderFlowBrain(StrategyBrain):
             self.last_update_time = datetime.now()
 
             self.logger.info(f"OrderFlowBrain initialization completed successfully")
+
             return True
 
         except Exception as e:
@@ -232,7 +234,7 @@ class OrderFlowBrain(StrategyBrain):
         # Check for session boundary
         candle_date = datetime.fromtimestamp(candle['timestamp'] / 1000).date()
         if self.params["session_reset"] and self.last_session_date and candle_date != self.last_session_date:
-            self.logger.info(f"New trading session detected, resetting session-specific data")
+            self.logger.info("New trading session detected, resetting session-specific data")
             await self._reset_session_data()
 
         self.last_session_date = candle_date
@@ -393,6 +395,7 @@ class OrderFlowBrain(StrategyBrain):
             performance_metrics: Dictionary with performance metrics
         """
         self.logger.info(f"Updating OrderFlowBrain parameters based on performance metrics")
+
 
         # Store performance metrics
         self.performance_metrics = performance_metrics
@@ -609,8 +612,8 @@ class OrderFlowBrain(StrategyBrain):
 
         # Save final state metrics
         try:
-            state = await self.save_state()
-            self.logger.info(f"Final state saved during shutdown")
+            await self.save_state()
+            self.logger.info("Final state saved during shutdown")
         except Exception as e:
             self.logger.error(f"Error saving state during shutdown: {str(e)}")
 
@@ -1755,4 +1758,14 @@ class OrderFlowBrain(StrategyBrain):
                 self.logger.info(f"Loaded saved state for {self.asset_id} on {self.timeframe}")
         except Exception as e:
             self.logger.warning(f"Could not load saved state: {str(e)}")
+
+    async def generate_signals(self) -> List[Dict[str, Any]]:
+        """Wrapper to provide list-based API."""
+
+        signal = await self.generate_signal()
+        return [signal] if signal else []
+
+    async def on_regime_change(self, new_regime: str) -> None:
+        """Handle external regime change notifications."""
+        self.logger.info(f"Regime changed to {new_regime}")
 

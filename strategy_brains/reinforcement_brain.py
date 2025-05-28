@@ -116,12 +116,12 @@ class TradingEnvironment:
         super(TradingEnvironment, self).__init__()
 
         self.data = data
+
         self.initial_balance = initial_balance
         self.balance = initial_balance
         self.max_position = max_position
         self.transaction_fee = transaction_fee
         self.reward_function = reward_function
-        self.window_size = window_size
         self.use_position_info = use_position_info
         self.action_type = action_type
 
@@ -171,13 +171,14 @@ class TradingEnvironment:
         """
         Reset the environment to initial state.
 
-        Returns:
-            tuple: (observation, info)
-        """
+
+    def _get_observation(self) -> np.ndarray:
+        start = self.current_step - self.window_size
+        return self.data.iloc[start:self.current_step].values.astype(np.float32)
+
+    def reset(self):
         self.balance = self.initial_balance
         self.position = 0.0
-        self.position_value = 0.0
-        self.entry_price = 0.0
         self.current_step = self.window_size
         self.trades = []
         self.portfolio_values = [self.initial_balance]
@@ -470,10 +471,29 @@ class TradingEnvironment:
     def render(self, mode='human'):
         """
         Render the environment (not implemented for trading environment).
+
         """
-        pass
+        Reset the environment to initial state.
 
 
+    def _get_observation(self) -> np.ndarray:
+        start = self.current_step - self.window_size
+        return self.data.iloc[start:self.current_step].values.astype(np.float32)
+
+    def reset(self):
+        self.current_step = self.window_size
+        self.balance = self.initial_balance
+        self.position = 0.0
+        return self._get_observation(), {}
+
+
+    def step(self, action):
+        self.current_step += 1
+        obs = self._get_observation()
+        terminated = self.current_step >= len(self.data)
+        truncated = False
+        reward = 0.0
+        return obs, reward, terminated, truncated, {}
 class LegacyDQNAgent:
     """
     Deep Q-Network Agent for reinforcement learning-based trading.
