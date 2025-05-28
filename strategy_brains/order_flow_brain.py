@@ -164,6 +164,16 @@ class OrderFlowBrain(StrategyBrain):
         }
         
         self.logger.info(f"OrderFlowBrain initialization complete")
+
+    async def generate_signals(self) -> List[Dict[str, Any]]:
+        """Produce at most one signal using :meth:`generate_signal`."""
+        signal = await self.generate_signal()
+        return [signal] if signal else []
+
+    async def on_regime_change(self, new_regime: str) -> None:
+        """Reset internal state on regime change."""
+        self.logger.info(f"Regime changed to {new_regime}. Resetting state.")
+        await self.reset_session_data()
     
     async def initialize(self) -> bool:
         """

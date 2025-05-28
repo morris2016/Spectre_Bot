@@ -81,6 +81,7 @@ class TradingEnvironment:
         self.data = data.reset_index(drop=True)
         self.window_size = window_size
         self.current_step = window_size
+
         self.initial_balance = initial_balance
         self.balance = initial_balance
         self.max_position = max_position
@@ -99,6 +100,7 @@ class TradingEnvironment:
         self.balance = self.initial_balance
         self.position = 0.0
         return self._get_observation(), {}
+
 
     def step(self, action):
         self.current_step += 1

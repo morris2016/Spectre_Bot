@@ -128,6 +128,12 @@ class SentimentFeatures(BaseFeature):
             'discord': 0.45
         }
         logger.info("SentimentFeatures initialized")
+
+    async def calculate(self, symbol: str, **kwargs) -> SentimentAnalysisResult:
+        """Return sentiment analysis for *symbol* using :meth:`analyze_sentiment`."""
+        lookback = int(kwargs.get("lookback_hours", 24))
+        include_sources = kwargs.get("include_sources")
+        return self.analyze_sentiment(symbol, lookback, include_sources)
     
     def analyze_sentiment(self, symbol: str, 
                          lookback_hours: int = 24,
