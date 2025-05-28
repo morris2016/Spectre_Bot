@@ -80,7 +80,6 @@ class TradingEnvironment:
     ) -> None:
         self.data = data.reset_index(drop=True)
         self.window_size = window_size
-        self.current_step = window_size
         self.initial_balance = initial_balance
         self.balance = initial_balance
         self.position = 0.0
@@ -173,25 +172,23 @@ class TradingEnvironment:
     def reset(self):
         """
         Reset the environment to initial state.
-
-
-    def _get_observation(self) -> np.ndarray:
-        start = self.current_step - self.window_size
-        return self.data.iloc[start:self.current_step].values.astype(np.float32)
-
-    def reset(self):
+        Returns:
+            tuple: (observation, info)
+        """
         self.balance = self.initial_balance
         self.position = 0.0
+        self.position_value = 0.0
+        self.entry_price = 0.0
         self.current_step = self.window_size
         self.trades = []
         self.portfolio_values = [self.initial_balance]
-
+        
         return self._get_observation(), {}
-
+    
     def _get_observation(self):
         """
         Construct the current state observation.
-
+        
         Returns:
             observation: Current state features
         """
@@ -209,16 +206,16 @@ class TradingEnvironment:
                 normalized_entry_price = (current_price - self.entry_price) / current_price
             else:
                 normalized_entry_price = 0
-
+            
             position_info[:, 1] = normalized_entry_price
 
             # Combine features with position info
             observation = np.hstack((features, position_info))
         else:
             observation = features
-
+            
         return observation.astype(np.float32)
-
+    
     def _calculate_reward(self, action, prev_portfolio_value, current_portfolio_value):
         """
         Calculate reward based on selected reward function.
@@ -239,7 +236,7 @@ class TradingEnvironment:
             # Approximate Sharpe ratio based on recent returns
             if len(self.portfolio_values) < 20:
                 return 0
-
+                
             # Calculate returns for last 20 steps
             returns = np.diff(self.portfolio_values[-20:]) / self.portfolio_values[-21:-1]
 
@@ -252,7 +249,7 @@ class TradingEnvironment:
             # Risk-adjusted return that penalizes large drawdowns
             if len(self.portfolio_values) < 5:
                 return 0
-
+                
             # Calculate return
             ret = (current_portfolio_value - prev_portfolio_value) / prev_portfolio_value
 
@@ -266,20 +263,21 @@ class TradingEnvironment:
                     peak = value
                 drawdown = (peak - value) / peak
                 max_drawdown = max(max_drawdown, drawdown)
-
+            
             # Penalize return by drawdown factor
             return ret - (max_drawdown * 2)
-
+            
         else:
             # Default to simple difference
             return current_portfolio_value - prev_portfolio_value
-
+    
     def step(self, action):
         """
         Execute one step in the environment.
-
+        
         Args:
             action: Action to take (buy/hold/sell or continuous value)
+            
 
         Returns:
             observation: New state
@@ -290,11 +288,10 @@ class TradingEnvironment:
         """
         if self.current_step >= len(self.data) - 1:
             terminated = True
-            return self._get_observation(), 0, terminated, False, {}
-
+            return self._get_observation(), 0, terminated, False, {}        
         # Get current price data
         current_price = self.data.iloc[self.current_step]['close']
-
+        
         # Calculate portfolio value before trade
         prev_portfolio_value = self.balance + self.position_value
 
@@ -303,26 +300,27 @@ class TradingEnvironment:
             self._process_discrete_action(action, current_price)
         else:
             self._process_continuous_action(action, current_price)
-
+        
         # Move to next step
         self.current_step += 1
-
+        
         # Get new price after action
         new_price = self.data.iloc[self.current_step]['close']
-
+        
         # Update position value
         if self.position != 0:
             self.position_value = self.position * new_price
-
+        
         # Calculate total portfolio value
         portfolio_value = self.balance + self.position_value
         self.portfolio_values.append(portfolio_value)
-
+        
         # Calculate reward
         reward = self._calculate_reward(action, prev_portfolio_value, portfolio_value)
-
+        
         # Check if done
         done = self.current_step >= len(self.data) - 1
+        
 
         # Information dictionary
         info = {
@@ -333,12 +331,151 @@ class TradingEnvironment:
             'trades': len(self.trades),
             'timestamp': self.data.iloc[self.current_step]['timestamp']
         }
-
+        
         terminated = done
         truncated = False
-        reward = 0.0
-        return obs, reward, terminated, truncated, {}
+        return self._get_observation(), reward, terminated, truncated, info
     
+    def _process_discrete_action(self, action, current_price):
+        """
+        Process a discrete action (sell/hold/buy).
+        
+        Args:
+            action: Discrete action (0=sell, 1=hold, 2=buy)
+            current_price: Current asset price
+        """
+        if action == 0:  # Sell
+            if self.position > 0:
+                # Calculate sale value after fees
+                sale_value = self.position * current_price * (1 - self.transaction_fee)
+                self.balance += sale_value
+                
+                # Record trade
+                self.trades.append({
+                    'type': 'sell',
+                    'step': self.current_step,
+                    'price': current_price,
+                    'amount': self.position,
+                    'value': sale_value,
+                    'fee': self.position * current_price * self.transaction_fee
+                })
+                
+                # Clear position
+                self.position = 0
+                self.position_value = 0
+                self.entry_price = 0
+        
+        elif action == 2:  # Buy
+            if self.position < self.max_position * self.balance / current_price:
+                # Calculate how much to buy (target a position of max_position)
+                target_position = self.max_position * self.balance / current_price
+                amount_to_buy = min(target_position - self.position, 
+                                   self.balance / (current_price * (1 + self.transaction_fee)))
+                
+                if amount_to_buy > 0:
+                    # Calculate cost including fees
+                    cost = amount_to_buy * current_price * (1 + self.transaction_fee)
+                    self.balance -= cost
+                    
+                    # Update position
+                    if self.position == 0:
+                        self.entry_price = current_price
+                    else:
+                        # Calculate weighted average entry price
+                        self.entry_price = (self.entry_price * self.position + 
+                                          current_price * amount_to_buy) / (self.position + amount_to_buy)
+                    
+                    self.position += amount_to_buy
+                    self.position_value = self.position * current_price
+                    
+                    # Record trade
+                    self.trades.append({
+                        'type': 'buy',
+                        'step': self.current_step,
+                        'price': current_price,
+                        'amount': amount_to_buy,
+                        'value': amount_to_buy * current_price,
+                        'fee': amount_to_buy * current_price * self.transaction_fee
+                    })
+    
+    def _process_continuous_action(self, action, current_price):
+        """
+        Process a continuous action from -1.0 to 1.0.
+        
+        Args:
+            action: Continuous action value
+            current_price: Current asset price
+        """
+        # Convert continuous action to target position (-1.0 = fully short, 1.0 = fully long)
+        target_position = float(action[0]) * self.max_position * self.balance / current_price
+        
+        # Calculate position difference
+        position_diff = target_position - self.position
+        
+        if position_diff > 0:  # Buy
+            amount_to_buy = min(position_diff, 
+                              self.balance / (current_price * (1 + self.transaction_fee)))
+            
+            if amount_to_buy > 0:
+                # Calculate cost including fees
+                cost = amount_to_buy * current_price * (1 + self.transaction_fee)
+                self.balance -= cost
+                
+                # Update position
+                if self.position == 0:
+                    self.entry_price = current_price
+                else:
+                    # Calculate weighted average entry price
+                    self.entry_price = (self.entry_price * self.position + 
+                                      current_price * amount_to_buy) / (self.position + amount_to_buy)
+                
+                self.position += amount_to_buy
+                self.position_value = self.position * current_price
+                
+                # Record trade
+                self.trades.append({
+                    'type': 'buy',
+                    'step': self.current_step,
+                    'price': current_price,
+                    'amount': amount_to_buy,
+                    'value': amount_to_buy * current_price,
+                    'fee': amount_to_buy * current_price * self.transaction_fee
+                })
+                
+        elif position_diff < 0:  # Sell
+            amount_to_sell = min(abs(position_diff), self.position)
+            
+            if amount_to_sell > 0:
+                # Calculate sale value after fees
+                sale_value = amount_to_sell * current_price * (1 - self.transaction_fee)
+                self.balance += sale_value
+                
+                # Record trade
+                self.trades.append({
+                    'type': 'sell',
+                    'step': self.current_step,
+                    'price': current_price,
+                    'amount': amount_to_sell,
+                    'value': sale_value,
+                    'fee': amount_to_sell * current_price * self.transaction_fee
+                })
+                
+                # Update position
+                self.position -= amount_to_sell
+                if self.position <= 1e-9:  # Account for floating point errors
+                    self.position = 0
+                    self.position_value = 0
+                    self.entry_price = 0
+                else:
+                    self.position_value = self.position * current_price
+    
+    def render(self, mode='human'):
+        """
+        Render the environment (not implemented for trading environment).
+        """
+        pass
+
+
 
 class LegacyDQNAgent:
     """
