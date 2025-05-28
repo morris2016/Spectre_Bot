@@ -399,6 +399,13 @@ class DQNAgent(RLAgent):
             self.weights[:, action] += self.learning_rate * (target - q_current) * state
         return 0.0
 
+    def train_step(self) -> None:
+        """Execute a single training iteration."""
+        loss = self.update_model()
+        if TORCH_AVAILABLE and loss is not None:
+            for t_param, param in zip(self.target_net.parameters(), self.policy_net.parameters()):
+                t_param.data.copy_((1 - self.tau) * t_param.data + self.tau * param.data)
+
 
     def save(self, path: str) -> None:
         if TORCH_AVAILABLE:
@@ -428,7 +435,8 @@ class DQNAgent(RLAgent):
                 path,
             )
         else:
-            np.save(path, self.weights)
+            with open(path, "wb") as f:
+                np.save(f, self.weights)
 
     def load(self, path: str) -> None:
         if TORCH_AVAILABLE:
@@ -438,4 +446,5 @@ class DQNAgent(RLAgent):
             self.optimizer.load_state_dict(checkpoint["optimizer"])
             self.steps_done = checkpoint["steps_done"]
         else:
-            self.weights = np.load(path)
+            with open(path, "rb") as f:
+                self.weights = np.load(f)

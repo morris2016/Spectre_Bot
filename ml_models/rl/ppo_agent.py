@@ -200,7 +200,8 @@ class PPOAgent(RLAgent):
                 path,
             )
         else:
-            np.savez(path, policy=self.policy.weights, value=self.value.weights)
+            with open(path, "wb") as f:
+                np.savez(f, policy=self.policy.weights, value=self.value.weights)
 
     def load(self, path: str) -> None:
         if TORCH_AVAILABLE:
@@ -209,6 +210,7 @@ class PPOAgent(RLAgent):
             self.value.load_state_dict(checkpoint["value"])
             self.optimizer.load_state_dict(checkpoint["optimizer"])
         else:
-            data = np.load(path)
-            self.policy.weights = data["policy"]
-            self.value.weights = data["value"]
+            with open(path, "rb") as f:
+                data = np.load(f)
+                self.policy.weights = data["policy"]
+                self.value.weights = data["value"]

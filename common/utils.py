@@ -660,6 +660,27 @@ def exponential_moving_average(data: List[Union[float, int]], span: int) -> List
     return result
 
 
+def normalize_data(sequence: Sequence[float]) -> List[float]:
+    """Normalize a numeric sequence to the range [0, 1]."""
+    arr = np.asarray(sequence, dtype=float)
+    if arr.size == 0:
+        return []
+    min_v = arr.min()
+    max_v = arr.max()
+    if min_v == max_v:
+        return [0.0 for _ in arr]
+    return ((arr - min_v) / (max_v - min_v)).tolist()
+
+
+def calculate_dynamic_threshold(data: Sequence[float], window: int = 100, multiplier: float = 1.5) -> float:
+    """Calculate a simple dynamic threshold using rolling mean and std."""
+    arr = np.asarray(data, dtype=float)
+    if arr.size == 0:
+        return 0.0
+    window_data = arr[-window:]
+    return float(window_data.mean() + multiplier * window_data.std())
+
+
 def rolling_window(sequence, window_size):
     """
     Create rolling windows of data for time series analysis.
@@ -697,6 +718,41 @@ def efficient_rolling_window(sequence, window_size):
         Iterator of sliding windows
     """
     return rolling_window(sequence, window_size)
+
+
+def is_time_series(df: 'pd.DataFrame', time_column: str | None = None) -> bool:
+    """Return True if *df* appears to be a time series ordered by datetime."""
+    if time_column and time_column in df.columns:
+        series = pd.to_datetime(df[time_column], errors="coerce")
+    else:
+        if isinstance(df.index, (pd.DatetimeIndex, pd.TimedeltaIndex)):
+            series = df.index
+        else:
+            series = pd.to_datetime(df.index, errors="coerce")
+    if series.isnull().any():
+        return False
+    return series.is_monotonic_increasing
+
+
+def create_window_samples(
+    data: 'pd.DataFrame | np.ndarray | Sequence',
+    window_size: int,
+    step_size: int = 1,
+    flatten: bool = False,
+):
+    """Generate sliding windows from *data* with the given window and step size."""
+    if window_size <= 0 or step_size <= 0:
+        raise ValueError("window_size and step_size must be positive")
+
+    arr = data.values if hasattr(data, "values") else np.asarray(data)
+    if len(arr) < window_size:
+        return np.empty((0, window_size))
+    num_windows = 1 + (len(arr) - window_size) // step_size
+    windows = []
+    for idx in range(0, num_windows * step_size, step_size):
+        window = arr[idx : idx + window_size]
+        windows.append(window.flatten() if flatten else window)
+    return np.array(windows)
 
 
 # ======================================
@@ -1825,6 +1881,11 @@ def time_execution(label):
     return decorator
 
 
+def time_function(label):
+    """Deprecated alias for :func:`time_execution`."""
+    return time_execution(label)
+
+
 def calculate_checksum(data: bytes, method="sha256") -> str:
     """
     Calculate checksum from binary data.
@@ -2123,6 +2184,17 @@ def calculate_position_size(
     return risk_amount / stop_loss_percent
 
 
+def detect_market_condition(prices: Sequence[float]) -> str:
+    """Simple market condition detection based on price direction."""
+    if len(prices) < 2:
+        return "unknown"
+    if prices[-1] > prices[0]:
+        return "bullish"
+    if prices[-1] < prices[0]:
+        return "bearish"
+    return "sideways"
+
+
 def calculate_risk_reward(*args: Union[str, float]) -> float:
     """Compute risk-reward ratio for a trade.
 
@@ -2140,14 +2212,19 @@ def calculate_risk_reward(*args: Union[str, float]) -> float:
 
     if len(args) == 3:
         entry_price, stop_loss, take_profit = args
+        action = "buy"
     elif len(args) == 4:
-        _, entry_price, stop_loss, take_profit = args
+        action, entry_price, stop_loss, take_profit = args
     else:
         raise ValueError("calculate_risk_reward expects 3 or 4 arguments")
 
     try:
-        risk = abs(entry_price - stop_loss)
-        reward = abs(take_profit - entry_price)
+        if str(action).lower() == "sell":
+            risk = abs(stop_loss - entry_price)
+            reward = abs(stop_loss - take_profit)
+        else:
+            risk = abs(entry_price - stop_loss)
+            reward = abs(take_profit - entry_price)
     except Exception:
         return 0.0
 
@@ -4995,6 +5072,7 @@ __all__ = [
     'calculate_order_risk', 'normalize_price', 'normalize_quantity',
     'parse_decimal', 'safe_divide', 'round_to_tick', 'round_to_tick_size', 'calculate_change_percent',
     'normalize_value', 'moving_average', 'exponential_moving_average', 'rolling_window',
+    'efficient_rolling_window', 'is_time_series', 'create_window_samples',
     
     # String and format
     'camel_to_snake', 'snake_to_camel', 'format_number', 'format_currency', 'truncate_string',
@@ -5012,7 +5090,7 @@ __all__ = [
     
     # Network and system
     'get_host_info', 'is_port_open', 'rate_limit', 'rate_limited', 'retry', 'timer',
-    'retry_with_backoff', 'exponential_backoff', 'time_execution', 'calculate_checksum',
+    'retry_with_backoff', 'exponential_backoff', 'time_execution', 'time_function', 'calculate_checksum',
     
     # Async utilities
     'ensure_future', 'create_task_name',
@@ -5025,7 +5103,7 @@ __all__ = [
     'calculate_position_size', 'calculate_volatility', 'calculate_correlation', 'calculate_drawdown',
     'calculate_liquidation_price', 'calculate_risk_reward', 'calculate_win_rate',
     'calculate_risk_reward_ratio', 'calculate_confidence_score', 'normalize_probability',
-    'normalize_price_series',
+    'normalize_price_series', 'detect_market_condition', 'normalize_data', 'calculate_dynamic_threshold',
     'weighted_average', 'time_weighted_average', 'validate_signal', 'validate_data', 'calculate_expectancy',
     'calculate_kelly_criterion', 'calculate_sharpe_ratio', 'calculate_sortino_ratio', 'calculate_metrics',
     'calculate_max_drawdown', 'calculate_calmar_ratio', 'z_score',
