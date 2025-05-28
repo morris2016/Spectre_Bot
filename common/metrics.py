@@ -50,13 +50,14 @@ class Timer:
 class MetricsCollector:
     """Collects and manages system and trading metrics."""
 
-    def __init__(self, namespace: str = "default"):
+    def __init__(self, namespace: str = "default", subsystem: str | None = None):
 
         """
         Initialize metrics collector.
         
         Args:
             namespace: Namespace for metrics
+            subsystem: Optional subsystem name appended to the namespace
         """
         self.namespace = namespace if subsystem is None else f"{namespace}.{subsystem}"
 
@@ -65,7 +66,7 @@ class MetricsCollector:
         self.timers = {}
         self.histograms = {}
         self.start_time = time.time()
-        self.logger = get_logger(f"Metrics.{namespace}")
+        self.logger = get_logger(f"Metrics.{self.namespace}")
         
     def increment(self, metric_name, value=1):
         """
@@ -396,105 +397,31 @@ class MetricsCollector:
     def get_percentile(self, metric_name, percentile):
         """Get a percentile value for a timing metric."""
         full_name = f"{self.namespace}.{metric_name}"
-        if full_name in self.timers and self.timers[full_name]['samples']:
-            samples = sorted(self.timers[full_name]['samples'])
-            idx = int(len(samples) * (percentile / 100))
+        if full_name in self.timers and self.timers[full_name]:
+            samples = sorted(self.timers[full_name])
+            idx = int(round((len(samples) - 1) * (percentile / 100)))
             return samples[idx]
         return None
-    
-    def record_histogram(self, metric_name, value):
-        """Record a value in a histogram."""
-        full_name = f"{self.namespace}.{metric_name}"
-        if full_name not in self.histograms:
-            self.histograms[full_name] = {
-                'count': 0,
-                'sum': 0,
-                'min': float('inf'),
-                'max': float('-inf'),
-                'avg': 0,
-                'values': []
-            }
-        
-        hist = self.histograms[full_name]
-        hist['count'] += 1
-        hist['sum'] += value
-        hist['min'] = min(hist['min'], value)
-        hist['max'] = max(hist['max'], value)
-        hist['avg'] = hist['sum'] / hist['count']
-        
-        # Keep values for distribution analysis
-        hist['values'].append(value)
-        if len(hist['values']) > 1000:
-            hist['values'].pop(0)
-            
-        return hist
-    
-    def get_histogram_stats(self, metric_name):
-        """Get statistical information about a histogram."""
-        full_name = f"{self.namespace}.{metric_name}"
-        if full_name in self.histograms:
-            hist = self.histograms[full_name]
-            values = hist['values']
-            
-            if not values:
-                return None
-                
-            # Calculate standard deviation
-            mean = hist['avg']
-            variance = sum((x - mean) ** 2 for x in values) / len(values)
-            std_dev = variance ** 0.5
-            
-            # Calculate percentiles
-            sorted_values = sorted(values)
-            p50 = sorted_values[int(len(sorted_values) * 0.5)]
-            p90 = sorted_values[int(len(sorted_values) * 0.9)]
-            p95 = sorted_values[int(len(sorted_values) * 0.95)]
-            p99 = sorted_values[int(len(sorted_values) * 0.99)]
-            
-            return {
-                'count': hist['count'],
-                'min': hist['min'],
-                'max': hist['max'],
-                'avg': hist['avg'],
-                'std_dev': std_dev,
-                'p50': p50,
-                'p90': p90, 
-                'p95': p95,
-                'p99': p99
-            }
-        return None
-        
+
     def export_metrics(self):
         """Export all metrics as a dictionary for serialization."""
         result = {
             'timestamp': time.time(),
             'uptime': time.time() - self.start_time,
-            'counters': self.counters.copy(),  # Changed from self.metrics
+            'counters': self.counters.copy(),
             'gauges': self.gauges.copy(),
             'timers': {},
-            'histograms': {}
+            'histograms': {},
         }
-    
 
+        for name in self.timers:
+            short_name = name.replace(f"{self.namespace}.", "")
+            result['timers'][name] = self.get_timer_stats(short_name)
 
-        
-        # Simplify timer data for export
-        for name, timer in self.timers.items():
-            result['timers'][name] = {
-                'count': timer['count'],
-                'avg_ms': timer['avg'] * 1000,  # Convert to ms
-                'min_ms': timer['min'] * 1000,
-                'max_ms': timer['max'] * 1000,
-                'p95_ms': self.get_percentile(name.replace(f"{self.namespace}.", ""), 95) * 1000 if timer['samples'] else None,
-                'p99_ms': self.get_percentile(name.replace(f"{self.namespace}.", ""), 99) * 1000 if timer['samples'] else None
-            }
-            
-        # Simplify histogram data for export
-        for name, hist in self.histograms.items():
-            stats = self.get_histogram_stats(name.replace(f"{self.namespace}.", ""))
-            if stats:
-                result['histograms'][name] = stats
-                
+        for name in self.histograms:
+            short_name = name.replace(f"{self.namespace}.", "")
+            result['histograms'][name] = self.get_histogram_stats(short_name)
+
         return result
         
     # Context manager for timing operations
@@ -685,27 +612,6 @@ def record_success(name, tags=None):
         tag_str = ",".join(f"{k}={v}" for k, v in tags.items())
         _default_collector.logger.debug(f"Success: {name} {tag_str}")
 
-def record_failure(name, error=None, tags=None):
-    """
-    Record a failure event using the default collector.
-    
-    Args:
-        name: Metric name
-        error: Optional error message or exception
-        tags: Optional dictionary of tags
-    """
-    _default_collector.increment(f"{name}.failure", 1)
-    
-    # Create log message
-    log_msg = f"Failure: {name}"
-    if error:
-        log_msg += f" - {str(error)}"
-    
-    if tags:
-        tag_str = ",".join(f"{k}={v}" for k, v in tags.items())
-        log_msg += f" {tag_str}"
-    
-    _default_collector.logger.warning(log_msg)
 
 def record_failure(name, error=None, tags=None):
     """
@@ -915,48 +821,6 @@ def calculate_trading_metrics(returns: List[float], trades: List[Dict[str, Any]]
         "annualized_volatility": annualized_volatility,
         "num_trades": num_trades
     }
-    """
-    Calculate the Sortino ratio for a series of returns.
-    
-    Args:
-        returns: List of period returns (e.g., daily returns)
-        risk_free_rate: Risk-free rate (annualized)
-        annualization_factor: Factor to annualize returns (252 for daily, 52 for weekly, 12 for monthly)
-        
-    Returns:
-        float: Sortino ratio
-    """
-    if not returns or len(returns) < 2:
-        return 0.0
-        
-    # Convert to numpy array for calculations
-    returns_array = np.array(returns)
-    
-    # Calculate mean return
-    mean_return = np.mean(returns_array)
-    
-    # Calculate daily excess return
-    daily_risk_free = risk_free_rate / annualization_factor
-    excess_return = mean_return - daily_risk_free
-    
-    # Calculate downside deviation (only negative returns)
-    negative_returns = returns_array[returns_array < 0]
-    
-    if len(negative_returns) == 0:
-        return float('inf')  # No negative returns
-        
-    downside_deviation = np.std(negative_returns, ddof=1)
-    
-    if downside_deviation == 0:
-        return 0.0  # Avoid division by zero
-        
-    # Calculate daily Sortino ratio
-    daily_sortino = excess_return / downside_deviation
-    
-    # Annualize Sortino ratio
-    sortino_ratio = daily_sortino * math.sqrt(annualization_factor)
-
-    return sortino_ratio
 
 
 class ExecutionMetrics:
