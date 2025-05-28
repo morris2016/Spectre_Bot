@@ -65,7 +65,8 @@ logger = get_logger("ReinforcementBrain")
 
 
 class TradingEnvironment:
-    """Minimal trading environment used in unit tests."""
+    """Simplified trading environment used for testing."""
+
 
     def __init__(
         self,
@@ -81,14 +82,9 @@ class TradingEnvironment:
         self.data = data.reset_index(drop=True)
         self.window_size = window_size
         self.current_step = window_size
-        self.initial_balance = initial_balance
         self.balance = initial_balance
         self.position = 0.0
-        self.max_position = max_position
-        self.transaction_fee = transaction_fee
-        self.reward_function = reward_function
-        self.use_position_info = use_position_info
-        self.action_type = action_type
+
 
     def _get_observation(self) -> np.ndarray:
         start = self.current_step - self.window_size
@@ -96,8 +92,6 @@ class TradingEnvironment:
 
     def reset(self):
         self.current_step = self.window_size
-        self.balance = self.initial_balance
-        self.position = 0.0
         return self._get_observation(), {}
 
     def step(self, action):
