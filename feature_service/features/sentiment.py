@@ -126,8 +126,12 @@ class SentimentFeatures(BaseFeature):
             'blogs': 0.60,
             'telegram': 0.50,
             'discord': 0.45
-        }
+        } 
         logger.info("SentimentFeatures initialized")
+
+    async def calculate(self, symbol: str, lookback_hours: int = 24, **kwargs) -> SentimentAnalysisResult:
+        """Async wrapper for ``analyze_sentiment`` for compatibility."""
+        return self.analyze_sentiment(symbol, lookback_hours, **kwargs)
     
     def analyze_sentiment(self, symbol: str, 
                          lookback_hours: int = 24,

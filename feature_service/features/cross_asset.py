@@ -5,7 +5,7 @@ Utilities for analyzing relationships between two assets, including rolling
 correlation and cointegration tests.
 """
 
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
 import logging
 
@@ -22,11 +22,20 @@ __all__ = ["compute_pair_correlation", "cointegration_score"]
 
 
 def _align_series(
-    data1: pd.DataFrame,
-    data2: pd.DataFrame,
+    data1: Union[pd.DataFrame, pd.Series],
+    data2: Union[pd.DataFrame, pd.Series],
     column: str,
 ) -> Optional[Tuple[pd.Series, pd.Series]]:
-    """Return aligned series for the specified column."""
+    """Return aligned series for the specified column or raw series."""
+    if isinstance(data1, pd.Series) and isinstance(data2, pd.Series):
+        length = min(len(data1), len(data2))
+        if length == 0:
+            return None
+        return data1.iloc[-length:], data2.iloc[-length:]
+
+    if not isinstance(data1, pd.DataFrame) or not isinstance(data2, pd.DataFrame):
+        raise TypeError("data1 and data2 must both be Series or DataFrame")
+
     if column not in data1.columns or column not in data2.columns:
         raise ValueError(f"Column '{column}' missing from input data")
 
@@ -35,29 +44,30 @@ def _align_series(
     length = min(len(s1), len(s2))
     if length == 0:
         return None
-    s1 = s1.iloc[-length:]
-    s2 = s2.iloc[-length:]
-    return s1, s2
+    return s1.iloc[-length:], s2.iloc[-length:]
 
 
 def compute_pair_correlation(
-    data1: pd.DataFrame,
-    data2: pd.DataFrame,
+    data1: Union[pd.DataFrame, pd.Series],
+    data2: Union[pd.DataFrame, pd.Series],
     column: str = "close",
-) -> float:
+    window: int | None = None,
+) -> Union[float, pd.Series]:
     """Compute Pearson correlation for two aligned asset series."""
     series = _align_series(data1, data2, column)
     if series is None:
         return float("nan")
     s1, s2 = series
+    if window:
+        return s1.rolling(window).corr(s2)
     if s1.isna().all() or s2.isna().all():
         return float("nan")
     return float(np.corrcoef(s1, s2)[0, 1])
 
 
 def cointegration_score(
-    data1: pd.DataFrame,
-    data2: pd.DataFrame,
+    data1: Union[pd.DataFrame, pd.Series],
+    data2: Union[pd.DataFrame, pd.Series],
     column: str = "close",
 ) -> float:
     """Return the Engle-Granger cointegration p-value for two assets."""

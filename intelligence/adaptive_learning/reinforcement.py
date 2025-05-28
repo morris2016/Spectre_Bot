@@ -117,6 +117,7 @@ if not GYM_AVAILABLE:
             self.current_idx = state_lookback
             self.balance = initial_balance
             self.position = 0  # -1 sell, 0 hold, 1 buy
+            self._validate_data()
 
         def _get_state(self) -> np.ndarray:
             start = self.current_idx - self.state_lookback
@@ -139,6 +140,12 @@ if not GYM_AVAILABLE:
             truncated = False
             reward = 0.0
             return self._get_state(), reward, terminated, truncated, {}
+
+        def _validate_data(self):
+            if self.market_data.empty or self.features.empty:
+                raise ValueError("Market data or features cannot be empty")
+            if len(self.market_data) != len(self.features):
+                raise ValueError("Market data and features must have same length")
 
 else:
     class MarketEnvironment:
@@ -213,32 +220,32 @@ else:
             # Initialize environment state
             self.reset()
         
-    def _validate_data(self):
-        """Validate input data for consistency and completeness."""
-        if self.market_data.empty or self.features.empty:
-            raise InsufficientDataError("Market data or features DataFrame is empty")
+        def _validate_data(self):
+            """Validate input data for consistency and completeness."""
+            if self.market_data.empty or self.features.empty:
+                raise InsufficientDataError("Market data or features DataFrame is empty")
+
+            if len(self.market_data) != len(self.features):
+                raise ValueError(
+                    f"Market data length ({len(self.market_data)}) and features length "
+                    f"({len(self.features)}) must match"
+                )
+
+            required_cols = ['open', 'high', 'low', 'close', 'volume']
+            missing_cols = [col for col in required_cols if col not in self.market_data.columns]
+            if missing_cols:
+                raise ValueError(f"Market data missing required columns: {missing_cols}")
         
-        if len(self.market_data) != len(self.features):
-            raise ValueError(
-                f"Market data length ({len(self.market_data)}) and features length "
-                f"({len(self.features)}) must match"
-            )
-        
-        required_cols = ['open', 'high', 'low', 'close', 'volume']
-        missing_cols = [col for col in required_cols if col not in self.market_data.columns]
-        if missing_cols:
-            raise ValueError(f"Market data missing required columns: {missing_cols}")
-        
-        # Ensure indexes match and are datetime
-        if not isinstance(self.market_data.index, pd.DatetimeIndex):
-            raise ValueError("Market data index must be a DatetimeIndex")
-        
-        if not isinstance(self.features.index, pd.DatetimeIndex):
-            raise ValueError("Features index must be a DatetimeIndex")
-            
-        # Ensure all index values in features exist in market_data
-        if not self.features.index.isin(self.market_data.index).all():
-            raise ValueError("Feature index contains values not in market data index")
+            # Ensure indexes match and are datetime
+            if not isinstance(self.market_data.index, pd.DatetimeIndex):
+                raise ValueError("Market data index must be a DatetimeIndex")
+
+            if not isinstance(self.features.index, pd.DatetimeIndex):
+                raise ValueError("Features index must be a DatetimeIndex")
+
+            # Ensure all index values in features exist in market_data
+            if not self.features.index.isin(self.market_data.index).all():
+                raise ValueError("Feature index contains values not in market data index")
             
     def _setup_spaces(self):
         """Define observation and action spaces."""

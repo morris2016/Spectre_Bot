@@ -32,9 +32,14 @@ from config import Config
 from common.logger import get_logger
 from common.utils import normalize_data, timeit, calculate_dynamic_threshold
 from data_storage.market_data import MarketDataStorage
-from feature_service.features.order_flow import (
-    OrderFlowFeatures, VolumeProfileFeatures, OrderBookFeatures
-)
+try:
+    from feature_service.features.order_flow import (
+        OrderFlowFeatures, VolumeProfileFeatures, OrderBookFeatures
+    )
+except Exception:  # pragma: no cover - optional dependency
+    from feature_service.features.order_flow import OrderFlowFeatures
+    VolumeProfileFeatures = None  # type: ignore
+    OrderBookFeatures = None  # type: ignore
 from strategy_brains.base_brain import StrategyBrain
 from intelligence.loophole_detection.microstructure import MicrostructureAnalyzer
 
@@ -1737,4 +1742,29 @@ class OrderFlowBrain(StrategyBrain):
                 self.logger.info(f"Loaded saved state for {self.asset_id} on {self.timeframe}")
         except Exception as e:
             self.logger.warning(f"Could not load saved state: {str(e)}")
+
+    async def generate_signals(self) -> List[Dict[str, Any]]:
+        """Generate basic momentum signals from recent close prices."""
+        if not self.initialized:
+            return []
+        candles = await self.market_data.get_candles(self.asset_id, self.timeframe, limit=2)
+        if len(candles) < 2:
+            return []
+        prev_close = candles[-2]["close"]
+        last_close = candles[-1]["close"]
+        timestamp = candles[-1]["timestamp"]
+        if last_close > prev_close:
+            signal = {"type": "buy", "timestamp": timestamp}
+        elif last_close < prev_close:
+            signal = {"type": "sell", "timestamp": timestamp}
+        else:
+            return []
+        self.signal_performance["total"] += 1
+        return [signal]
+
+    async def on_regime_change(self, new_regime: str) -> None:
+        """Respond to market regime shifts by resetting trackers."""
+        self.logger.info("Regime changed to %s", new_regime)
+        await self._reset_session_data()
+        self.current_regime = new_regime
 

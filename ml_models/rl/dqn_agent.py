@@ -21,7 +21,6 @@ except ImportError:  # pragma: no cover - optional dependency
     F = None  # type: ignore
     TORCH_AVAILABLE = False
 
-from .base_agent import BaseAgent
 from .base_agent import RLAgent
 
 # Constants
@@ -216,7 +215,6 @@ if TORCH_AVAILABLE:
             self.fc3.reset_noise()
             self.fc4.reset_noise()
 
-
     class NoisyDuelingDQN(nn.Module):
         def __init__(self, state_dim: int, action_dim: int, hidden_dim: int = 128) -> None:
             super().__init__()
@@ -285,11 +283,10 @@ class DQNAgent(RLAgent):
         self.dueling_network = dueling_network
         self.double_dqn = double_dqn
         self.noisy_nets = noisy_nets
+
         if TORCH_AVAILABLE:
-            if device is None:
-                self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            else:
-                self.device = torch.device(device)
+            device_str = device or ("cuda" if torch.cuda.is_available() else "cpu")
+            self.device = torch.device(device_str)
             self._setup_networks()
             self._setup_memory(memory_size)
             self.optimizer = optim.Adam(self.policy_net.parameters(), lr=learning_rate)
@@ -299,19 +296,6 @@ class DQNAgent(RLAgent):
             self.weights = np.zeros((state_dim, action_dim))
 
         self.steps_done = 0
-
-        if TORCH_AVAILABLE:
-            if device is None:
-                self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            else:
-                self.device = torch.device(device)
-            self._setup_networks()
-            self._setup_memory(memory_size)
-            self.optimizer = optim.Adam(self.policy_net.parameters(), lr=learning_rate)
-        else:
-            self.device = "cpu"
-            self.memory = deque(maxlen=memory_size)
-            self.weights = np.zeros((state_dim, action_dim))
 
     def _setup_networks(self) -> None:
         if not TORCH_AVAILABLE:
@@ -353,7 +337,6 @@ class DQNAgent(RLAgent):
                 return int(q_values.max(1)[1].item())
         q_values = np.dot(state, self.weights)
         return int(np.argmax(q_values))
-
 
     def store_transition(self, state: Any, action: int, reward: float, next_state: Any, done: bool) -> None:
         if TORCH_AVAILABLE:
@@ -399,6 +382,14 @@ class DQNAgent(RLAgent):
             self.weights[:, action] += self.learning_rate * (target - q_current) * state
         return 0.0
 
+    def train_step(self) -> float | None:
+        """Run a single training iteration and soft update the target network."""
+        loss = self.update_model()
+        if loss is not None and TORCH_AVAILABLE:
+            with torch.no_grad():
+                for tgt, src in zip(self.target_net.parameters(), self.policy_net.parameters()):
+                    tgt.data.mul_(1 - self.tau).add_(src.data * self.tau)
+        return loss
 
     def save(self, path: str) -> None:
         if TORCH_AVAILABLE:
@@ -428,7 +419,8 @@ class DQNAgent(RLAgent):
                 path,
             )
         else:
-            np.save(path, self.weights)
+            with open(path, "wb") as f:
+                np.save(f, self.weights)
 
     def load(self, path: str) -> None:
         if TORCH_AVAILABLE:
@@ -438,4 +430,5 @@ class DQNAgent(RLAgent):
             self.optimizer.load_state_dict(checkpoint["optimizer"])
             self.steps_done = checkpoint["steps_done"]
         else:
-            self.weights = np.load(path)
+            with open(path, "rb") as f:
+                self.weights = np.load(f)
