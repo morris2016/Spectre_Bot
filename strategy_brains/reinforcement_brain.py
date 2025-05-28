@@ -108,30 +108,8 @@ class TradingEnvironment:
         truncated = False
         reward = 0.0
         return obs, reward, terminated, truncated, {}
-    
-    def reset(self):
-        """
-        Reset the environment to initial state.
 
 
-    def _get_observation(self) -> np.ndarray:
-        start = self.current_step - self.window_size
-        return self.data.iloc[start:self.current_step].values.astype(np.float32)
-
-    def reset(self):
-        self.current_step = self.window_size
-        self.balance = self.initial_balance
-        self.position = 0.0
-        return self._get_observation(), {}
-
-
-    def step(self, action):
-        self.current_step += 1
-        obs = self._get_observation()
-        terminated = self.current_step >= len(self.data)
-        truncated = False
-        reward = 0.0
-        return obs, reward, terminated, truncated, {}
 class LegacyDQNAgent:
     """
     Deep Q-Network Agent for reinforcement learning-based trading.
