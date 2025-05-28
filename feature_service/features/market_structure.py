@@ -1508,6 +1508,31 @@ def classify_market_structure(df: pd.DataFrame, window_size: int = 20, order: in
     return structure.get('trend', 'neutral')
 
 
+def detect_consolidation(
+    df: pd.DataFrame,
+    min_periods: int = 5,
+    max_periods: int = 50,
+    threshold: float = 0.1,
+) -> pd.Series:
+    """Return a boolean Series indicating consolidation periods."""
+    if df.empty or min_periods <= 0:
+        return pd.Series(False, index=df.index)
+
+    range_pct = (
+        df['high'].rolling(min_periods).max() - df['low'].rolling(min_periods).min()
+    ) / df['close']
+    is_consolidating = range_pct < threshold
+
+    if max_periods > min_periods:
+        for w in range(min_periods + 1, max_periods + 1):
+            range_pct = (
+                df['high'].rolling(w).max() - df['low'].rolling(w).min()
+            ) / df['close']
+            is_consolidating &= range_pct < threshold
+
+    return is_consolidating.fillna(False)
+
+
 __all__ = [
     'MarketStructureFeature',
     'MarketStructureFeatures',
@@ -1515,4 +1540,5 @@ __all__ = [
     'identify_swing_points',
     'find_support_resistance_levels',
     'classify_market_structure',
+    'detect_consolidation',
 ]
