@@ -439,7 +439,10 @@ class FeatureExtractor:
         """
         period = params.get('ema_period', 14)
         if TA_AVAILABLE:
-            return ta.ema(data['close'], length=period)
+            try:
+                return ta.ema(data['close'], length=period)
+            except Exception:
+                pass
         return data['close'].ewm(span=period, adjust=False).mean()
     
     def ema_gpu(self, data: cudf.DataFrame, params: Dict[str, Any]) -> cudf.Series:
@@ -462,7 +465,10 @@ class FeatureExtractor:
         """
         period = params.get('rsi_period', 14)
         if TA_AVAILABLE:
-            return ta.rsi(data['close'], length=period)
+            try:
+                return ta.rsi(data['close'], length=period)
+            except Exception:
+                pass
 
         delta = data['close'].diff()
         up = delta.clip(lower=0)
@@ -493,10 +499,13 @@ class FeatureExtractor:
         signal_period = params.get('macd_signal_period', 9)
         
         if TA_AVAILABLE:
-            macd_df = ta.macd(
-                data['close'], fast=fast_period, slow=slow_period, signal=signal_period
-            )
-            return macd_df.iloc[:, 0]
+            try:
+                macd_df = ta.macd(
+                    data['close'], fast=fast_period, slow=slow_period, signal=signal_period
+                )
+                return macd_df.iloc[:, 0]
+            except Exception:
+                pass
 
         ema_fast = data['close'].ewm(span=fast_period, adjust=False).mean()
         ema_slow = data['close'].ewm(span=slow_period, adjust=False).mean()
@@ -524,10 +533,13 @@ class FeatureExtractor:
         signal_period = params.get('macd_signal_period', 9)
         
         if TA_AVAILABLE:
-            macd_df = ta.macd(
-                data['close'], fast=fast_period, slow=slow_period, signal=signal_period
-            )
-            return macd_df.iloc[:, 2]
+            try:
+                macd_df = ta.macd(
+                    data['close'], fast=fast_period, slow=slow_period, signal=signal_period
+                )
+                return macd_df.iloc[:, 2]
+            except Exception:
+                pass
 
         ema_fast = data['close'].ewm(span=fast_period, adjust=False).mean()
         ema_slow = data['close'].ewm(span=slow_period, adjust=False).mean()
@@ -555,10 +567,13 @@ class FeatureExtractor:
         signal_period = params.get('macd_signal_period', 9)
         
         if TA_AVAILABLE:
-            macd_df = ta.macd(
-                data['close'], fast=fast_period, slow=slow_period, signal=signal_period
-            )
-            return macd_df.iloc[:, 1]
+            try:
+                macd_df = ta.macd(
+                    data['close'], fast=fast_period, slow=slow_period, signal=signal_period
+                )
+                return macd_df.iloc[:, 1]
+            except Exception:
+                pass
 
         ema_fast = data['close'].ewm(span=fast_period, adjust=False).mean()
         ema_slow = data['close'].ewm(span=slow_period, adjust=False).mean()
@@ -712,9 +727,12 @@ class FeatureExtractor:
         """
         period = params.get('atr_period', 14)
         if TA_AVAILABLE:
-            return ta.atr(
-                high=data['high'], low=data['low'], close=data['close'], length=period
-            )
+            try:
+                return ta.atr(
+                    high=data['high'], low=data['low'], close=data['close'], length=period
+                )
+            except Exception:
+                pass
 
         high = data['high']
         low = data['low']
