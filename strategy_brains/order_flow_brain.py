@@ -35,7 +35,6 @@ from data_storage.market_data import MarketDataStorage
 try:
     from feature_service.features.order_flow import (
         OrderFlowFeatures, VolumeProfileFeatures, OrderBookFeatures
-
     )
 except Exception:  # pragma: no cover - optional dependency
     from feature_service.features.order_flow import OrderFlowFeatures

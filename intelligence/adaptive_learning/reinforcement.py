@@ -49,7 +49,8 @@ except Exception:  # pragma: no cover - optional dependency
     logging.getLogger(__name__).warning(
         "gymnasium not available; using minimal environment implementation"
     )
-# Force use of the lightweight environment in test builds
+# Force the use of the simplified environment during testing
+
 GYM_AVAILABLE = False
 import datetime
 from concurrent.futures import ThreadPoolExecutor
@@ -133,6 +134,14 @@ if not GYM_AVAILABLE:
             if len(self.market_data) != len(self.features):
                 raise ValueError("Market and feature data must be same length")
 
+
+            self._validate_data()
+
+        def _validate_data(self) -> None:
+            if self.market_data.empty or self.features.empty:
+                raise ValueError("Market data or features DataFrame is empty")
+            if len(self.market_data) != len(self.features):
+                raise ValueError("Market data and features must have equal length")
 
         def _get_state(self) -> np.ndarray:
             start = self.current_idx - self.state_lookback
