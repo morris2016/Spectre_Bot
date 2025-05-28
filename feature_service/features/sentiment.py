@@ -110,7 +110,8 @@ class SentimentFeatures(BaseFeature):
         Args:
             ts_storage: TimeSeriesStorage instance for accessing historical data
         """
-        super().__init__(ts_storage)
+        super().__init__()
+        self.ts_storage = ts_storage
         self.sentiment_cache = {}  # Cache for sentiment calculations
         self.sources_reliability = {  # Initial source reliability scores
             'financial_news': 0.85,
@@ -126,15 +127,20 @@ class SentimentFeatures(BaseFeature):
             'blogs': 0.60,
             'telegram': 0.50,
             'discord': 0.45
-        }
+        } 
         logger.info("SentimentFeatures initialized")
 
-    async def calculate(self, data=None, **kwargs):
-        """Async wrapper to satisfy BaseFeature interface."""
-        symbol = kwargs.get("symbol")
-        hours = kwargs.get("lookback_hours", 24)
-        sources = kwargs.get("include_sources")
-        return self.analyze_sentiment(symbol, hours, sources)
+    async def calculate(self, symbol: str, lookback_hours: int = 24,
+                         include_sources: Optional[List[str]] | None = None) -> Dict[str, float]:
+        """Asynchronously compute sentiment metrics for a symbol."""
+        result = self.analyze_sentiment(symbol, lookback_hours, include_sources)
+        return {
+            "compound": result.compound_score,
+            "positive": result.positive_score,
+            "negative": result.negative_score,
+            "neutral": result.neutral_score,
+            "confidence": result.confidence,
+        }
 
     
     def analyze_sentiment(self, symbol: str, 

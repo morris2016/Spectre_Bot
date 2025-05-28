@@ -8,6 +8,7 @@ import {
   ListItem,
   ListItemText,
   Link,
+
 } from '@mui/material';
 import { api } from '../../api';
 
@@ -16,12 +17,14 @@ const NewsFeed = ({ limit = 20 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+
   useEffect(() => {
     const loadNews = async () => {
       setLoading(true);
       setError(null);
       try {
         const { data } = await api.market.getMarketNews({ limit });
+
         setNews(data || []);
       } catch (err) {
         console.error('Failed to load market news', err);
@@ -33,6 +36,7 @@ const NewsFeed = ({ limit = 20 }) => {
 
     loadNews();
   }, [limit]);
+
 
   if (loading) {
     return (
@@ -55,6 +59,7 @@ const NewsFeed = ({ limit = 20 }) => {
       <Typography variant="h6" sx={{ mb: 1 }}>
         Latest News
       </Typography>
+
       <List dense>
         {news.map((item) => (
           <ListItem key={item.id} divider>
