@@ -163,17 +163,8 @@ class OrderFlowBrain(StrategyBrain):
             'sharpe_ratio': 0.0
         }
         
-        self.logger.info(f"OrderFlowBrain initialization complete")
+        self.logger.info("OrderFlowBrain initialization complete")
 
-    async def generate_signals(self) -> List[Dict[str, Any]]:
-        """Produce at most one signal using :meth:`generate_signal`."""
-        signal = await self.generate_signal()
-        return [signal] if signal else []
-
-    async def on_regime_change(self, new_regime: str) -> None:
-        """Reset internal state on regime change."""
-        self.logger.info(f"Regime changed to {new_regime}. Resetting state.")
-        await self.reset_session_data()
     
     async def initialize(self) -> bool:
         """
@@ -182,7 +173,7 @@ class OrderFlowBrain(StrategyBrain):
         Returns:
             bool: True if initialization was successful, False otherwise
         """
-        self.logger.info(f"Starting OrderFlowBrain initialization")
+        self.logger.info("Starting OrderFlowBrain initialization")
         
         try:
             # Load historical data
@@ -193,13 +184,13 @@ class OrderFlowBrain(StrategyBrain):
             )
             
             if len(candles) < 10:  # Need some minimum data
-                self.logger.warning(f"Insufficient historical data for initialization")
+                self.logger.warning("Insufficient historical data for initialization")
                 return False
             
             # Initialize order book state
             orderbook = await self.market_data.get_order_book_snapshot(self.asset_id)
             if not orderbook:
-                self.logger.warning(f"Could not retrieve order book snapshot")
+                self.logger.warning("Could not retrieve order book snapshot")
                 return False
                 
             # Process historical data
@@ -219,7 +210,7 @@ class OrderFlowBrain(StrategyBrain):
             self.is_ready = True
             self.last_update_time = datetime.now()
             
-            self.logger.info(f"OrderFlowBrain initialization completed successfully")
+            self.logger.info("OrderFlowBrain initialization completed successfully")
             return True
             
         except Exception as e:
@@ -242,7 +233,7 @@ class OrderFlowBrain(StrategyBrain):
         # Check for session boundary
         candle_date = datetime.fromtimestamp(candle['timestamp'] / 1000).date()
         if self.params["session_reset"] and self.last_session_date and candle_date != self.last_session_date:
-            self.logger.info(f"New trading session detected, resetting session-specific data")
+            self.logger.info("New trading session detected, resetting session-specific data")
             await self._reset_session_data()
         
         self.last_session_date = candle_date
@@ -402,7 +393,7 @@ class OrderFlowBrain(StrategyBrain):
         Args:
             performance_metrics: Dictionary with performance metrics
         """
-        self.logger.info(f"Updating OrderFlowBrain parameters based on performance metrics")
+        self.logger.info("Updating OrderFlowBrain parameters based on performance metrics")
         
         # Store performance metrics
         self.performance_metrics = performance_metrics
@@ -474,7 +465,6 @@ class OrderFlowBrain(StrategyBrain):
             
             # Calculate signal quality metrics
             max_adverse_excursion = metrics.get('max_adverse_excursion', 0)
-            time_to_outcome = metrics.get('time_to_outcome', 0)
             
             # Adjust parameters based on outcome
             if status == 'tp_hit' and max_adverse_excursion < self.params['max_adverse_excursion'] * 0.5:
@@ -602,16 +592,16 @@ class OrderFlowBrain(StrategyBrain):
         """
         Perform any cleanup operations before shutdown.
         """
-        self.logger.info(f"OrderFlowBrain shutdown initiated")
+        self.logger.info("OrderFlowBrain shutdown initiated")
         
         # Save final state metrics
         try:
-            state = await self.save_state()
-            self.logger.info(f"Final state saved during shutdown")
+            await self.save_state()
+            self.logger.info("Final state saved during shutdown")
         except Exception as e:
             self.logger.error(f"Error saving state during shutdown: {str(e)}")
         
-        self.logger.info(f"OrderFlowBrain shutdown complete")
+        self.logger.info("OrderFlowBrain shutdown complete")
     
     # ========== Private Methods ==========
     
@@ -1733,7 +1723,7 @@ class OrderFlowBrain(StrategyBrain):
         # Reset certain counters
         self.current_ob_imbalance = 0.0
         
-        self.logger.info(f"Session data reset complete")
+        self.logger.info("Session data reset complete")
     
     async def _load_state(self) -> None:
         """
@@ -1753,21 +1743,13 @@ class OrderFlowBrain(StrategyBrain):
         except Exception as e:
             self.logger.warning(f"Could not load saved state: {str(e)}")
 
-    async def generate_signals(self) -> List[Dict[str, Any]]:
-        """Generate trading signals from analyzed order flow."""
-        signals: List[Dict[str, Any]] = []
-        if self.significant_transactions:
-            txn = self.significant_transactions[-1]
-            direction = "buy" if txn.get("buy_volume", 0) >= txn.get("sell_volume", 0) else "sell"
-            signals.append({
-                "timestamp": txn["timestamp"],
-                "signal": direction,
-                "reasons": txn["reasons"],
-            })
-        return signals
+    async def generate_signals(self) -> list[dict[str, Any]]:
+        """Return a list with a single generated signal if available."""
+        signal = await self.generate_signal()
+        return [signal] if signal else []
 
     async def on_regime_change(self, new_regime: str) -> None:
-        """React to market regime changes by resetting session data."""
-        await self._reset_session_data()
-        self.logger.info(f"Switched to regime: {new_regime}")
+        """Handle market regime changes by logging the event."""
+        self.logger.info(f"Regime changed to {new_regime}")
+
 

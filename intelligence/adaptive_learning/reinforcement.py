@@ -62,7 +62,10 @@ from common.exceptions import (
 from feature_service.features.technical import TechnicalFeatures
 from feature_service.features.market_structure import MarketStructureFeatures
 from data_storage.market_data import MarketDataRepository
-from ml_models.rl import DQNAgent
+try:
+    from ml_models.rl import DQNAgent  # type: ignore
+except Exception:  # pragma: no cover - optional dependency
+    DQNAgent = None  # type: ignore
 
 # Constants
 MAX_MEMORY_SIZE = 100000
@@ -118,6 +121,8 @@ if not GYM_AVAILABLE:
             self.balance = initial_balance
             self.position = 0  # -1 sell, 0 hold, 1 buy
 
+            self._validate_data()
+
         def _get_state(self) -> np.ndarray:
             start = self.current_idx - self.state_lookback
             df = pd.concat(
@@ -128,6 +133,13 @@ if not GYM_AVAILABLE:
                 axis=1,
             )
             return df.values.flatten()
+
+        def _validate_data(self) -> None:
+            if self.market_data.empty or self.features.empty:
+                raise ValueError("Market data or features cannot be empty")
+
+            if len(self.market_data) != len(self.features):
+                raise ValueError("Market data and features must have same length")
 
         def reset(self):
             self.current_idx = self.state_lookback
