@@ -894,6 +894,11 @@ class FeatureServiceError(QuantumSpectreError):
     pass
 
 
+class FeatureEngineeringError(FeatureServiceError):
+    """Raised when feature engineering fails."""
+    pass
+
+
 class FeatureNotFoundError(FeatureServiceError):
     """Raised when a requested feature is not found."""
     pass
