@@ -843,7 +843,7 @@ class DerivFeed(BaseDataFeed):
         self.credentials = credentials
         self.options = options or DerivFeedOptions()
         
-        super().__init__(config=self.options)
+        super().__init__("deriv", self.options)
 
         
         # Platform and market state trackers

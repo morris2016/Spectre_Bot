@@ -3,6 +3,7 @@
 
 import asyncio
 import os
+import socket
 from typing import Any, Optional
 
 import uvicorn
@@ -53,6 +54,15 @@ class UIService:
         host = self.config.ui.get("host", "0.0.0.0")
         port = int(self.config.ui.get("port", 3000))
         log_level = self.config.logging.get("ui_level", "info").lower()
+
+        # Skip startup if the port is already in use
+        try:
+            test_sock = socket.socket()
+            test_sock.bind((host, port))
+            test_sock.close()
+        except OSError:
+            self.logger.error("UI port %s is already in use; disabling UI service", port)
+            return
 
         config = uvicorn.Config(self.app, host=host, port=port, log_level=log_level,
                                 loop="asyncio")
