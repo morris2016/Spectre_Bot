@@ -168,6 +168,15 @@ class DataFeedService:
                     self.config.data_feeds.get(feed_name, {})["enabled"] = False
                     continue
 
+                # Disable feed if credentials are invalid to avoid restart loops
+                if "Invalid Deriv credentials" in str(e):
+                    self.logger.error(
+                        f"Disabling {feed_name} feed due to invalid credentials"
+                    )
+                    self.feeds.pop(feed_name, None)
+                    self.config.data_feeds.get(feed_name, {})["enabled"] = False
+                    continue
+
                 # If this is a critical feed, raise an error
                 if self.config.data_feeds.get(feed_name, {}).get("critical", False):
                     raise ServiceStartupError(f"Failed to start critical feed {feed_name}")

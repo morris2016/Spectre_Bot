@@ -91,21 +91,27 @@ class NewsDataProcessor(DataProcessor):
         """Initialize NLP libraries for advanced text processing."""
         try:
             # Import NLP libraries only if enabled
-            import nltk
             from nltk.sentiment.vader import SentimentIntensityAnalyzer
-            
+
             # Ensure required NLTK data is available without network downloads
             from common.utils import safe_nltk_download
-            safe_nltk_download('vader_lexicon')
-            safe_nltk_download('tokenizers/punkt')
-            safe_nltk_download('stopwords')
-            
-            # Initialize sentiment analyzer
-            self.nlp = {
-                'sentiment': SentimentIntensityAnalyzer()
-            }
-            
-            self.logger.info("NLP initialized successfully")
+            vader_ok = safe_nltk_download('vader_lexicon')
+            punkt_ok = safe_nltk_download('tokenizers/punkt')
+            stopwords_ok = safe_nltk_download('stopwords')
+
+            if vader_ok and punkt_ok and stopwords_ok:
+                # Initialize sentiment analyzer only if all resources exist
+                self.nlp = {
+                    'sentiment': SentimentIntensityAnalyzer()
+                }
+                self.logger.info("NLP initialized successfully")
+            else:
+                self.logger.warning(
+                    "Required NLTK data missing; disabling advanced NLP features"
+                )
+                self.use_nlp = False
+                self.nlp = None
+                return
             
         except ImportError as e:
             self.logger.warning(f"NLP libraries not available: {str(e)}. Falling back to basic analysis.")
