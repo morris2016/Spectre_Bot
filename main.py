@@ -683,6 +683,9 @@ async def startup():
         logger.info("Validating configuration...")
         config.validate()
 
+        # Force UI to run on port 3001 to avoid conflicts in the sandbox
+        config.ui["port"] = 3001
+
         # If dry run, exit here
         if args.dry_run:
             logger.info("Configuration validation successful (dry run)")

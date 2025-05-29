@@ -15,6 +15,7 @@ from typing import Dict, List, Any, Optional
 import psutil
 from contextlib import contextmanager
 from functools import wraps
+from collections import defaultdict
 
 from common.logger import get_logger
 
@@ -72,10 +73,11 @@ class Timer:
             elapsed_time = time.time() - self.start_time
             self.metrics_collector.record_timer(self.metric_name, elapsed_time)
 
+
 class MetricsCollector:
     """Collects and manages system and trading metrics."""
 
-    def __init__(self, namespace):
+    def __init__(self, namespace, subsystem=None):
 
         """
         Initialize metrics collector.
@@ -137,8 +139,6 @@ class MetricsCollector:
         full_name = f"{self.namespace}.{metric_name}"
         self.gauges[full_name] = value
         return value
-
-
 
     def register_gauge(self, metric_name, description=None, initial_value=0):
         """
@@ -256,7 +256,6 @@ class MetricsCollector:
             "median": statistics.median(values),
             "p95": statistics.quantiles(values, n=20)[18] if len(values) >= 20 else max(values)
         }
-
 
     def timer(self, metric_name):
         """
@@ -482,7 +481,6 @@ class MetricsCollector:
             short_name = name.replace(f"{self.namespace}.", "")
             result['histograms'][name] = self.get_histogram_stats(short_name)
 
-
         # Simplify timer data for export
         for name, timer in self.timers.items():
             result['timers'][name] = {
@@ -506,7 +504,6 @@ class MetricsCollector:
         # Add this static method for singleton access
     _instances = {}
 
-
     @classmethod
     def get_instance(cls, namespace="default"):
         """
@@ -523,7 +520,6 @@ class MetricsCollector:
             cls._instances[namespace] = cls(namespace)
         return cls._instances[namespace]
 
-
     @contextmanager
     def timing(self, metric_name, duration: float | None = None):
         """Record timing either as context manager or direct call."""
@@ -538,7 +534,6 @@ class MetricsCollector:
         finally:
             duration = time.time() - start_time
             self.record_timing(metric_name, duration)
-
 
     async def collect_metrics_task(self, interval=10):
         """
@@ -582,7 +577,8 @@ class MetricsCollector:
             tag_str = ",".join(f"{k}={v}" for k, v in tags.items())
             self.logger.debug(f"Latency: {name} {value_ms}ms {tag_str}")
 
-    # Module-level instance for global use
+
+# Module-level instance for global use
 def get_default_collector():
     """Get the default metrics collector instance."""
     return MetricsCollector.get_instance("default")
@@ -591,8 +587,6 @@ def get_default_collector():
 # Global collector instances
 
 performance_tracker = MetricsCollector.get_instance("performance")
-_default_collector = get_default_collector()
-
 _default_collector = get_default_collector()
 
 
@@ -642,6 +636,7 @@ def calculate_timing(func=None, *, metric_name: Optional[str] = None,
 
     return sync_wrapper
 
+
 def record_latency(name, value_ms, tags=None):
     """
     Record a latency metric using the default collector.
@@ -652,6 +647,7 @@ def record_latency(name, value_ms, tags=None):
         tags: Optional dictionary of tags
     """
     _default_collector.record_latency(name, value_ms, tags)
+
 
 def increment_counter(name, value=1, tags=None):
     """
@@ -667,6 +663,7 @@ def increment_counter(name, value=1, tags=None):
     """
     return _default_collector.increment(name, value)
 
+
 def record_value(name, value, tags=None):
     """
     Record a gauge value using the default collector.
@@ -680,6 +677,7 @@ def record_value(name, value, tags=None):
         Recorded value
     """
     return _default_collector.set(name, value)
+
 
 def record_success(name, tags=None):
     """
@@ -718,6 +716,7 @@ def record_failure(name, error=None, tags=None):
 
     _default_collector.logger.warning(log_msg)
 
+
 def compute_sharpe_ratio(returns: List[float], risk_free_rate: float = 0.0, annualization_factor: int = 252) -> float:
     """
     Calculate the Sharpe ratio for a series of returns.
@@ -754,6 +753,7 @@ def compute_sharpe_ratio(returns: List[float], risk_free_rate: float = 0.0, annu
     sharpe_ratio = daily_sharpe * math.sqrt(annualization_factor)
 
     return sharpe_ratio
+
 
 def compute_sortino_ratio(returns: List[float], risk_free_rate: float = 0.0, annualization_factor: int = 252) -> float:
     """
@@ -839,12 +839,12 @@ def calculate_trading_metrics(returns: List[float], trades: List[Dict[str, Any]]
     # Risk metrics
     try:
         sharpe_ratio = compute_sharpe_ratio(returns)
-    except:
+    except Exception:
         sharpe_ratio = 0.0
 
     try:
         sortino_ratio = compute_sortino_ratio(returns)
-    except:
+    except Exception:
         sortino_ratio = 0.0
 
     # Calculate drawdown
