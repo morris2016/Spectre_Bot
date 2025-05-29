@@ -58,7 +58,8 @@ from common.metrics import (
 )
 from common.redis_client import RedisClient
 
-from data_feeds.base_feed import BaseFeed, FeedOptions, DataProcessor
+from data_feeds.base_feed import BaseDataFeed, FeedOptions, DataProcessor
+
 from data_ingest.processor import normalize_instrument_id
 
 # Set up logger
@@ -86,6 +87,8 @@ class DerivFeedOptions(FeedOptions):
     max_subscriptions_per_connection: int = 25
     price_refresh_rate: float = DERIV_PRICE_REFRESH_RATE
     order_book_depth: int = MARKET_ORDER_BOOK_DEPTH
+    rate_limit_max_requests: int = 30
+    rate_limit_period: float = 1.0
     use_enhanced_ticks: bool = True
     track_market_structure: bool = True
     model_platform_behavior: bool = True
@@ -822,7 +825,7 @@ class DerivContractHandler:
             self.logger.error(f"Error recording contract result: {str(e)}")
 
 
-class DerivFeed(BaseFeed):
+class DerivFeed(BaseDataFeed):
     """
     Advanced Deriv platform data feed with sophisticated pattern recognition, platform behavior 
     modeling, and market microstructure analysis to exploit inefficiencies and achieve superior 
@@ -841,6 +844,7 @@ class DerivFeed(BaseFeed):
         self.options = options or DerivFeedOptions()
         
         super().__init__("deriv", self.options)
+
         
         # Platform and market state trackers
         self.connections = {}
@@ -861,11 +865,12 @@ class DerivFeed(BaseFeed):
         # Locks for thread safety
         self.connection_locks = {}
         self.subscription_locks = {}
+        self.tasks: List[asyncio.Task] = []
         
         # Rate limiters
         self.rest_rate_limiter = AsyncRateLimiter(
-            rate=self.options.rate_limit_max_requests, 
-            period=self.options.rate_limit_period
+            rate_limit=self.options.rate_limit_max_requests,
+            time_period=self.options.rate_limit_period
         )
         
         # Monitoring

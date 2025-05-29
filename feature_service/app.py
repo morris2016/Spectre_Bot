@@ -86,7 +86,7 @@ class FeatureService:
         self.executor = None
         self._throttler = Throttler(
             rate_limit=config.get("feature_service.rate_limit", 100),
-            time_period=1.0
+            period=1.0
         )
         
         # Initialize event loop
