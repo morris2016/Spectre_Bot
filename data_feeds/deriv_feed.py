@@ -58,7 +58,7 @@ from common.metrics import (
 )
 from common.redis_client import RedisClient
 
-from data_feeds.base_feed import BaseFeed, FeedOptions, DataProcessor
+from data_feeds.base_feed import BaseFeed, BaseDataFeed, FeedOptions, DataProcessor
 from data_ingest.processor import normalize_instrument_id
 
 # Set up logger
@@ -96,7 +96,6 @@ class DerivFeedOptions(FeedOptions):
     analyze_contract_availability: bool = True
     
     def __post_init__(self):
-        super().__post_init__()
         # Additional validation for Deriv-specific options
         if self.ping_interval < 5:
             logger.warning("Ping interval is too low, setting to minimum of 5 seconds")
@@ -823,7 +822,7 @@ class DerivContractHandler:
             self.logger.error(f"Error recording contract result: {str(e)}")
 
 
-class DerivFeed(BaseFeed):
+class DerivFeed(BaseDataFeed):
     """
     Advanced Deriv platform data feed with sophisticated pattern recognition, platform behavior 
     modeling, and market microstructure analysis to exploit inefficiencies and achieve superior 
@@ -841,7 +840,7 @@ class DerivFeed(BaseFeed):
         self.credentials = credentials
         self.options = options or DerivFeedOptions()
         
-        super().__init__(name="deriv", options=self.options)
+        super().__init__(name="deriv", config=self.options)
         
         # Platform and market state trackers
         self.connections = {}
