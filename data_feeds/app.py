@@ -18,7 +18,11 @@ from common.logger import get_logger
 from common.metrics import MetricsCollector
 from common.event_bus import EventBus
 from common.exceptions import (
-    FeedError, FeedConnectionError, ServiceStartupError, ServiceShutdownError
+    FeedError,
+    FeedConnectionError,
+    FeedAuthenticationError,
+    ServiceStartupError,
+    ServiceShutdownError,
 )
 
 from data_feeds.base_feed import BaseFeed
@@ -163,6 +167,15 @@ class DataFeedService:
                 if isinstance(e, FeedConnectionError) and "Could not contact DNS servers" in str(e):
                     self.logger.error(
                         f"Disabling {feed_name} feed due to network unavailability"
+                    )
+                    self.feeds.pop(feed_name, None)
+                    self.config.data_feeds.get(feed_name, {})["enabled"] = False
+                    continue
+
+                # Disable feed on authentication failures to prevent restart loops
+                if isinstance(e, FeedAuthenticationError):
+                    self.logger.error(
+                        f"Disabling {feed_name} feed due to authentication error"
                     )
                     self.feeds.pop(feed_name, None)
                     self.config.data_feeds.get(feed_name, {})["enabled"] = False
