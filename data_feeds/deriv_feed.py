@@ -86,6 +86,8 @@ class DerivFeedOptions(FeedOptions):
     max_subscriptions_per_connection: int = 25
     price_refresh_rate: float = DERIV_PRICE_REFRESH_RATE
     order_book_depth: int = MARKET_ORDER_BOOK_DEPTH
+    rate_limit_max_requests: int = 30
+    rate_limit_period: float = 1.0
     use_enhanced_ticks: bool = True
     track_market_structure: bool = True
     model_platform_behavior: bool = True
@@ -96,7 +98,6 @@ class DerivFeedOptions(FeedOptions):
     analyze_contract_availability: bool = True
     
     def __post_init__(self):
-        super().__post_init__()
         # Additional validation for Deriv-specific options
         if self.ping_interval < 5:
             logger.warning("Ping interval is too low, setting to minimum of 5 seconds")
@@ -841,7 +842,7 @@ class DerivFeed(BaseFeed):
         self.credentials = credentials
         self.options = options or DerivFeedOptions()
         
-        super().__init__(name="deriv", options=self.options)
+        super().__init__(config=self.options)
         
         # Platform and market state trackers
         self.connections = {}
@@ -862,11 +863,12 @@ class DerivFeed(BaseFeed):
         # Locks for thread safety
         self.connection_locks = {}
         self.subscription_locks = {}
+        self.tasks: List[asyncio.Task] = []
         
         # Rate limiters
         self.rest_rate_limiter = AsyncRateLimiter(
-            rate=self.options.rate_limit_max_requests, 
-            period=self.options.rate_limit_period
+            rate_limit=self.options.rate_limit_max_requests,
+            time_period=self.options.rate_limit_period
         )
         
         # Monitoring
