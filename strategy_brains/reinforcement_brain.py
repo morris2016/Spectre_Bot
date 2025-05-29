@@ -79,6 +79,8 @@ class TradingEnvironment:
         action_type: str = "discrete",
     ) -> None:
         self.data = data.reset_index(drop=True)
+        self.initial_balance = initial_balance
+
         self.window_size = window_size
         self.current_step = window_size
         self.balance = initial_balance

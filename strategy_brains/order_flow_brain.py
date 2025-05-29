@@ -643,6 +643,16 @@ class OrderFlowBrain(StrategyBrain):
 
         self.logger.info(f"OrderFlowBrain shutdown complete")
 
+    async def generate_signals(self) -> List[Dict[str, Any]]:
+        """Generate trading signals based on current analysis."""
+        signal = await self.generate_signal()
+        return [signal] if signal else []
+
+    async def on_regime_change(self, new_regime: str) -> None:
+        """React to a detected market regime change."""
+        self.logger.info(f"Regime changed to {new_regime}")
+    
+
     # ========== Private Methods ==========
 
     async def _process_candle(self, candle: Dict[str, Any]) -> None:

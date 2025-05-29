@@ -124,32 +124,26 @@ if not GYM_AVAILABLE:
             self.current_idx = state_lookback
             self.initial_balance = initial_balance
             self.balance = initial_balance
-            self.position = 0  # -1 sell, 0 hold, 1 buy
-            self._validate_data()
-
-
-        def _validate_data(self) -> None:
-            if self.market_data.empty or self.features.empty:
-                raise ValueError("Market or feature data is empty")
-            if len(self.market_data) != len(self.features):
-                raise ValueError("Market and feature data must be same length")
+            self.position = 0
 
 
             self._validate_data()
 
         def _validate_data(self) -> None:
             if self.market_data.empty or self.features.empty:
-                raise ValueError("Market data or features DataFrame is empty")
+                raise ValueError("Market data or features are empty")
             if len(self.market_data) != len(self.features):
-                raise ValueError("Market data and features must have equal length")
+                raise ValueError("Market data and features length mismatch")
+            required_cols = {"open", "high", "low", "close", "volume"}
+            missing = required_cols - set(self.market_data.columns)
+            if missing:
+                raise ValueError(f"Missing market columns: {missing}")
 
         def _get_state(self) -> np.ndarray:
             start = self.current_idx - self.state_lookback
             df = pd.concat(
-                [
-                    self.market_data.iloc[start:self.current_idx],
-                    self.features.iloc[start:self.current_idx],
-                ],
+                [self.market_data.iloc[start:self.current_idx],
+                 self.features.iloc[start:self.current_idx]],
                 axis=1,
             )
             return df.values.flatten()
@@ -163,6 +157,7 @@ if not GYM_AVAILABLE:
 
         def reset(self):
             self.current_idx = self.state_lookback
+            self.balance = self.initial_balance
             return self._get_state(), {}
 
         def step(self, action, position_size_pct=None):

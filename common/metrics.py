@@ -588,9 +588,10 @@ def get_default_collector():
     return MetricsCollector.get_instance("default")
 
 
-# Global collectors used across the application
-_default_collector = MetricsCollector.get_instance("default")
+# Global collector instances
+
 performance_tracker = MetricsCollector.get_instance("performance")
+_default_collector = get_default_collector()
 
 _default_collector = get_default_collector()
 
