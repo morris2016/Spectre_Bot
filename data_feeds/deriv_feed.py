@@ -58,7 +58,8 @@ from common.metrics import (
 )
 from common.redis_client import RedisClient
 
-from data_feeds.base_feed import BaseFeed, BaseDataFeed, FeedOptions, DataProcessor
+from data_feeds.base_feed import BaseDataFeed, FeedOptions, DataProcessor
+
 from data_ingest.processor import normalize_instrument_id
 
 # Set up logger
@@ -94,7 +95,7 @@ class DerivFeedOptions(FeedOptions):
     cache_historical_data: bool = True
     detect_synthetic_price_movements: bool = True
     analyze_contract_availability: bool = True
-    
+
     def __post_init__(self):
         # Additional validation for Deriv-specific options
         if self.ping_interval < 5:
@@ -839,7 +840,6 @@ class DerivFeed(BaseDataFeed):
         """
         self.credentials = credentials
         self.options = options or DerivFeedOptions()
-        
         super().__init__(name="deriv", config=self.options)
         
         # Platform and market state trackers
