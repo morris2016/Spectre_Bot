@@ -325,6 +325,16 @@ class RiskLevel(enum.Enum):
     VERY_HIGH = 5
 
 
+class RegimeTypes(enum.Enum):
+    """Detailed market regime classifications used by strategy brains."""
+    STRONG_TREND = "strong_trend"
+    WEAK_TREND = "weak_trend"
+    VOLATILE_TREND = "volatile_trend"
+    RANGING = "ranging"
+    VOLATILE_RANGE = "volatile_range"
+    CHOPPY = "choppy"
+
+
 # Fee types
 class FeeType(enum.Enum):
     MAKER = "maker"
@@ -1354,6 +1364,13 @@ ADAPTIVE_LEARNING_SCHEDULE = {
     "interval_minutes": 60,
     "full_retrain_hours": 24
 }
+ONLINE_LEARNING_INTERVAL = 300  # seconds between online learning updates
+MODEL_SAVE_INTERVAL = 3600      # seconds between model persistence operations
+MIN_SAMPLES_FOR_TRAINING = 50
+FEATURE_IMPORTANCE_THRESHOLD = 0.01
+LEARNING_RATES = {"default": 0.001, "fine_tune": 0.0001}
+REINFORCEMENT_DECAY_FACTOR = 0.99
+BATCH_SIZES = {"default": 32, "large": 128}
 DEFAULT_SERVICE_TIMEOUT = 60  # seconds
 MARKET_REGIMES = ["trending_bullish", "trending_bearish", "ranging", "volatile", "choppy", "breakout", "reversal"]
 SIGNAL_CONFIDENCE_LEVELS = {
@@ -1484,6 +1501,12 @@ SIGNAL_TYPES = {
     "POSITION_SIZE": "position_size",
     "RISK_ADJUSTMENT": "risk_adjustment"
 }
+
+# Trading action constants
+ACTION_BUY = "buy"
+ACTION_SELL = "sell"
+ACTION_HOLD = "hold"
+ACTION_CLOSE = "close"
 
 POSITION_DIRECTION = {
     "LONG": "long",
@@ -1668,6 +1691,7 @@ MODEL_REGISTRY_CONFIG = {
     "backup_frequency": 24,  # hours
     "max_versions": 5
 }
+MODEL_REGISTRY_KEYS = ["name", "version", "path"]
 
 FEATURE_IMPORTANCE_CONFIG = {
     "n_permutations": 10,

@@ -46,7 +46,7 @@ The QuantumSpectre Elite Trading System is built with a modular, microservice-ba
    cd quantum-spectre
    ```
 
-2. Install the core Python dependencies:
+2. Install the base Python dependencies:
    ```bash
    pip install -r requirements-core.txt
    ```

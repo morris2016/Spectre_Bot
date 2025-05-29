@@ -73,7 +73,7 @@ class MLModelService:
         )
         
         # Metrics collection
-        self.metrics = MetricsCollector(service_name='ml_models')
+        self.metrics = MetricsCollector(namespace='ml_models')
         
         # Initialize event loop
         self.loop = None
