@@ -149,7 +149,7 @@ class DataFeedService:
     
     async def _start_feeds(self):
         """Start all initialized feeds."""
-        for feed_name, feed in self.feeds.items():
+        for feed_name, feed in list(self.feeds.items()):
             self.logger.info(f"Starting {feed_name} feed")
             try:
                 await feed.start()
@@ -158,7 +158,16 @@ class DataFeedService:
             except Exception as e:
                 self.logger.error(f"Failed to start {feed_name} feed: {str(e)}")
                 self.metrics.increment("feed.start.error")
-                
+
+                # Disable feed if network is unreachable to avoid endless restart attempts
+                if isinstance(e, FeedConnectionError) and "Could not contact DNS servers" in str(e):
+                    self.logger.error(
+                        f"Disabling {feed_name} feed due to network unavailability"
+                    )
+                    self.feeds.pop(feed_name, None)
+                    self.config.data_feeds.get(feed_name, {})["enabled"] = False
+                    continue
+
                 # If this is a critical feed, raise an error
                 if self.config.data_feeds.get(feed_name, {}).get("critical", False):
                     raise ServiceStartupError(f"Failed to start critical feed {feed_name}")

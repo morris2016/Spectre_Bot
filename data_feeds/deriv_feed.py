@@ -96,7 +96,6 @@ class DerivFeedOptions(FeedOptions):
     analyze_contract_availability: bool = True
     
     def __post_init__(self):
-        super().__post_init__()
         # Additional validation for Deriv-specific options
         if self.ping_interval < 5:
             logger.warning("Ping interval is too low, setting to minimum of 5 seconds")
