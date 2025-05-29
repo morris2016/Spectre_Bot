@@ -80,8 +80,6 @@ import enum
 from pathlib import Path
 from functools import wraps
 from contextlib import suppress, asynccontextmanager, contextmanager
-import inspect  # Add this to the imports at the top
-from common.constants import OrderSide, OrderType, TimeInForce
 from typing import (
     Dict,
     List,
@@ -2853,45 +2851,9 @@ def calculate_pivot_points(high: float, low: float, close: float) -> Dict[str, f
 pivot_points = calculate_pivot_points
 
 
-def obfuscate_sensitive_data(
-    data: Union[str, Dict, List], level: int = 1
-) -> Union[str, Dict, List]:
-
-
-    return {
-        'pivot': pivot,
-        'r1': r1,
-        'r2': r2,
-        'r3': r3,
-        's1': s1,
-        's2': s2,
-        's3': s3
-    }
-
-
-# Backward compatibility alias
-pivot_points = calculate_pivot_points
-
-# Backward compatibility alias
-pivot_points = calculate_pivot_points
-
-
 def pivot_points(high: float, low: float, close: float) -> Dict[str, float]:
-    """Alias for calculate_pivot_points for backward compatibility."""
-    return calculate_pivot_points(high, low, close)
-
     """Alias for :func:`calculate_pivot_points`."""
     return calculate_pivot_points(high, low, close)
-
-# Backward compatibility alias
-def pivot_points(high: float, low: float, close: float) -> Dict[str, float]:
-    """Alias for :func:`calculate_pivot_points` for backward compatibility."""
-    return calculate_pivot_points(high, low, close)
-
-# Backwards compatibility alias
-
-
-pivot_points = calculate_pivot_points
 
 
 def obfuscate_sensitive_data(data: Union[str, Dict, List], level: int = 1) -> Union[str, Dict, List]:
@@ -2979,46 +2941,6 @@ def exponential_smooth(data: List[float], alpha: float = 0.3) -> List[float]:
     """
     return exponential_smoothing(data, alpha)
 
-
-def periodic_reset(interval: float = 3600.0):
-    """
-    Decorator for functions that need to reset their state periodically.
-
-    Args:
-        interval: Time interval in seconds between resets
-
-    Returns:
-        Decorator function
-    """
-
-    def decorator(func):
-        last_reset = {"time": time.time()}
-
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            current_time = time.time()
-
-            # Check if it's time to reset
-            if current_time - last_reset["time"] >= interval:
-                # Reset by calling with reset flag
-                if "reset" in inspect.signature(func).parameters:
-                    result = func(*args, reset=True, **kwargs)
-                else:
-                    # For backward compatibility with functions that don't accept reset
-                    result = func(*args, **kwargs)
-
-                last_reset["time"] = current_time
-                return result
-            else:
-                # Normal call, no reset
-                if "reset" in inspect.signature(func).parameters:
-                    return func(*args, reset=False, **kwargs)
-                else:
-                    return func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
 
 
 def async_retry_with_backoff_decorator(
@@ -3824,11 +3746,6 @@ ASSET_PRECISION_MAP = {
 }
 
 
-def get_asset_precision(symbol: str) -> int:
-    """Return decimal precision for a trading symbol."""
-    return ASSET_PRECISION_MAP.get(symbol.upper(), 2)
-
-
 def calculate_zscore(data: Sequence[float]) -> float:
     """Calculate the z-score of the latest data point."""
     series = np.asarray(data, dtype=float)
@@ -3843,9 +3760,6 @@ def detect_outliers(data: Sequence[float], threshold: float = 3.0) -> List[int]:
     return [i for i, x in enumerate(series) if abs(x - mean) > threshold * std]
 
 
-def exponential_backoff(attempt: int, base_delay: float = 1.0, max_delay: float = 60.0) -> float:
-    """Calculate exponential backoff delay."""
-    return min(base_delay * (2 ** attempt), max_delay)
 
 def safe_nltk_download(resource: str, quiet: bool = True) -> bool:
     """Check for an NLTK resource without downloading.
@@ -3906,12 +3820,6 @@ def load_from_file(path: str) -> Any:
         return pickle.load(f)
 
 
-def validate_data(data: pd.DataFrame) -> pd.DataFrame:
-    """Basic validation placeholder returning the input."""
-    return data
-def pivot_points(high: float, low: float, close: float) -> Dict[str, float]:
-    """Backward-compatible alias for calculate_pivot_points."""
-    return calculate_pivot_points(high, low, close)
 
 
 class ThreadSafeDict:
@@ -4857,9 +4765,9 @@ def calculate_quantity_precision(symbol: str, exchange: str = None) -> int:
     return default_precisions.get(base, default_precisions["DEFAULT"])
 
 
-def get_asset_precision(asset: str) -> int:
+def get_asset_precision(symbol: str, exchange: str | None = None) -> int:
     """Return precision for an asset symbol."""
-    return calculate_quantity_precision(asset)
+    return calculate_quantity_precision(symbol, exchange)
 
 
 def round_to_precision(value: float, precision: int) -> float:
@@ -5033,22 +4941,8 @@ def normalize_quantity(
     return max(normalized, min_quantity)
 
 
-def create_timeframes(start: datetime.datetime, end: datetime.datetime, freq: str = '1D') -> List[pd.Timestamp]:
-    """Generate a list of timestamps between start and end at the given frequency."""
-    if pd is None:  # pragma: no cover - optional dependency
-        raise ImportError('pandas is required for create_timeframes')
-    return list(pd.date_range(start=start, end=end, freq=freq))
 
 
-def calculate_metrics(y_true: Sequence[float], y_pred: Sequence[float]) -> Dict[str, float]:
-    """Calculate simple MAE and MSE metrics."""
-    if np is None:  # pragma: no cover - optional dependency
-        raise ImportError('NumPy is required for calculate_metrics')
-    y_true_arr = np.asarray(y_true)
-    y_pred_arr = np.asarray(y_pred)
-    mse = float(np.mean((y_true_arr - y_pred_arr) ** 2))
-    mae = float(np.mean(np.abs(y_true_arr - y_pred_arr)))
-    return {'mse': mse, 'mae': mae}
 
 
 def validate_data(df: pd.DataFrame) -> pd.DataFrame:
