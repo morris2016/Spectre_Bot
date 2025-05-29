@@ -59,6 +59,7 @@ from common.metrics import (
 from common.redis_client import RedisClient
 
 from data_feeds.base_feed import BaseDataFeed, FeedOptions, DataProcessor
+
 from data_ingest.processor import normalize_instrument_id
 
 # Set up logger
@@ -839,7 +840,6 @@ class DerivFeed(BaseDataFeed):
         """
         self.credentials = credentials
         self.options = options or DerivFeedOptions()
-
         super().__init__(name="deriv", config=self.options)
         
         # Platform and market state trackers
