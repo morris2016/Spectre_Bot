@@ -2851,11 +2851,6 @@ def calculate_pivot_points(high: float, low: float, close: float) -> Dict[str, f
 pivot_points = calculate_pivot_points
 
 
-def pivot_points(high: float, low: float, close: float) -> Dict[str, float]:
-    """Alias for :func:`calculate_pivot_points`."""
-    return calculate_pivot_points(high, low, close)
-
-
 def obfuscate_sensitive_data(data: Union[str, Dict, List], level: int = 1) -> Union[str, Dict, List]:
 
     """
