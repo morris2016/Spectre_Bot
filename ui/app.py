@@ -46,6 +46,12 @@ class UIService:
 
         self.app.add_api_route("/{full_path:path}", self.index, methods=["GET"])
 
+    def _port_available(self, host: str, port: int) -> bool:
+        """Return True if the port is free for binding."""
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.settimeout(1)
+            return sock.connect_ex((host, port)) != 0
+
     async def start(self) -> None:
         """Start the UI service using Uvicorn."""
         if self.running:
@@ -56,11 +62,7 @@ class UIService:
         log_level = self.config.logging.get("ui_level", "info").lower()
 
         # Skip startup if the port is already in use
-        try:
-            test_sock = socket.socket()
-            test_sock.bind((host, port))
-            test_sock.close()
-        except OSError:
+        if not self._port_available(host, port):
             self.logger.error("UI port %s is already in use; disabling UI service", port)
             return
 

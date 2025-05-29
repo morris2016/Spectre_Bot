@@ -176,6 +176,7 @@ class DataFeedService:
                 if isinstance(e, FeedAuthenticationError):
                     self.logger.error(
                         f"Disabling {feed_name} feed due to authentication error"
+
                     )
                     self.feeds.pop(feed_name, None)
                     self.config.data_feeds.get(feed_name, {})["enabled"] = False
