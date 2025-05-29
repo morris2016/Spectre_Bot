@@ -44,7 +44,6 @@ from common.redis_client import RedisClient  # Async-compatible Redis client
 
 # Assuming 'config.py' at the root level provides the Config class/instance
 # If 'config.py' provides an instance: from config import app_config as Config (or similar)
-# If 'core.config' is the module: from core.config import Config
 from config import Config  # This might need adjustment based on actual project structure
 
 
