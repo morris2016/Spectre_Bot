@@ -94,9 +94,8 @@ class DerivFeedOptions(FeedOptions):
     cache_historical_data: bool = True
     detect_synthetic_price_movements: bool = True
     analyze_contract_availability: bool = True
-    
+
     def __post_init__(self):
-        super().__post_init__()
         # Additional validation for Deriv-specific options
         if self.ping_interval < 5:
             logger.warning("Ping interval is too low, setting to minimum of 5 seconds")
@@ -841,7 +840,7 @@ class DerivFeed(BaseFeed):
         self.credentials = credentials
         self.options = options or DerivFeedOptions()
         
-        super().__init__(name="deriv", options=self.options)
+        super().__init__("deriv", self.options)
         
         # Platform and market state trackers
         self.connections = {}

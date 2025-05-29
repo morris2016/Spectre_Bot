@@ -1115,6 +1115,16 @@ class SimulationError(BacktestError):
     pass
 
 
+class BacktestExecutionError(BacktestError):
+    """Raised when a backtest execution fails or is cancelled."""
+    pass
+
+
+class BacktestOptimizationError(BacktestError):
+    """Raised for errors during backtest optimization."""
+    pass
+
+
 # ======================================
 # Monitoring and Alerting Exceptions
 # ======================================
@@ -1297,7 +1307,7 @@ __all__ = [
     'ModelValidationError', 'WebSocketError', 'SubscriptionError', 'DataFetchError',
     'BacktestConfigError', 'BacktestDataError', 'BacktestStrategyError', 'AssetCouncilError',
     'BrainNotFoundError', 'CouncilError', 'DecisionError', 'PerformanceTrackerError',
-    'InvalidStrategyError', 'SimulationError', 'SentimentAnalysisError', 'RegimeCouncilError',
+    'InvalidStrategyError', 'SimulationError', 'BacktestExecutionError', 'BacktestOptimizationError', 'SentimentAnalysisError', 'RegimeCouncilError',
     'ReportGenerationError', 'OperationNotPermittedError', 'BacktestScenarioError',
     'DataNotFoundError', 'VoiceAdvisorError', 'TTSEngineError', 'VotingError',
     'PermissionDeniedError', 'WeightingSystemError', 'FeedCoordinationError',
