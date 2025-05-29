@@ -188,21 +188,6 @@ class MetricsCollector:
             
         return self.histograms[full_name]
         
-    def record_histogram(self, metric_name, value):
-        """
-        Record a histogram value.
-        
-        Args:
-            metric_name: Metric name
-            value: Histogram value
-        """
-        full_name = f"{self.namespace}.{metric_name}"
-        if full_name not in self.histograms:
-            self.histograms[full_name] = []
-        self.histograms[full_name].append(value)
-        # Keep only the last 1000 values to limit memory usage
-        if len(self.histograms[full_name]) > 1000:
-            self.histograms[full_name] = self.histograms[full_name][-1000:]
             
     def get(self, metric_name, default=None):
         """
@@ -589,8 +574,10 @@ def get_default_collector():
     """Get the default metrics collector instance."""
     return MetricsCollector.get_instance("default")
 
-# Create a global performance tracker instance
+
+# Global collector instances
 performance_tracker = MetricsCollector.get_instance("performance")
+_default_collector = get_default_collector()
 
 
 def calculate_timing(func=None, *, metric_name: Optional[str] = None,
@@ -692,27 +679,6 @@ def record_success(name, tags=None):
         tag_str = ",".join(f"{k}={v}" for k, v in tags.items())
         _default_collector.logger.debug(f"Success: {name} {tag_str}")
 
-def record_failure(name, error=None, tags=None):
-    """
-    Record a failure event using the default collector.
-    
-    Args:
-        name: Metric name
-        error: Optional error message or exception
-        tags: Optional dictionary of tags
-    """
-    _default_collector.increment(f"{name}.failure", 1)
-    
-    # Create log message
-    log_msg = f"Failure: {name}"
-    if error:
-        log_msg += f" - {str(error)}"
-    
-    if tags:
-        tag_str = ",".join(f"{k}={v}" for k, v in tags.items())
-        log_msg += f" {tag_str}"
-    
-    _default_collector.logger.warning(log_msg)
 
 def record_failure(name, error=None, tags=None):
     """
@@ -920,50 +886,8 @@ def calculate_trading_metrics(returns: List[float], trades: List[Dict[str, Any]]
         "avg_return": avg_return,
         "volatility": volatility,
         "annualized_volatility": annualized_volatility,
-        "num_trades": num_trades
+        "num_trades": num_trades,
     }
-    """
-    Calculate the Sortino ratio for a series of returns.
-    
-    Args:
-        returns: List of period returns (e.g., daily returns)
-        risk_free_rate: Risk-free rate (annualized)
-        annualization_factor: Factor to annualize returns (252 for daily, 52 for weekly, 12 for monthly)
-        
-    Returns:
-        float: Sortino ratio
-    """
-    if not returns or len(returns) < 2:
-        return 0.0
-        
-    # Convert to numpy array for calculations
-    returns_array = np.array(returns)
-    
-    # Calculate mean return
-    mean_return = np.mean(returns_array)
-    
-    # Calculate daily excess return
-    daily_risk_free = risk_free_rate / annualization_factor
-    excess_return = mean_return - daily_risk_free
-    
-    # Calculate downside deviation (only negative returns)
-    negative_returns = returns_array[returns_array < 0]
-    
-    if len(negative_returns) == 0:
-        return float('inf')  # No negative returns
-        
-    downside_deviation = np.std(negative_returns, ddof=1)
-    
-    if downside_deviation == 0:
-        return 0.0  # Avoid division by zero
-        
-    # Calculate daily Sortino ratio
-    daily_sortino = excess_return / downside_deviation
-    
-    # Annualize Sortino ratio
-    sortino_ratio = daily_sortino * math.sqrt(annualization_factor)
-
-    return sortino_ratio
 
 
 class ExecutionMetrics:

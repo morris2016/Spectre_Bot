@@ -32,9 +32,14 @@ from config import Config
 from common.logger import get_logger
 from common.utils import normalize_data, timeit, calculate_dynamic_threshold
 from data_storage.market_data import MarketDataStorage
-from feature_service.features.order_flow import (
-    OrderFlowFeatures, VolumeProfileFeatures, OrderBookFeatures
-)
+try:
+    from feature_service.features.order_flow import (
+        OrderFlowFeatures, VolumeProfileFeatures, OrderBookFeatures
+    )
+except Exception:  # pragma: no cover - optional dependency
+    from feature_service.features.order_flow import OrderFlowFeatures
+    VolumeProfileFeatures = None  # type: ignore
+    OrderBookFeatures = None  # type: ignore
 from strategy_brains.base_brain import StrategyBrain
 from intelligence.loophole_detection.microstructure import MicrostructureAnalyzer
 
@@ -597,6 +602,15 @@ class OrderFlowBrain(StrategyBrain):
             self.logger.error(f"Error saving state during shutdown: {str(e)}")
         
         self.logger.info(f"OrderFlowBrain shutdown complete")
+
+    async def generate_signals(self) -> List[Dict[str, Any]]:
+        """Generate trading signals based on current analysis."""
+        signal = await self.generate_signal()
+        return [signal] if signal else []
+
+    async def on_regime_change(self, new_regime: str) -> None:
+        """React to a detected market regime change."""
+        self.logger.info(f"Regime changed to {new_regime}")
     
     # ========== Private Methods ==========
     

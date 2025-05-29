@@ -1265,3 +1265,13 @@ def get_sampler(**kwargs) -> SamplingManager:
     """Create and return a SamplingManager with optional configuration."""
     return SamplingManager()
 
+
+def balance_dataset(X: pd.DataFrame, y: pd.Series, method: str = 'oversampling', **kwargs) -> Tuple[pd.DataFrame, pd.Series]:
+    """Balance feature and target data using the chosen sampling method."""
+    df = X.copy()
+    df['_target'] = y.values
+    sampler = get_sampler()
+    balanced = sampler.sample(df, method=method, target_col='_target', **kwargs)
+    y_bal = balanced.pop('_target')
+    return balanced.reset_index(drop=True), y_bal.reset_index(drop=True)
+
