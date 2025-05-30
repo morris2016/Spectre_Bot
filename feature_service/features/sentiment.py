@@ -361,8 +361,11 @@ class SentimentFeatures(BaseFeature):
                 # Fall back to daily data
                 daily_data = self.ts_storage.get_ohlcv(symbol, '1d', 10)
                 if daily_data is None or len(daily_data) == 0:
-                    # No data available
-                    return []
+                    # No price data available, return a neutral placeholder
+                    return [{
+                        'timestamp': start_time,
+                        'sentiment': 0.0
+                    }]
                 
                 # Use daily data
                 price_data = daily_data

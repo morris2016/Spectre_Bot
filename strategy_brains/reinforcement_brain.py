@@ -88,7 +88,13 @@ class TradingEnvironment:
 
     def _get_observation(self) -> np.ndarray:
         start = self.current_step - self.window_size
-        return self.data.iloc[start:self.current_step].values.astype(np.float32)
+        slice_df = self.data.iloc[max(start, 0):self.current_step]
+        obs = slice_df.values.astype(np.float32)
+        if len(obs) < self.window_size:
+            pad_rows = self.window_size - len(obs)
+            pad = np.zeros((pad_rows, obs.shape[1]), dtype=np.float32)
+            obs = np.vstack([pad, obs])
+        return obs
 
     def reset(self):
         self.current_step = self.window_size

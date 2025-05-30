@@ -119,7 +119,10 @@ class ModelTrainer:
         self.config = config
         self.metrics_collector = metrics_collector or MetricsCollector("ml_models", "trainer")
         self.market_data_repo = MarketDataRepository(config)
-        self.feature_extractor = FeatureExtractor(config)
+        feature_list = config.get("ml_models.features", [])
+        if not isinstance(feature_list, list):
+            feature_list = []
+        self.feature_extractor = FeatureExtractor(feature_list)
         self.redis_client = RedisClient(config)
         self.use_gpu = config.get("ml_models.use_gpu", True)
         self.cuda_available = torch.cuda.is_available() if torch else False
