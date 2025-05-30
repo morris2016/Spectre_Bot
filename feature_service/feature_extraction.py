@@ -1750,6 +1750,29 @@ def fibonacci_levels(data: pd.DataFrame) -> Dict[str, float]:
 
         return vwap
 
+    @feature_calculation
+    def pair_correlation(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
+        """Correlation between this asset and a paired asset."""
+        pair_data = params.get("pair_data")
+        column = params.get("pair_column", "close")
+        window = params.get("corr_window")
+        if pair_data is None:
+            raise ValueError("pair_data parameter required for pair_correlation")
+        corr = compute_pair_correlation(data, pair_data, column=column, window=window)
+        if isinstance(corr, pd.Series):
+            return corr.rename("pair_correlation")
+        return pd.Series([corr] * len(data), index=data.index, name="pair_correlation")
+
+    @feature_calculation
+    def cointegration_pvalue(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
+        """Engle-Granger cointegration p-value with a paired asset."""
+        pair_data = params.get("pair_data")
+        column = params.get("pair_column", "close")
+        if pair_data is None:
+            raise ValueError("pair_data parameter required for cointegration_pvalue")
+        pvalue = cointegration_score(data, pair_data, column=column)
+        return pd.Series([pvalue] * len(data), index=data.index, name="cointegration_pvalue")
+
 
 
 def atr(high: Union[pd.Series, List[float]],
