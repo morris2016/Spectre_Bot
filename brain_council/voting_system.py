@@ -26,6 +26,26 @@ from common.constants import (
 
 
 @dataclass
+class VotingResult:
+    """Result of a voting process with direction and confidence."""
+    
+    direction: str
+    confidence: float
+    agreement_level: float = 0.0
+    timestamp: float = field(default_factory=time.time)
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary representation."""
+        return {
+            'direction': self.direction,
+            'confidence': self.confidence,
+            'agreement_level': self.agreement_level,
+            'timestamp': self.timestamp,
+            'metadata': self.metadata
+        }
+
+@dataclass
 class VoterPerformance:
     """Performance metrics for a single voter."""
 
@@ -764,22 +784,6 @@ class VotingSystem:
             metrics.finalize()
 
         return {voter: m.to_dict() for voter, m in voter_metrics.items()}
-
-                voter_metrics[voter]['total_votes'] += 1
-                
-                # Check if this voter's direction matched the outcome
-                if vote['direction'] == record['decision']['direction'] and outcome_successful:
-                    voter_metrics[voter]['correct_votes'] += 1
-                
-                # Track PnL
-                voter_metrics[voter]['pnl_sum'] += outcome_pnl
-
-                # Track confidence and whether this vote was correct for
-                # correlation analysis later
-                voter_metrics[voter]['confidences'].append(vote.get('confidence', 0))
-                voter_metrics[voter]['successes'].append(
-                    1 if vote['direction'] == record['decision']['direction'] and outcome_successful else 0
-                )
         
         # Calculate derived metrics
         for voter, metrics in voter_metrics.items():

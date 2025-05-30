@@ -839,3 +839,25 @@ def load_config(path: str) -> Config:
         return config
     except Exception as e:
         raise ConfigurationError(f"Failed to load configuration: {str(e)}")
+
+
+def save_config(config: Config, path: str = None) -> None:
+    """
+    Save configuration to file.
+    
+    Args:
+        config: Configuration object to save
+        path: Path to save configuration to (defaults to the path it was loaded from)
+    """
+    if path is None:
+        path = DEFAULT_CONFIG_PATH
+    
+    # Determine format based on file extension
+    format = "yaml"
+    if path.endswith(".json"):
+        format = "json"
+    elif path.endswith(".toml"):
+        format = "toml"
+    
+    # Save configuration
+    config.save(path, format)

@@ -219,6 +219,62 @@ class RiskExceededError(RiskError):
     pass
 
 
+class InvalidSignalError(QuantumSpectreError):
+    """Raised when a trading signal is invalid or malformed."""
+    pass
+
+
+class NoConsensusError(QuantumSpectreError):
+    """Raised when no consensus can be reached among voting components."""
+    pass
+
+
+class TakeProfitError(QuantumSpectreError):
+    """Raised when there is an error with take profit order placement."""
+    pass
+
+
+class OrderValidationError(QuantumSpectreError):
+    """Raised when an order fails validation."""
+    pass
+
+
+class OrderExecutionError(QuantumSpectreError):
+    """Raised when an order fails to execute."""
+    pass
+
+
+class CouncilInitializationError(QuantumSpectreError):
+    """Raised when a council fails to initialize."""
+    pass
+
+
+class ExposureError(QuantumSpectreError):
+    """Raised when exposure limits are exceeded."""
+    pass
+
+
+class CircuitBreakerError(QuantumSpectreError):
+    """Raised when a circuit breaker is triggered."""
+    pass
+
+
+class PositionError(QuantumSpectreError):
+    """Raised when there is an error with a position."""
+    pass
+
+
+class DrawdownError(QuantumSpectreError):
+    """Raised when drawdown limits are exceeded."""
+    pass
+
+
+class ExchangeError(QuantumSpectreError):
+    """Raised when there is an error with an exchange."""
+    pass
+
+
+
 class InsufficientBalanceError(RiskError):
     """Raised when an account balance is insufficient to open a position."""
     pass

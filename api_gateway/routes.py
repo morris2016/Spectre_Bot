@@ -11,6 +11,12 @@ import time
 import json
 import asyncio
 from typing import Dict, List, Any, Optional, Union
+
+# Import route modules
+from .routes import (
+    auth, users, market_data, trading, backtesting,
+    system, strategy, monitoring, ml_models, brain_council
+)
 from fastapi import APIRouter, FastAPI, Depends, HTTPException, WebSocket, WebSocketDisconnect, Request, status, Response
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -25,10 +31,22 @@ from .authentication import (
 )
 from common.logger import get_logger
 from common.exceptions import ValidationError, OperationNotPermittedError
-from config import Config
+from config import Config, save_config
 
 # Create logger
 logger = get_logger(__name__)
+
+# Database configuration model
+class DatabaseConfigModel(BaseModel):
+    host: str = Field(..., description="Database host")
+    port: int = Field(..., description="Database port")
+    user: str = Field(..., description="Database username")
+    password: str = Field(..., description="Database password")
+    dbname: str = Field(..., description="Database name")
+    min_pool_size: int = Field(5, description="Minimum connection pool size")
+    max_pool_size: int = Field(20, description="Maximum connection pool size")
+    connection_timeout: int = Field(60, description="Connection timeout in seconds")
+    command_timeout: int = Field(60, description="Command timeout in seconds")
 
 # Create routers
 main_router = APIRouter()
@@ -248,6 +266,71 @@ async def get_system_config():
     config = Config.get_public_config()
     return config
 
+@system_router.post("/database/config", dependencies=[Depends(JWTBearer())])
+async def update_database_config(db_config: DatabaseConfigModel, request: Request):
+    """
+    Update database configuration
+    """
+    try:
+        user = await get_current_user(request)
+        
+        # Check if user has admin permissions
+        if "admin" not in user.get("permissions", []):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You don't have permission to update database configuration"
+            )
+        
+        # Update config.yml with new database settings
+        config = Config()
+        config.database = db_config.dict()
+        save_config(config)
+        
+        # Restart database connection
+        from common.db_client import get_db_client
+        
+        try:
+            # Close existing connection if any
+            from main import db_client as current_db_client
+            if current_db_client:
+                await current_db_client.close()
+            
+            # Create new connection
+            db_config_dict = db_config.dict()
+            new_db_client = await get_db_client(
+                db_type=db_config_dict.get("type", "postgresql"),
+                host=db_config_dict.get("host", "localhost"),
+                port=db_config_dict.get("port", 5432),
+                username=db_config_dict.get("user", "postgres"),
+                password=db_config_dict.get("password", ""),
+                database=db_config_dict.get("dbname", "quantumspectre"),
+                pool_size=db_config_dict.get("min_pool_size", 10),
+                ssl=False,
+                timeout=db_config_dict.get("connection_timeout", 30)
+            )
+            
+            # Update global db_client
+            import main
+            main.db_client = new_db_client
+        except Exception as e:
+            logger.error(f"Error connecting to database: {str(e)}")
+            
+        if db_client is None:
+            return {
+                "status": "error",
+                "message": "Failed to connect to database with new configuration"
+            }
+        
+        return {
+            "status": "success",
+            "message": "Database configuration updated successfully"
+        }
+    except Exception as e:
+        logger.error(f"Error updating database configuration: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update database configuration: {str(e)}"
+        )
 @system_router.post("/restart", dependencies=[Depends(JWTBearer())])
 async def restart_system():
     """
@@ -1298,6 +1381,7 @@ def setup_routes(app: FastAPI):
     app.include_router(brain_router)
     app.include_router(backtest_router)
     app.include_router(monitoring_router)
+    app.include_router(brain_council.router)
     
     # Start background tasks
     @app.on_event("startup")

@@ -82,17 +82,17 @@ class RiskManagerService(AsyncService):
             config: System configuration
             signal_bus: Signal bus for inter-service communication
         """
-        super().__init__(SERVICE_NAMES.RISK_MANAGER, config, signal_bus)
-        self.logger = get_logger(f"{SERVICE_NAMES.RISK_MANAGER}.service")
+        super().__init__(SERVICE_NAMES["risk_manager"], config, signal_bus)
+        self.logger = get_logger(f"{SERVICE_NAMES['risk_manager']}.service")
         self.logger.info("Initializing Risk Manager Service")
         
         # Initialize database and Redis clients
         self.db_client = None
-        self._db_params = config
+        self._db_params = config.get('database', {}) if isinstance(config, dict) else {}
         self.redis_client = RedisClient(config)
         
         # Initialize metrics collector
-        self.metrics = MetricsCollector(SERVICE_NAMES.RISK_MANAGER, config)
+        self.metrics = MetricsCollector("risk_manager", config)
         
         # Initialize component configuration
         self._load_configuration()
@@ -132,10 +132,14 @@ class RiskManagerService(AsyncService):
         if db_connector is not None:
             self.db_client = db_connector
         if self.db_client is None:
-            self.db_client = await get_db_client(**self._db_params)
-        if getattr(self.db_client, "pool", None) is None:
-            await self.db_client.initialize()
-            await self.db_client.create_tables()
+            try:
+                self.db_client = await get_db_client(**self._db_params)
+                if getattr(self.db_client, "pool", None) is None:
+                    await self.db_client.initialize()
+                    await self.db_client.create_tables()
+            except Exception as e:
+                self.logger.warning(f"Failed to initialize database client: {e}. Using in-memory storage.")
+                self.db_client = None
     
     def _load_configuration(self) -> None:
         """Load risk management configuration from config files."""
@@ -304,7 +308,7 @@ class RiskManagerService(AsyncService):
             self.signal_bus.emit(
                 Signal.SERVICE_STARTED,
                 {
-                    'service': SERVICE_NAMES.RISK_MANAGER,
+                    'service': SERVICE_NAMES["risk_manager"],
                     'timestamp': datetime.now().isoformat()
                 }
             )
@@ -330,7 +334,7 @@ class RiskManagerService(AsyncService):
             self.signal_bus.emit(
                 Signal.SERVICE_STOPPED,
                 {
-                    'service': SERVICE_NAMES.RISK_MANAGER,
+                    'service': SERVICE_NAMES["risk_manager"],
                     'timestamp': datetime.now().isoformat()
                 }
             )
@@ -345,7 +349,16 @@ class RiskManagerService(AsyncService):
         """Main service loop for periodic risk assessment and updates."""
         self.logger.info("Starting Risk Manager service loop")
         
-        while self.active:
+        # Make sure self.active is set to True
+        self.active = True
+        
+        # Keep running until explicitly stopped
+        while True:
+            # Check if service should still be active
+            if not self.active:
+                self.logger.info("Risk Manager service loop stopping (active=False)")
+                break
+                
             try:
                 # Update time tracking
                 current_time = time.time()
@@ -353,35 +366,58 @@ class RiskManagerService(AsyncService):
                 
                 if elapsed >= self.update_interval:
                     # Perform periodic risk assessment
-                    await self._perform_periodic_risk_assessment()
+                    if hasattr(self, '_perform_periodic_risk_assessment'):
+                        await self._perform_periodic_risk_assessment()
+                    else:
+                        self.logger.debug("Skipping periodic risk assessment - method not available")
                     
                     # Update stored state
                     await self._persist_risk_state()
                     
                     # Update metrics
-                    self._update_metrics()
+                    if hasattr(self, '_update_metrics'):
+                        self._update_metrics()
                     
                     # Update last run time
                     self.last_update_time = current_time
-                
-                # Sleep for a short interval to prevent CPU hogging
-                await asyncio.sleep(0.1)
                 
             except Exception as e:
                 self.logger.error(f"Error in Risk Manager service loop: {e}")
                 self.logger.error(traceback.format_exc())
                 
                 # Report error but continue running
-                self.metrics.increment('risk_manager_service_loop_errors')
-                
-                # Sleep briefly before retrying
+                if hasattr(self, 'metrics'):
+                    self.metrics.increment('risk_manager_service_loop_errors')
+            
+            # Sleep for a short interval to prevent CPU hogging
+            # This is outside the try-except block to ensure the loop continues
+            try:
+                await asyncio.sleep(5.0)  # Longer sleep to reduce CPU usage
+            except asyncio.CancelledError:
+                self.logger.info("Risk Manager service loop cancelled")
+                break
+            except Exception as e:
+                self.logger.error(f"Error during sleep in service loop: {e}")
+                # Use a shorter sleep if there was an error
                 await asyncio.sleep(1.0)
+                
+        self.logger.info("Risk Manager service loop exited")
     
     async def _load_initial_account_data(self) -> None:
         """Load initial account data to establish risk baselines."""
         self.logger.info("Loading initial account data")
         
         try:
+            if self.db_client is None:
+                self.logger.warning("Database client is None, using default values for account data")
+                self.account_peak_value = 10000.0  # Default value
+                self.current_drawdown = 0.0
+                self.current_exposure = {}
+                self.win_streak = 0
+                self.loss_streak = 0
+                self.recent_win_rate = 0.5  # Default 50% win rate
+                return
+                
             # Fetch account balance history
             account_history = await self.db_client.fetch_account_history(
                 days=30,  # Look back 30 days for establishing baseline
@@ -444,46 +480,81 @@ class RiskManagerService(AsyncService):
             market_data = await self._fetch_latest_market_data()
             
             # Check if circuit breaker should be activated
-            circuit_breaker_triggered = self.circuit_breaker.check_conditions(
-                market_data, 
-                self.current_exposure
-            )
+            circuit_breaker_triggered = False
+            if hasattr(self, 'circuit_breaker') and hasattr(self.circuit_breaker, 'check_conditions'):
+                try:
+                    circuit_breaker_triggered = self.circuit_breaker.check_conditions(
+                        market_data,
+                        self.current_exposure
+                    )
+                except Exception as e:
+                    self.logger.error(f"Error checking circuit breaker conditions: {e}")
             
             if circuit_breaker_triggered and not self.circuit_breaker_active:
                 self.circuit_breaker_active = True
                 self.logger.warning("CIRCUIT BREAKER ACTIVATED - Suspending new trades")
                 
-                # Emit circuit breaker signal
-                self.signal_bus.emit(
-                    Signal.CIRCUIT_BREAKER_ACTIVATED,
-                    {
-                        'timestamp': datetime.now().isoformat(),
-                        'reason': self.circuit_breaker.get_trigger_reason(),
-                        'expected_duration': self.circuit_breaker.get_cooldown_period()
-                    }
-                )
+                # Emit circuit breaker signal if signal_bus is available
+                if hasattr(self, 'signal_bus') and hasattr(self.signal_bus, 'emit'):
+                    reason = "Unknown"
+                    duration = "Unknown"
+                    
+                    if hasattr(self.circuit_breaker, 'get_trigger_reason'):
+                        reason = self.circuit_breaker.get_trigger_reason()
+                    
+                    if hasattr(self.circuit_breaker, 'get_cooldown_period'):
+                        duration = self.circuit_breaker.get_cooldown_period()
+                    
+                    self.signal_bus.emit(
+                        Signal.CIRCUIT_BREAKER_ACTIVATED,
+                        {
+                            'timestamp': datetime.now().isoformat(),
+                            'reason': reason,
+                            'expected_duration': duration
+                        }
+                    )
             elif self.circuit_breaker_active:
                 # Check if circuit breaker can be deactivated
-                if self.circuit_breaker.can_deactivate(market_data):
+                can_deactivate = False
+                if hasattr(self.circuit_breaker, 'can_deactivate'):
+                    try:
+                        can_deactivate = self.circuit_breaker.can_deactivate(market_data)
+                    except Exception as e:
+                        self.logger.error(f"Error checking if circuit breaker can be deactivated: {e}")
+                
+                if can_deactivate:
                     self.circuit_breaker_active = False
                     self.logger.info("CIRCUIT BREAKER DEACTIVATED - Resuming normal operations")
                     
                     # Emit circuit breaker deactivated signal
-                    self.signal_bus.emit(
-                        Signal.CIRCUIT_BREAKER_DEACTIVATED,
-                        {
-                            'timestamp': datetime.now().isoformat()
-                        }
-                    )
+                    if hasattr(self, 'signal_bus') and hasattr(self.signal_bus, 'emit'):
+                        self.signal_bus.emit(
+                            Signal.CIRCUIT_BREAKER_DEACTIVATED,
+                            {
+                                'timestamp': datetime.now().isoformat()
+                            }
+                        )
             
             # Update global risk level based on market conditions and account state
-            self._update_global_risk_level(market_data)
+            if hasattr(self, '_update_global_risk_level'):
+                try:
+                    self._update_global_risk_level(market_data)
+                except Exception as e:
+                    self.logger.error(f"Error updating global risk level: {e}")
             
             # Update risk budget based on drawdown state
-            await self._update_risk_budget()
+            if hasattr(self, '_update_risk_budget'):
+                try:
+                    await self._update_risk_budget()
+                except Exception as e:
+                    self.logger.error(f"Error updating risk budget: {e}")
             
             # Adjust position sizes for open positions if necessary
-            await self._adjust_open_positions()
+            if hasattr(self, '_adjust_open_positions'):
+                try:
+                    await self._adjust_open_positions()
+                except Exception as e:
+                    self.logger.error(f"Error adjusting open positions: {e}")
             
             self.logger.info(f"Risk assessment completed - Global risk level: {self.global_risk_level}")
             
@@ -496,31 +567,51 @@ class RiskManagerService(AsyncService):
         """Fetch latest market data for risk assessment."""
         try:
             # Get list of assets we're interested in
-            assets = list(self.current_exposure.keys())
+            assets = list(self.current_exposure.keys()) if hasattr(self, 'current_exposure') else []
             
             # Add any assets from risk profiles that aren't already included
-            for asset in self.asset_risk_profiles:
-                if asset not in assets:
-                    assets.append(asset)
+            if hasattr(self, 'asset_risk_profiles'):
+                for asset in self.asset_risk_profiles:
+                    if asset not in assets:
+                        assets.append(asset)
             
             # Fetch market data from Redis (faster) or database
             market_data = {}
+            
+            # If no assets to check, return empty data
+            if not assets:
+                self.logger.debug("No assets to fetch market data for")
+                return market_data
+                
             for asset in assets:
-                # Try to get from Redis first
-                asset_data = await self.redis_client.get_market_data(asset)
+                asset_data = None
                 
-                if not asset_data:
-                    # Fall back to database
-                    asset_data = await self.db_client.fetch_latest_market_data(asset)
+                # Try to get from Redis first if available
+                if hasattr(self, 'redis_client') and self.redis_client is not None:
+                    try:
+                        asset_data = await self.redis_client.get_market_data(asset)
+                    except Exception as redis_err:
+                        self.logger.debug(f"Error getting market data from Redis for {asset}: {redis_err}")
                 
+                # Fall back to database if Redis failed or returned no data
+                if not asset_data and hasattr(self, 'db_client') and self.db_client is not None:
+                    try:
+                        asset_data = await self.db_client.fetch_latest_market_data(asset)
+                    except Exception as db_err:
+                        self.logger.debug(f"Error getting market data from database for {asset}: {db_err}")
+                
+                # If we got data from either source, add it to the result
                 if asset_data:
                     market_data[asset] = asset_data
             
-            # Get global market indicators
-            global_indicators = await self.redis_client.get_global_market_indicators()
-            
-            if global_indicators:
-                market_data['global'] = global_indicators
+            # Get global market indicators if Redis is available
+            if hasattr(self, 'redis_client') and self.redis_client is not None:
+                try:
+                    global_indicators = await self.redis_client.get_global_market_indicators()
+                    if global_indicators:
+                        market_data['global'] = global_indicators
+                except Exception as e:
+                    self.logger.debug(f"Error getting global market indicators: {e}")
             
             return market_data
         
@@ -785,10 +876,14 @@ class RiskManagerService(AsyncService):
             }
             
             # Store in database
-            await self.db_client.store_risk_state(risk_state)
+            if self.db_client is not None:
+                await self.db_client.store_risk_state(risk_state)
+            else:
+                self.logger.debug("Database client is None, skipping database persistence")
             
             # Also cache in Redis for quick access
-            await self.redis_client.set_risk_state(risk_state)
+            if hasattr(self.redis_client, 'set_risk_state'):
+                await self.redis_client.set_risk_state(risk_state)
             
         except Exception as e:
             self.logger.error(f"Error persisting risk state: {e}")

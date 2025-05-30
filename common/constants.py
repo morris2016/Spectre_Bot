@@ -334,6 +334,61 @@ class RegimeTypes(enum.Enum):
     VOLATILE_RANGE = "volatile_range"
     CHOPPY = "choppy"
 
+# Regime types for strategy selection
+REGIME_TYPES = [rt.value for rt in RegimeTypes]
+
+# Weighting methods for signal aggregation
+WEIGHTING_METHODS = {
+    "EQUAL": "equal",
+    "PERFORMANCE_BASED": "performance_based",
+    "CONFIDENCE_BASED": "confidence_based",
+    "ADAPTIVE": "adaptive",
+    "REGIME_SPECIFIC": "regime_specific",
+    "VOLATILITY_ADJUSTED": "volatility_adjusted"
+}
+
+# Default feature importance threshold
+DEFAULT_FEATURE_IMPORTANCE_THRESHOLD = 0.01
+
+# Default voting configuration
+DEFAULT_VOTING_CONFIG = {
+    "min_votes_required": 3,
+    "consensus_threshold": 0.6,
+    "confidence_threshold": 0.5,
+    "weighting_method": "performance_based",
+    "tie_breaker": "highest_confidence"
+}
+
+# ML model voting weights
+ML_MODEL_VOTING_WEIGHTS = {
+    "gradient_boosting": 1.0,
+    "random_forest": 0.9,
+    "neural_network": 0.8,
+    "lstm": 1.0,
+    "ensemble": 1.2
+}
+
+# Default prediction horizons for ML models
+DEFAULT_PREDICTION_HORIZONS = {
+    "short_term": 12,  # 12 periods
+    "medium_term": 24,  # 24 periods
+    "long_term": 48    # 48 periods
+}
+
+# Default confidence scaling factor for ML predictions
+DEFAULT_CONFIDENCE_SCALING_FACTOR = 0.8
+
+# Notification priority levels
+NOTIFICATION_PRIORITY_LOW = 1
+NOTIFICATION_PRIORITY_MEDIUM = 2
+NOTIFICATION_PRIORITY_HIGH = 3
+NOTIFICATION_PRIORITY_CRITICAL = 4
+
+# Metric collection frequency in seconds
+METRIC_COLLECTION_FREQUENCY = 60
+# Maximum number of metrics to keep in history
+MAX_METRIC_HISTORY = 1000
+
 
 # Fee types
 class FeeType(enum.Enum):
@@ -565,6 +620,21 @@ STRATEGY_TYPES = [
     "volatility_based", "order_flow", "market_structure", "multi_timeframe",
     "adaptive", "ensemble", "reinforcement_learning", "regime_based",
 ]
+
+STRATEGY_CATEGORIES = {
+    "TREND": "trend",
+    "MEAN_REVERSION": "mean_reversion",
+    "MOMENTUM": "momentum",
+    "BREAKOUT": "breakout",
+    "VOLATILITY": "volatility",
+    "PATTERN": "pattern",
+    "SENTIMENT": "sentiment",
+    "ARBITRAGE": "arbitrage",
+    "MARKET_MAKING": "market_making",
+    "REINFORCEMENT": "reinforcement",
+    "ENSEMBLE": "ensemble",
+    "ADAPTIVE": "adaptive"
+}
 
 EXECUTION_MODES = [
     "live", "paper", "backtest", "simulation", "optimization", "stress_test",
@@ -843,6 +913,38 @@ DERIV_MARKETS = {
 # ======================================
 # Supported social media platforms
 SOCIAL_PLATFORMS = ["twitter", "reddit", "telegram", "discord", "stocktwits", "tradingview"]
+
+# Social media query parameters
+SOCIAL_QUERY_PARAMS = {
+    "twitter": {
+        "max_results": 100,
+        "result_type": "mixed",
+        "lang": "en",
+        "include_entities": True
+    },
+    "reddit": {
+        "limit": 100,
+        "sort": "relevance",
+        "time_filter": "day"
+    },
+    "telegram": {
+        "limit": 50,
+        "offset": 0
+    },
+    "discord": {
+        "limit": 100,
+        "before": None,
+        "after": None
+    },
+    "stocktwits": {
+        "limit": 30,
+        "filter": "all"
+    },
+    "tradingview": {
+        "limit": 50,
+        "sort": "recent"
+    }
+}
 
 SOCIAL_API_KEYS = {
     "twitter": {

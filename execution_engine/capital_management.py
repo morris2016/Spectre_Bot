@@ -68,6 +68,130 @@ class TradingState:
     last_10_trades: List[float]  # Returns as percentages
     sharpe_ratio: float
     sortino_ratio: float
+
+
+class CapitalManagement:
+    """
+    Capital Management System for the QuantumSpectre Elite Trading System.
+    
+    This class handles all aspects of capital allocation, position sizing,
+    and risk management for trading operations.
+    """
+    
+    def __init__(self,
+                 initial_capital: float,
+                 risk_per_trade: float = 0.02,
+                 max_drawdown: float = 0.20,
+                 position_sizing_method: str = "risk_based",
+                 max_open_positions: int = 5,
+                 max_risk_per_asset: float = 0.05,
+                 max_risk_per_sector: float = 0.20,
+                 leverage_limit: float = 3.0):
+        """
+        Initialize the Capital Management system.
+        
+        Args:
+            initial_capital: Starting capital amount
+            risk_per_trade: Percentage of capital to risk per trade (default: 2%)
+            max_drawdown: Maximum allowed drawdown before reducing risk (default: 20%)
+            position_sizing_method: Method for sizing positions (default: risk_based)
+            max_open_positions: Maximum number of concurrent open positions
+            max_risk_per_asset: Maximum risk allocation per asset
+            max_risk_per_sector: Maximum risk allocation per sector
+            leverage_limit: Maximum allowed leverage
+        """
+        self.initial_capital = initial_capital
+        self.current_capital = initial_capital
+        self.peak_capital = initial_capital
+        self.risk_per_trade = risk_per_trade
+        self.max_drawdown = max_drawdown
+        self.position_sizing_method = position_sizing_method
+        self.max_open_positions = max_open_positions
+        self.max_risk_per_asset = max_risk_per_asset
+        self.max_risk_per_sector = max_risk_per_sector
+        self.leverage_limit = leverage_limit
+        self.open_positions = {}
+        self.position_history = []
+        self.current_drawdown = 0.0
+        self.in_recovery_mode = False
+        
+    async def calculate_position_size(self,
+                                asset: str,
+                                entry_price: float,
+                                stop_loss: float,
+                                risk_multiplier: float = 1.0) -> float:
+        """
+        Calculate the appropriate position size based on risk parameters.
+        
+        Args:
+            asset: The asset to trade
+            entry_price: Planned entry price
+            stop_loss: Stop loss price
+            risk_multiplier: Adjust risk up or down (default: 1.0)
+            
+        Returns:
+            Position size in base units
+        """
+        # Calculate risk amount in account currency
+        risk_amount = self.current_capital * self.risk_per_trade * risk_multiplier
+        
+        # Apply recovery mode if necessary
+        if self.in_recovery_mode:
+            risk_amount *= 0.5
+            
+        # Calculate risk per unit
+        if entry_price <= stop_loss:  # Short position
+            risk_per_unit = entry_price - stop_loss
+        else:  # Long position
+            risk_per_unit = stop_loss - entry_price
+            
+        # Avoid division by zero
+        if abs(risk_per_unit) < 0.000001:
+            return 0
+            
+        # Calculate position size
+        position_size = risk_amount / abs(risk_per_unit)
+        
+        # Apply additional constraints
+        position_size = self._apply_position_constraints(position_size, asset)
+        
+        return position_size
+        
+    def _apply_position_constraints(self, position_size: float, asset: str) -> float:
+        """Apply additional constraints to the position size."""
+        # Check if we're at max positions
+        if len(self.open_positions) >= self.max_open_positions:
+            return 0
+            
+        # Check asset-specific constraints
+        # (Implementation would depend on asset-specific logic)
+        
+        return position_size
+        
+    async def update_capital(self, new_capital: float) -> None:
+        """
+        Update the current capital amount.
+        
+        Args:
+            new_capital: The new capital amount
+        """
+        self.current_capital = new_capital
+        
+        # Update peak capital if we have a new high
+        if new_capital > self.peak_capital:
+            self.peak_capital = new_capital
+            
+        # Calculate current drawdown
+        if self.peak_capital > 0:
+            self.current_drawdown = 1 - (self.current_capital / self.peak_capital)
+            
+        # Check if we need to enter recovery mode
+        if self.current_drawdown >= self.max_drawdown and not self.in_recovery_mode:
+            self.in_recovery_mode = True
+        
+        # Check if we can exit recovery mode
+        if self.in_recovery_mode and self.current_drawdown < (self.max_drawdown * 0.5):
+            self.in_recovery_mode = False
     trade_frequency: float  # Trades per day
     recovery_mode: bool
     current_exposure: Dict[str, float]  # Symbol to position size mapping

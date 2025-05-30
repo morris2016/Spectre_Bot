@@ -81,6 +81,7 @@ startup_lock = asyncio.Lock()
 redis_client = None
 db_client = None
 credentials_manager = None
+signal_bus = None
 
 
 class ServiceManager:
@@ -139,15 +140,32 @@ class ServiceManager:
         for name, service_class in service_classes.items():
             self.logger.info(f"Instantiating {name} service")
             try:
-                self.services[name] = service_class(
-                    config=self.config,
-                    loop=self.loop,
-                    redis_client=redis_client,
-                    db_client=db_client
-                )
+                # Get the parameters that the service class accepts
+                import inspect
+                params = inspect.signature(service_class.__init__).parameters
+                
+                # Build the arguments dictionary based on what the service accepts
+                kwargs = {'config': self.config}
+                if 'loop' in params:
+                    kwargs['loop'] = self.loop
+                if 'redis_client' in params:
+                    kwargs['redis_client'] = redis_client
+                if 'db_client' in params:
+                    kwargs['db_client'] = db_client
+                if 'signal_bus' in params:
+                    # Import SignalBus if not already imported
+                    from common.utils import SignalBus
+                    global signal_bus
+                    if signal_bus is None:
+                        signal_bus = SignalBus()
+                    kwargs['signal_bus'] = signal_bus
+                
+                # Instantiate the service with the appropriate parameters
+                self.services[name] = service_class(**kwargs)
                 self.service_statuses[name] = "instantiated"
             except Exception as exc:
                 self.logger.error(f"Failed to instantiate {name} service: {exc}")
+                self.logger.error(traceback.format_exc())
                 self.logger.error(traceback.format_exc())
                 if self.config.services.get(name, {}).get("required", True):
                     self.logger.warning(
@@ -203,14 +221,21 @@ class ServiceManager:
 
         try:
             start_timeout = self.config.services.get(service_name, {}).get("startup_timeout", 60)
+            self.logger.info(f"Starting {service_name} with timeout {start_timeout}s")
+            
             async with self.lock:
-                await run_with_timeout(
-                    service.start(),
-                    timeout=start_timeout,
-                    loop=self.loop,
-                    error_message=f"{service_name} service failed to start within {start_timeout} seconds"
-                )
-                self.logger.debug(f"Service {service_name} started successfully")
+                try:
+                    await run_with_timeout(
+                        service.start(),
+                        timeout=start_timeout,
+                        loop=self.loop,
+                        error_message=f"{service_name} service failed to start within {start_timeout} seconds"
+                    )
+                    self.logger.debug(f"Service {service_name} started successfully")
+                except Exception as e:
+                    self.logger.error(f"Error starting {service_name} service: {str(e)}")
+                    self.logger.error(traceback.format_exc())
+                    raise
 
             self.service_statuses[service_name] = "running"
             self.logger.info(f"{service_name} service started successfully")
@@ -501,16 +526,28 @@ async def initialize_db(config: Config) -> DatabaseClient:
 
     try:
         db_config = config.database
+        
+        # Check if database is enabled
+        if not db_config.get("enabled", True):
+            logger.info("Database is disabled in configuration; skipping connection")
+            
+            # Check if memory storage should be used
+            if db_config.get("use_memory_storage", False):
+                logger.info("Using in-memory storage for database operations")
+                # Here we could initialize an in-memory database if needed
+                
+            return None
+            
         db_client = await get_db_client(
             db_type=db_config.get("type", "postgresql"),
             host=db_config.get("host", "localhost"),
             port=db_config.get("port", 5432),
-            username=db_config.get("username", "postgres"),
+            username=db_config.get("user", "postgres"),
             password=db_config.get("password", ""),
-            database=db_config.get("database", "quantumspectre"),
-            pool_size=db_config.get("pool_size", 10),
+            database=db_config.get("dbname", "quantumspectre"),
+            pool_size=db_config.get("min_pool_size", 10),
             ssl=db_config.get("ssl", False),
-            timeout=db_config.get("timeout", 30)
+            timeout=db_config.get("connection_timeout", 30)
         )
 
         # Run migrations if needed
@@ -683,8 +720,8 @@ async def startup():
         logger.info("Validating configuration...")
         config.validate()
 
-        # Force UI to run on port 3001 to avoid conflicts in the sandbox
-        config.ui["port"] = 3001
+        # Force UI to run on port 3002 to avoid conflicts in the sandbox
+        config.ui["port"] = 3002
 
         # If dry run, exit here
         if args.dry_run:
@@ -727,15 +764,27 @@ async def startup():
         logger.debug(f"ServiceManager created; services configured: {list(config.services.keys())}")
 
         # Register signal handlers for graceful shutdown
-        for sig in (signal.SIGINT, signal.SIGTERM):
-            service_event_loop.add_signal_handler(
-                sig,
-                lambda s=sig: asyncio.create_task(handle_shutdown_signal(s, service_manager))
-            )
+        # Note: add_signal_handler is not supported on Windows
+        import platform
+        if platform.system() != 'Windows':
+            for sig in (signal.SIGINT, signal.SIGTERM):
+                service_event_loop.add_signal_handler(
+                    sig,
+                    lambda s=sig: asyncio.create_task(handle_shutdown_signal(s, service_manager))
+                )
+            logger.info("Signal handlers registered for graceful shutdown")
+        else:
+            logger.info("Running on Windows - signal handlers not supported, using KeyboardInterrupt handling")
 
         # Start all services
-        await service_manager.start_services()
-        logger.debug(f"Services started: {list(service_manager.services.keys())}")
+        logger.info("Starting all services...")
+        try:
+            await service_manager.start_services()
+            logger.info(f"All services started successfully: {list(service_manager.services.keys())}")
+        except Exception as e:
+            logger.error(f"Failed to start services: {str(e)}")
+            logger.error(traceback.format_exc())
+            raise
 
         # Wait for shutdown signal
         await service_manager.shutdown_complete.wait()

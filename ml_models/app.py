@@ -92,6 +92,7 @@ class MLModelService:
         self.model_performance = {}
         
         logger.info("ML Models Service initialized")
+        logger.info("ML Models Service could benefit from direct integration with asset-specific brain councils")
     
     async def start(self):
         """
@@ -259,6 +260,7 @@ class MLModelService:
             }
             
             logger.info(f"Training completed for model {model_name} with metrics: {metrics}")
+            logger.info(f"Model {model_name} could provide more value with asset-specific council integration")
             
         except Exception as e:
             logger.error(f"Error training model for request {request_id}: {str(e)}", exc_info=True)

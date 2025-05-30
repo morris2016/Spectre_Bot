@@ -939,6 +939,118 @@ class DrawdownProtection(BaseDrawdownProtector):
         return report
 
 
+class ProgressiveDrawdownProtector(BaseDrawdownProtector, name="ProgressiveDrawdownProtector"):
+    """
+    Progressive drawdown protection that adjusts risk parameters based on drawdown levels.
+    
+    This protector implements a tiered approach to drawdown protection, progressively
+    reducing risk as drawdown increases, and implementing recovery strategies
+    when drawdown exceeds certain thresholds.
+    """
+    
+    def __init__(self,
+                 max_drawdown: float = 0.25,
+                 recovery_threshold: float = 0.15,
+                 risk_reduction_factor: float = 0.5,
+                 min_risk_percentage: float = 0.25,
+                 cooldown_days: int = 5,
+                 **kwargs):
+        """
+        Initialize the progressive drawdown protector.
+        
+        Args:
+            max_drawdown: Maximum allowed drawdown before halting trading (default: 25%)
+            recovery_threshold: Drawdown threshold to activate recovery mode (default: 15%)
+            risk_reduction_factor: Factor to reduce risk by in recovery mode (default: 0.5)
+            min_risk_percentage: Minimum risk percentage allowed (default: 0.25%)
+            cooldown_days: Days to maintain reduced risk after recovery (default: 5)
+        """
+        self.max_drawdown = max_drawdown
+        self.recovery_threshold = recovery_threshold
+        self.risk_reduction_factor = risk_reduction_factor
+        self.min_risk_percentage = min_risk_percentage
+        self.cooldown_days = cooldown_days
+        
+        self.current_drawdown = 0.0
+        self.in_recovery_mode = False
+        self.recovery_start_date = None
+        self.risk_adjustment = 1.0
+        
+        self.logger = get_logger("risk_manager.drawdown_protection")
+        self.metrics = MetricsCollector("drawdown_protection")
+        self.logger.info(f"Progressive drawdown protector initialized with max drawdown {max_drawdown:.1%}")
+    
+    async def apply_protection(self,
+                              current_drawdown: float,
+                              account_value: float,
+                              base_risk_percentage: float = DEFAULT_RISK_PERCENTAGE,
+                              strategy_performance: Dict[str, Any] = None) -> Dict[str, Any]:
+        """
+        Apply drawdown protection based on current drawdown level.
+        
+        Args:
+            current_drawdown: Current drawdown as a decimal (e.g., 0.1 for 10%)
+            account_value: Current account value
+            base_risk_percentage: Base risk percentage to adjust
+            strategy_performance: Optional performance metrics for strategies
+            
+        Returns:
+            Dict containing adjusted risk parameters
+        """
+        self.current_drawdown = current_drawdown
+        self.metrics.set("current_drawdown", current_drawdown * 100)
+        
+        # Check if drawdown exceeds maximum allowed
+        if current_drawdown >= self.max_drawdown:
+            self.logger.warning(f"Maximum drawdown exceeded: {current_drawdown:.2%} >= {self.max_drawdown:.2%}")
+            self.metrics.increment("max_drawdown_exceeded")
+            return {
+                "halt_trading": True,
+                "reason": f"Maximum drawdown exceeded: {current_drawdown:.2%}",
+                "risk_percentage": 0.0,
+                "position_size_multiplier": 0.0
+            }
+        
+        # Check if we should enter recovery mode
+        now = datetime.now()
+        if current_drawdown >= self.recovery_threshold and not self.in_recovery_mode:
+            self.in_recovery_mode = True
+            self.recovery_start_date = now
+            self.logger.info(f"Entering drawdown recovery mode at {current_drawdown:.2%} drawdown")
+            self.metrics.increment("recovery_mode_activated")
+        
+        # Calculate risk adjustment based on drawdown level
+        if self.in_recovery_mode:
+            # Progressive risk reduction based on drawdown severity
+            severity_factor = min(current_drawdown / self.max_drawdown, 1.0)
+            self.risk_adjustment = max(1.0 - (severity_factor * self.risk_reduction_factor),
+                                      self.min_risk_percentage)
+            
+            # Check if we should exit recovery mode
+            if (current_drawdown < self.recovery_threshold / 2 and
+                self.recovery_start_date and
+                (now - self.recovery_start_date).days >= self.cooldown_days):
+                self.in_recovery_mode = False
+                self.recovery_start_date = None
+                self.logger.info(f"Exiting drawdown recovery mode, drawdown reduced to {current_drawdown:.2%}")
+                self.metrics.increment("recovery_mode_deactivated")
+                self.risk_adjustment = 1.0
+        else:
+            # Normal operation - minor risk adjustment based on drawdown
+            self.risk_adjustment = 1.0 - (current_drawdown / 2)
+        
+        # Calculate adjusted risk percentage
+        adjusted_risk = base_risk_percentage * self.risk_adjustment
+        
+        return {
+            "halt_trading": False,
+            "risk_percentage": adjusted_risk,
+            "position_size_multiplier": self.risk_adjustment,
+            "in_recovery_mode": self.in_recovery_mode,
+            "drawdown_level": current_drawdown
+        }
+
+
 def get_drawdown_protector(name: str, *args, **kwargs) -> BaseDrawdownProtector:
     """Instantiate a registered drawdown protector by name."""
     cls = BaseDrawdownProtector.registry.get(name)
@@ -946,4 +1058,4 @@ def get_drawdown_protector(name: str, *args, **kwargs) -> BaseDrawdownProtector:
         raise ValueError(f"Unknown drawdown protector: {name}")
     return cls(*args, **kwargs)
 
-__all__ = ["BaseDrawdownProtector", "get_drawdown_protector"]
+__all__ = ["BaseDrawdownProtector", "ProgressiveDrawdownProtector", "get_drawdown_protector"]

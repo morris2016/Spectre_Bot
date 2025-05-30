@@ -52,8 +52,56 @@ async def run_with_timeout(
         logger.error(msg)
         raise TimeoutError(msg)
 
+
+def run_in_executor(func, *args, **kwargs):
+    """
+    Run a synchronous function in an executor (thread pool).
+    
+    Args:
+        func: The synchronous function to run
+        *args: Arguments to pass to the function
+        **kwargs: Keyword arguments to pass to the function
+        
+    Returns:
+        A coroutine that will resolve to the function's result
+    """
+    loop = asyncio.get_event_loop()
+    return loop.run_in_executor(
+        None, lambda: func(*args, **kwargs)
+    )
+
+
+async def create_task_with_error_handling(coro, name=None, exception_handler=None):
+    """
+    Create a task with error handling.
+    
+    Args:
+        coro: The coroutine to run
+        name: Optional name for the task
+        exception_handler: Optional function to handle exceptions
+        
+    Returns:
+        The created task
+    """
+    task = asyncio.create_task(coro, name=name)
+    
+    def _handle_task_result(task):
+        try:
+            task.result()
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            if exception_handler:
+                exception_handler(e)
+            else:
+                logging.exception(f"Unhandled exception in task {task.get_name()}: {e}")
+    
+    task.add_done_callback(_handle_task_result)
+    return task
+
+
 async def cancel_all_tasks(
-    tasks: Set[asyncio.Task], 
+    tasks: Set[asyncio.Task],
     timeout: float = 5.0,
     exception_handler: Optional[Callable[[Exception], None]] = None
 ) -> None:

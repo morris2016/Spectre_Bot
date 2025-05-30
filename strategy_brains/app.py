@@ -91,6 +91,7 @@ class StrategyBrainService:
         
         self.running = True
         self.logger.info("Strategy Brains Service started successfully")
+        self.logger.info("Strategy Brains Service could benefit from asset-specific specialization and council integration")
         
     async def stop(self):
         """Stop the Strategy Brains Service."""

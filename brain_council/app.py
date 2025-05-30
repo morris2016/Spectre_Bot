@@ -23,6 +23,11 @@ from common.exceptions import (
 )
 from common.constants import SIGNAL_TYPES, POSITION_DIRECTION, MARKET_REGIMES
 
+# Import new council system
+from .council_manager import CouncilManager
+from .asset_council import AssetCouncil
+from .ml_council import MLCouncil
+
 
 class BrainCouncilService:
     """
@@ -56,11 +61,14 @@ class BrainCouncilService:
         self.pending_signals = []
         self.processed_signals = set()  # Track processed signal IDs
         
-        # Brain weights
-        self.brain_weights = {}
-        self.timeframe_weights = {}
+        # Initialize the new council system
+        self.council_manager = CouncilManager(
+            config=config,
+            redis_client=redis_client,
+            db_client=db_client
+        )
         
-        # Council types
+        # Keep legacy council types for backward compatibility
         self.council_types = {
             "timeframe": self.config.get("brain_council.council_types.timeframe", True),
             "asset": self.config.get("brain_council.council_types.asset", True),
@@ -68,7 +76,11 @@ class BrainCouncilService:
             "master": self.config.get("brain_council.council_types.master", True)
         }
         
-        # Voting method
+        # Debug logging for council structure
+        self.logger.info(f"Brain Council initialized with enhanced council system")
+        self.logger.info(f"New asset-specific councils and ML council integration enabled")
+        
+        # Legacy voting method (for backward compatibility)
         self.voting_method = self.config.get("brain_council.voting_method", "weighted")
         
         # Consensus and confidence thresholds
@@ -79,11 +91,18 @@ class BrainCouncilService:
         # Active positions (to track exits)
         self.active_positions = {}  # symbol -> position info
         
+        # Brain weights (legacy, now handled by council manager)
+        self.brain_weights = {}
+        self.timeframe_weights = {}
+        
     async def start(self):
         """Start the Brain Council Service."""
         self.logger.info("Starting Brain Council Service")
         
-        # Initialize brain weights
+        # Initialize the council manager
+        await self.council_manager.initialize()
+        
+        # Initialize legacy brain weights for backward compatibility
         await self._initialize_weights()
         
         # Start signal processing task
@@ -102,6 +121,9 @@ class BrainCouncilService:
             
         # Subscribe to position updates
         await self._subscribe_to_position_updates()
+        
+        # Subscribe to ML model registrations
+        await self._subscribe_to_ml_model_registrations()
         
         self.running = True
         self.logger.info("Brain Council Service started successfully")
@@ -450,6 +472,66 @@ class BrainCouncilService:
             return
             
         self.logger.debug(f"Processing {len(signals)} signals for {group_key}")
+        
+        # Extract asset information from group key
+        parts = group_key.split(":")
+        if len(parts) != 3:
+            self.logger.warning(f"Invalid group key: {group_key}")
+            return
+            
+        exchange, symbol, timeframe = parts
+        
+        # Process using the new council system
+        try:
+            # Add asset_id to signals if not present
+            for signal in signals:
+                if "asset_id" not in signal:
+                    signal["asset_id"] = symbol
+            
+            # Process through council manager
+            asset_decisions = await self.council_manager.process_signals(signals)
+            
+            # If we have a decision for this asset, publish it
+            if symbol in asset_decisions:
+                decision = asset_decisions[symbol]
+                
+                # Create final signal
+                final_signal = self._create_final_signal(
+                    decision, exchange, symbol, timeframe, signals
+                )
+                
+                # Publish final signal
+                await self._publish_final_signal(final_signal)
+                return
+        except Exception as e:
+            self.logger.error(f"Error processing with new council system: {str(e)}")
+            self.logger.info("Falling back to legacy processing method")
+        
+        # Legacy processing (fallback)
+        try:
+            # Check for conflicts (e.g., both long and short signals)
+            has_conflicts = self._check_for_conflicts(signals)
+            
+            # Calculate ensemble decision
+            if self.voting_method == "simple":
+                decision = self._simple_voting(signals)
+            elif self.voting_method == "weighted":
+                decision = self._weighted_voting(signals)
+            elif self.voting_method == "confidence":
+                decision = self._confidence_voting(signals)
+            else:
+                self.logger.warning(f"Unknown voting method: {self.voting_method}")
+                decision = self._weighted_voting(signals)  # Default to weighted
+                
+            # Check if we should generate a final signal
+            if decision and self._should_generate_signal(decision, exchange, symbol):
+                # Create final signal
+                final_signal = self._create_final_signal(decision, exchange, symbol, timeframe, signals)
+                
+                # Publish final signal
+                await self._publish_final_signal(final_signal)
+        except Exception as e:
+            self.logger.error(f"Error in legacy signal processing: {str(e)}")
         
         try:
             # Get signal details
@@ -1032,6 +1114,45 @@ class BrainCouncilService:
             
         except Exception as e:
             self.logger.error(f"Error adjusting weights by performance: {str(e)}")
+
+
+    async def _subscribe_to_ml_model_registrations(self):
+        """Subscribe to ML model registration channel."""
+        try:
+            channel = "ml_models.registration"
+            
+            async def registration_callback(message):
+                if self.running and message:
+                    await self._handle_ml_model_registration(message)
+                    
+            await self.redis_client.subscribe(channel, registration_callback)
+            self.logger.info(f"Subscribed to ML model registrations on channel: {channel}")
+            
+        except Exception as e:
+            self.logger.error(f"Error subscribing to ML model registrations: {str(e)}")
+    
+    async def _handle_ml_model_registration(self, registration: Dict[str, Any]):
+        """
+        Handle ML model registration message.
+        
+        Args:
+            registration: Model registration data
+        """
+        try:
+            model_name = registration.get("model_name")
+            model_type = registration.get("model_type")
+            asset_ids = registration.get("asset_ids")
+            
+            if not model_name or not model_type:
+                return
+                
+            # Register with council manager
+            await self.council_manager.register_ml_model(model_name, model_type, asset_ids)
+            
+            self.logger.info(f"Registered ML model {model_name} ({model_type}) with council system")
+                
+        except Exception as e:
+            self.logger.error(f"Error handling ML model registration: {str(e)}")
 
 
 async def create_app(config: Dict[str, Any]) -> BrainCouncilService:

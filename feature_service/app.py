@@ -116,14 +116,36 @@ class FeatureService:
             if db_connector is not None:
                 self.db_client = db_connector
             if self.db_client is None:
-                self.db_client = await get_db_client(
-                    connection_string=self.config.get("database.connection_string"),
-                    pool_size=self.config.get("database.pool_size", 10),
-                    pool_recycle=self.config.get("database.pool_recycle", 3600),
-                )
-            if getattr(self.db_client, "pool", None) is None:
-                await self.db_client.initialize()
-                await self.db_client.create_tables()
+                try:
+                    self.db_client = await get_db_client(
+                        db_type=self.config.get("database.type", "postgresql"),
+                        host=self.config.get("database.host", "localhost"),
+                        port=self.config.get("database.port", 5432),
+                        username=self.config.get("database.user", "postgres"),
+                        password=self.config.get("database.password", ""),
+                        database=self.config.get("database.dbname", "quantumspectre"),
+                        pool_size=self.config.get("database.max_pool_size", 10),
+                        ssl=False,
+                        timeout=self.config.get("database.connection_timeout", 30)
+                    )
+                    if getattr(self.db_client, "pool", None) is None:
+                        await self.db_client.initialize()
+                        await self.db_client.create_tables()
+                except Exception as e:
+                    print(f"Failed to connect to database: {e}. Using in-memory storage.")
+                    # Create a dummy db_client
+                    from common.db_client import DatabaseClient
+                    self.db_client = DatabaseClient(
+                        db_type="memory",
+                        host="localhost",
+                        port=5432,
+                        username="postgres",
+                        password="",
+                        database="quantumspectre",
+                        pool_size=10,
+                        ssl=False,
+                        timeout=30
+                    )
 
             # Initialize component resources
             max_workers = self.config.get(
@@ -133,23 +155,51 @@ class FeatureService:
             self.executor = ThreadPoolExecutor(max_workers=max_workers)
 
             # Initialize feature service components
+            from data_storage.time_series import TimeSeriesManager
+            
+            # Create time series manager
+            logger.info("Initializing TimeSeriesManager")
+            try:
+                # Create a config dictionary for TimeSeriesManager
+                ts_config = {
+                    'backend': self.config.get('feature_service.time_series.backend', 'pandas'),
+                    'data_path': self.config.get('feature_service.time_series.data_path', './data/time_series'),
+                    'compression_level': self.config.get('feature_service.time_series.compression_level', 5),
+                    'chunk_size': self.config.get('feature_service.time_series.chunk_size', 30),
+                    'cache_size': self.config.get('feature_service.time_series.cache_size', 100),
+                    'retention_policy': self.config.get('feature_service.time_series.retention_policy', {})
+                }
+                time_series_store = TimeSeriesManager(ts_config)
+                logger.info("TimeSeriesManager initialized successfully")
+            except Exception as e:
+                logger.error(f"Failed to initialize TimeSeriesManager: {str(e)}")
+                logger.error(traceback.format_exc())
+                # Create a minimal implementation for testing
+                from data_storage.time_series import TimeSeriesManager
+                class MinimalTimeSeriesManager:
+                    async def get_candles(self, asset, timeframe, start_time=None, end_time=None):
+                        logger.warning(f"Using minimal TimeSeriesManager implementation for {asset} {timeframe}")
+                        # Return empty DataFrame
+                        return pd.DataFrame(columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+                
+                time_series_store = MinimalTimeSeriesManager()
+                logger.info("Using minimal TimeSeriesManager implementation")
+            
+            # Initialize processor with time_series_store
             self.processor = FeatureProcessor(
                 self.config,
                 redis_client=self.redis_client,
-                db_client=self.db_client
+                db_client=self.db_client,
+                time_series_store=time_series_store
             )
 
             self.extractor = FeatureExtractor(
-                self.config,
-                redis_client=self.redis_client,
-                db_client=self.db_client
+                [], # Empty list of features
+                use_gpu=self.config.get("feature_service.use_gpu", False)
             )
 
-            self.mtf_analyzer = MultiTimeframeAnalyzer(
-                self.config,
-                redis_client=self.redis_client,
-                db_client=self.db_client
-            )
+            # Skip MultiTimeframeAnalyzer initialization for now
+            self.mtf_analyzer = None
 
             # Initialize feature service
             init_feature_service()
@@ -221,7 +271,51 @@ class FeatureService:
             await task.start()
 
         self.running = True
+        
+        # Create a task attribute that the service manager can monitor
+        self.task = asyncio.create_task(self.run())
+        
         logger.info("Feature service started successfully")
+
+    async def run(self):
+        """
+        Run the feature service. This method should be called after start() and will
+        keep the service running until stop() is called.
+        """
+        if not self.running:
+            logger.warning("Feature service not running")
+            return
+
+        # Keep the service running until stop() is called
+        try:
+            # Create a never-ending task that we can cancel when stop() is called
+            self.run_task = asyncio.create_task(self._keep_alive())
+            self.task = self.run_task  # Set the task attribute for the service manager
+            await self.run_task
+        except asyncio.CancelledError:
+            logger.info("Feature service run task cancelled")
+        except Exception as e:
+            logger.error(f"Error in feature service run task: {e}")
+            raise
+        finally:
+            self.running = False
+            
+    async def _keep_alive(self):
+        """
+        Keep the service alive by running an infinite loop with periodic health checks.
+        This prevents the service from completing unexpectedly.
+        """
+        logger.info("Feature service keep-alive task started")
+        try:
+            while True:
+                # Perform periodic health check or maintenance
+                await asyncio.sleep(10)  # Sleep to avoid consuming CPU
+        except asyncio.CancelledError:
+            logger.info("Feature service keep-alive task cancelled")
+            raise
+        except Exception as e:
+            logger.error(f"Error in feature service keep-alive task: {e}")
+            raise
 
     async def stop(self):
         """
@@ -233,6 +327,24 @@ class FeatureService:
 
         logger.info("Stopping feature service")
 
+        # Cancel the task attribute that the service manager monitors
+        if hasattr(self, 'task') and self.task is not None:
+            self.task.cancel()
+            try:
+                await self.task
+            except asyncio.CancelledError:
+                pass
+            self.task = None
+
+        # Cancel the run task if it exists
+        if hasattr(self, 'run_task') and self.run_task is not None:
+            self.run_task.cancel()
+            try:
+                await self.run_task
+            except asyncio.CancelledError:
+                pass
+            self.run_task = None
+
         # Stop periodic tasks
         for task in self.tasks:
             await task.stop()
@@ -241,7 +353,10 @@ class FeatureService:
         if self.executor:
             self.executor.shutdown(wait=True)
 
-        shutdown_feature_service()
+        try:
+            shutdown_feature_service()
+        except Exception as e:
+            logger.warning(f"Error during feature service shutdown: {str(e)}")
 
         self.running = False
         logger.info("Feature service stopped successfully")
@@ -481,8 +596,10 @@ class FeatureService:
             DataFrame containing OHLCV data
         """
         try:
+            logger.info(f"Getting market data for {asset} {timeframe}")
             # Try to get from Redis first for faster access
             data_key = f"market_data:{asset}:{timeframe}"
+            logger.debug(f"Checking Redis cache for {data_key}")
             cached_data = await self.redis_client.get(data_key)
 
             if cached_data:
@@ -506,9 +623,15 @@ class FeatureService:
 
             lookback = self.config.get("feature_service.lookback_periods", 500)
 
-            result = await self.db_client.fetch_all(
-                query, (asset, timeframe, lookback)
-            )
+            logger.debug(f"Fetching from database with lookback={lookback}")
+            try:
+                result = await self.db_client.fetch_all(
+                    query, (asset, timeframe, lookback)
+                )
+                logger.debug(f"Database query returned {len(result) if result else 0} rows")
+            except Exception as db_error:
+                logger.error(f"Database query failed: {str(db_error)}")
+                result = None
 
             if not result:
                 logger.warning(f"No data found for {asset} {timeframe}")

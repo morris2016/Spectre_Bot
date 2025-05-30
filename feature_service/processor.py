@@ -109,8 +109,8 @@ class FeatureProcessor:
             self.use_gpu = HAS_GPU and HAS_CUDA # Default to True only if GPU and CUDA are available
         
         # Initialize executors
-        self.thread_executor = ThreadPoolExecutor(max_workers=max_workers)
-        self.process_executor = ProcessPoolExecutor(max_workers=max(2, max_workers // 2))
+        self.thread_executor = ThreadPoolExecutor(max_workers=self.max_workers)
+        self.process_executor = ProcessPoolExecutor(max_workers=max(2, self.max_workers // 2))
         
         # Initialize feature extractors
         self.extractors: Dict[str, FeatureExtractor] = {}
@@ -137,7 +137,7 @@ class FeatureProcessor:
         self.active_tasks = {}
         self.task_lock = asyncio.Lock()
         
-        logger.info(f"Feature processor initialized with {max_workers} workers, GPU: {self.use_gpu}")
+        logger.info(f"Feature processor initialized with {self.max_workers} workers, GPU: {self.use_gpu}")
     
     def _initialize_gpu(self) -> Dict[str, Any]:
         """Initialize and configure GPU resources."""
@@ -195,17 +195,57 @@ class FeatureProcessor:
         """Start the feature processor service."""
         logger.info("Starting feature processor service")
         
-        # Start processing workers for each priority level
-        self.processing_tasks = []
-        for level in FEATURE_PRIORITY_LEVELS:
-            task = asyncio.create_task(self._process_queue(level))
-            self.processing_tasks.append(task)
-        
-        logger.info("Feature processor service started")
+        try:
+            # Check if time_series_store is initialized
+            if self.time_series_store is None:
+                logger.error("time_series_store is not initialized")
+                raise ValueError("time_series_store is not initialized")
+                
+            # Start processing workers for each priority level
+            self.processing_tasks = []
+            for level in FEATURE_PRIORITY_LEVELS:
+                logger.debug(f"Creating processing task for priority level: {level}")
+                task = asyncio.create_task(self._process_queue(level))
+                self.processing_tasks.append(task)
+            
+            # Create a main task that the service manager can monitor
+            self.task = asyncio.create_task(self._keep_alive())
+            
+            logger.info("Feature processor service started successfully")
+        except Exception as e:
+            logger.error(f"Failed to start feature processor service: {str(e)}")
+            logger.error(traceback.format_exc())
+            raise
+            
+    async def _keep_alive(self):
+        """
+        Keep the processor service alive with a long-running task.
+        This prevents the service from completing unexpectedly.
+        """
+        logger.info("Feature processor keep-alive task started")
+        try:
+            while True:
+                # Perform periodic health check
+                await asyncio.sleep(5)
+        except asyncio.CancelledError:
+            logger.info("Feature processor keep-alive task cancelled")
+            raise
+        except Exception as e:
+            logger.error(f"Error in feature processor keep-alive task: {str(e)}")
+            logger.error(traceback.format_exc())
+            raise
     
     async def stop(self):
         """Stop the feature processor service."""
         logger.info("Stopping feature processor service")
+        
+        # Cancel the keep-alive task if it exists
+        if hasattr(self, 'task') and self.task is not None:
+            self.task.cancel()
+            try:
+                await self.task
+            except asyncio.CancelledError:
+                pass
         
         # Cancel all processing tasks
         for task in self.processing_tasks:
@@ -370,13 +410,24 @@ class FeatureProcessor:
         
         try:
             # Get market data
-            data = await run_in_threadpool(
-                self.time_series_store.get_candles,
-                asset=asset,
-                timeframe=timeframe,
-                start_time=start_time,
-                end_time=end_time
-            )
+            logger.debug(f"Fetching candles for {asset} {timeframe} from time_series_store")
+            if self.time_series_store is None:
+                logger.error("time_series_store is None, cannot fetch candles")
+                raise ValueError("time_series_store is not initialized")
+                
+            try:
+                data = await run_in_threadpool(
+                    self.time_series_store.get_candles,
+                    asset=asset,
+                    timeframe=timeframe,
+                    start_time=start_time,
+                    end_time=end_time
+                )
+                logger.debug(f"Retrieved {len(data) if not data.empty else 0} candles")
+            except Exception as e:
+                logger.error(f"Error fetching candles: {str(e)}")
+                logger.error(traceback.format_exc())
+                raise
             
             if data.empty:
                 logger.warning(f"No data available for {asset} ({timeframe})")

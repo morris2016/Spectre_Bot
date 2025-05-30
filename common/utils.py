@@ -18,6 +18,415 @@ import hmac
 import hashlib
 import base64
 import pickle
+import itertools
+
+
+class TradingMode:
+    """
+    Singleton class to manage the current trading mode of the system.
+    
+    This class ensures that all components have a consistent view of the
+    current trading mode (live, paper, backtest, etc.)
+    """
+    
+    LIVE = "live"
+    PAPER = "paper"
+    BACKTEST = "backtest"
+    SIMULATION = "simulation"
+    OPTIMIZATION = "optimization"
+    STRESS_TEST = "stress_test"
+    
+    def __init__(self):
+        self._mode = self.PAPER  # Default to paper trading
+        self._observers = []
+        
+    def get_mode(self) -> str:
+        """Get the current trading mode."""
+        return self._mode
+        
+    def set_mode(self, mode: str) -> None:
+        """
+        Set the current trading mode.
+        
+        Args:
+            mode: The trading mode to set
+        """
+        if mode not in [self.LIVE, self.PAPER, self.BACKTEST,
+                        self.SIMULATION, self.OPTIMIZATION, self.STRESS_TEST]:
+            raise ValueError(f"Invalid trading mode: {mode}")
+            
+        old_mode = self._mode
+        self._mode = mode
+        
+        # Notify observers of mode change
+        for observer in self._observers:
+            observer(old_mode, mode)
+            
+    def register_observer(self, observer: callable) -> None:
+        """
+        Register an observer to be notified of mode changes.
+        
+        Args:
+            observer: Callable that takes (old_mode, new_mode) parameters
+        """
+        self._observers.append(observer)
+        
+    def unregister_observer(self, observer: callable) -> None:
+        """
+        Unregister an observer.
+        
+        Args:
+            observer: The observer to unregister
+        """
+        if observer in self._observers:
+            self._observers.remove(observer)
+
+
+def normalize_weights(weights: dict) -> dict:
+    """
+    Normalize a dictionary of weights so they sum to 1.0.
+    
+    Args:
+        weights: Dictionary of items and their weights
+        
+    Returns:
+        Dictionary with normalized weights
+    """
+    total = sum(weights.values())
+    if total == 0:
+        # If all weights are zero, assign equal weights
+        return {k: 1.0 / len(weights) for k in weights}
+    return {k: v / total for k, v in weights.items()}
+
+
+def format_price(price: float, precision: int = 2) -> str:
+    """
+    Format a price value with appropriate precision.
+    
+    Args:
+        price: The price to format
+        precision: Number of decimal places
+        
+    Returns:
+        Formatted price string
+    """
+    return f"{price:.{precision}f}"
+
+
+class CircularBuffer:
+    """
+    Fixed-size buffer that overwrites oldest data when full.
+    
+    This is useful for maintaining a sliding window of recent data
+    without growing memory usage.
+    """
+    
+    def __init__(self, size: int):
+        """
+        Initialize a circular buffer.
+        
+        Args:
+            size: Maximum number of items to store
+        """
+        self.size = size
+        self.buffer = [None] * size
+        self.position = 0
+        self.is_full = False
+        
+    def append(self, item):
+        """Add an item to the buffer."""
+        self.buffer[self.position] = item
+        self.position = (self.position + 1) % self.size
+        if self.position == 0:
+            self.is_full = True
+            
+    def get_all(self):
+        """Get all items in the buffer."""
+        if self.is_full:
+            return self.buffer
+        else:
+            return self.buffer[:self.position]
+            
+    def clear(self):
+        """Clear the buffer."""
+        self.buffer = [None] * self.size
+        self.position = 0
+        self.is_full = False
+        
+    def __len__(self):
+        """Return the number of items in the buffer."""
+        if self.is_full:
+            return self.size
+        return self.position
+
+
+def circular_buffer(size: int) -> CircularBuffer:
+    """
+    Create a new circular buffer.
+    
+    Args:
+        size: Maximum number of items to store
+        
+    Returns:
+        A new CircularBuffer instance
+    """
+    return CircularBuffer(size)
+
+
+def chunked_iterable(iterable, chunk_size):
+    """
+    Break an iterable into chunks of a specified size.
+    
+    Args:
+        iterable: The iterable to chunk
+        chunk_size: Size of each chunk
+        
+    Yields:
+        Chunks of the iterable
+    """
+    it = iter(iterable)
+    while True:
+        chunk = list(itertools.islice(it, chunk_size))
+        if not chunk:
+            break
+        yield chunk
+
+
+def format_percentage(value: float, precision: int = 2) -> str:
+    """
+    Format a value as a percentage.
+    
+    Args:
+        value: The value to format (0.1 = 10%)
+        precision: Number of decimal places
+        
+    Returns:
+        Formatted percentage string
+    """
+    return f"{value * 100:.{precision}f}%"
+
+
+def calculate_atr(high_prices, low_prices, close_prices, period=14):
+    """
+    Calculate Average True Range (ATR).
+    
+    Args:
+        high_prices: List of high prices
+        low_prices: List of low prices
+        close_prices: List of close prices
+        period: ATR period
+        
+    Returns:
+        List of ATR values
+    """
+    if len(high_prices) < period + 1:
+        return [0] * len(high_prices)
+        
+    # Calculate True Range
+    tr = []
+    for i in range(len(high_prices)):
+        if i == 0:
+            tr.append(high_prices[i] - low_prices[i])
+        else:
+            tr.append(max(
+                high_prices[i] - low_prices[i],
+                abs(high_prices[i] - close_prices[i-1]),
+                abs(low_prices[i] - close_prices[i-1])
+            ))
+    
+    # Calculate ATR
+    atr = [0] * len(tr)
+    atr[period-1] = sum(tr[:period]) / period
+    
+    for i in range(period, len(tr)):
+        atr[i] = (atr[i-1] * (period-1) + tr[i]) / period
+        
+    return atr
+
+
+def find_peaks(data, window=5):
+    """
+    Find peaks in a data series.
+    
+    Args:
+        data: List of values
+        window: Window size for peak detection
+        
+    Returns:
+        List of peak indices
+    """
+    peaks = []
+    for i in range(window, len(data) - window):
+        is_peak = True
+        for j in range(1, window + 1):
+            if data[i] <= data[i - j] or data[i] <= data[i + j]:
+                is_peak = False
+                break
+        if is_peak:
+            peaks.append(i)
+    return peaks
+
+
+def merge_configs(base_config, override_config):
+    """
+    Merge two configuration dictionaries.
+    
+    Args:
+        base_config: Base configuration
+        override_config: Configuration to override base
+        
+    Returns:
+        Merged configuration
+    """
+    result = base_config.copy()
+    
+    for key, value in override_config.items():
+        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            result[key] = merge_configs(result[key], value)
+        else:
+            result[key] = value
+            
+    return result
+
+
+def is_higher_high(current_value, previous_value, threshold=0.0):
+    """
+    Check if current value is a higher high compared to previous value.
+    
+    Args:
+        current_value: Current value to check
+        previous_value: Previous value to compare against
+        threshold: Minimum percentage difference required
+        
+    Returns:
+        True if current value is a higher high, False otherwise
+    """
+    if previous_value <= 0:
+        return current_value > 0
+        
+    diff_pct = (current_value - previous_value) / previous_value
+    return diff_pct > threshold
+
+
+def is_lower_low(current_value, previous_value, threshold=0.0):
+    """
+    Check if current value is a lower low compared to previous value.
+    
+    Args:
+        current_value: Current value to check
+        previous_value: Previous value to compare against
+        threshold: Minimum percentage difference required
+        
+    Returns:
+        True if current value is a lower low, False otherwise
+    """
+    if previous_value <= 0:
+        return current_value < 0
+        
+    diff_pct = (previous_value - current_value) / previous_value
+    return diff_pct > threshold
+
+
+def truncate_float(value, decimals=2):
+    """
+    Truncate a float to a specified number of decimal places.
+    
+    Args:
+        value: Float value to truncate
+        decimals: Number of decimal places
+        
+    Returns:
+        Truncated float value
+    """
+    factor = 10 ** decimals
+    return int(value * factor) / factor
+
+
+def get_user_preference(key, default=None):
+    """
+    Get a user preference from the configuration.
+    
+    Args:
+        key: Preference key
+        default: Default value if preference not found
+        
+    Returns:
+        Preference value or default
+    """
+    # In a real implementation, this would load from a user preferences file
+    # For now, return the default value
+    return default
+
+
+def zigzag_identification(prices, deviation=0.05):
+    """
+    Identify zigzag points in a price series.
+    
+    Args:
+        prices: List of price values
+        deviation: Minimum percentage deviation for a zigzag point
+        
+    Returns:
+        List of indices of zigzag points
+    """
+    if len(prices) < 3:
+        return []
+        
+    # Initialize with first point
+    zigzag_points = [0]
+    trend = None
+    
+    for i in range(1, len(prices)):
+        if trend is None:
+            # Determine initial trend
+            if prices[i] > prices[0]:
+                trend = "up"
+            elif prices[i] < prices[0]:
+                trend = "down"
+            else:
+                continue
+                
+            zigzag_points.append(i)
+            continue
+        
+        last_zigzag_price = prices[zigzag_points[-1]]
+        
+        if trend == "up":
+            # Check for reversal
+            if prices[i] < last_zigzag_price * (1 - deviation):
+                trend = "down"
+                zigzag_points.append(i)
+            # Check for new high
+            elif prices[i] > last_zigzag_price:
+                zigzag_points[-1] = i
+        else:  # trend == "down"
+            # Check for reversal
+            if prices[i] > last_zigzag_price * (1 + deviation):
+                trend = "up"
+                zigzag_points.append(i)
+            # Check for new low
+            elif prices[i] < last_zigzag_price:
+                zigzag_points[-1] = i
+    
+    return zigzag_points
+
+
+class Singleton(type):
+    """
+    Metaclass for implementing the Singleton pattern.
+    
+    This ensures only one instance of a class exists throughout the application.
+    
+    Usage:
+        class MyClass(metaclass=Singleton):
+            pass
+    """
+    _instances = {}
+    
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
 import random
 import zlib
 import socket

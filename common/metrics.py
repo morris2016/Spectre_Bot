@@ -11,7 +11,7 @@ import time
 import json
 import asyncio
 import statistics
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Tuple
 import psutil
 from contextlib import contextmanager
 from functools import wraps
@@ -576,6 +576,36 @@ class MetricsCollector:
         if tags:
             tag_str = ",".join(f"{k}={v}" for k, v in tags.items())
             self.logger.debug(f"Latency: {name} {value_ms}ms {tag_str}")
+            
+    def gauge(self, name, value, tags=None):
+        """
+        Set a gauge metric to a specific value.
+        This is an alias for the set() method for compatibility.
+
+        Args:
+            name: Metric name
+            value: Gauge value
+            tags: Optional tags (ignored in this implementation)
+
+        Returns:
+            Set value
+        """
+        return self.set(name, value)
+    
+    def counter(self, name, value=1, tags=None):
+        """
+        Increment a counter metric.
+        This is an alias for the increment() method for compatibility.
+
+        Args:
+            name: Metric name
+            value: Increment value (default: 1)
+            tags: Optional tags (ignored in this implementation)
+
+        Returns:
+            New counter value
+        """
+        return self.increment(name, value)
 
 
 # Module-level instance for global use
@@ -587,7 +617,229 @@ def get_default_collector():
 # Global collector instances
 
 performance_tracker = MetricsCollector.get_instance("performance")
+performance_metrics = MetricsCollector.get_instance("performance_metrics")
 _default_collector = get_default_collector()
+
+
+def sharpe_ratio(returns: List[float], risk_free_rate: float = 0.0, annualization_factor: int = 252) -> float:
+    """
+    Calculate the Sharpe ratio for a series of returns.
+    
+    Args:
+        returns: List of period returns (e.g., daily returns)
+        risk_free_rate: Risk-free rate (annualized)
+        annualization_factor: Factor to annualize returns (252 for daily, 52 for weekly, 12 for monthly)
+    
+    Returns:
+        float: Sharpe ratio
+    """
+    if not returns or len(returns) < 2:
+        return 0.0
+    
+    # Convert to numpy array for calculations
+    returns_array = np.array(returns)
+    
+    # Calculate mean return and standard deviation
+    mean_return = np.mean(returns_array)
+    std_dev = np.std(returns_array, ddof=1)  # Use sample standard deviation
+    
+    if std_dev == 0:
+        return 0.0  # Avoid division by zero
+    
+    # Calculate daily excess return
+    daily_risk_free = risk_free_rate / annualization_factor
+    excess_return = mean_return - daily_risk_free
+    
+    # Calculate daily Sharpe ratio
+    daily_sharpe = excess_return / std_dev
+    
+    # Annualize Sharpe ratio
+    sharpe_ratio = daily_sharpe * math.sqrt(annualization_factor)
+    
+    return sharpe_ratio
+
+
+def sortino_ratio(returns: List[float], risk_free_rate: float = 0.0, annualization_factor: int = 252) -> float:
+    """
+    Calculate the Sortino ratio, which measures the risk-adjusted return using downside deviation.
+    
+    Args:
+        returns: List of period returns (as decimals, e.g., 0.01 for 1%)
+        risk_free_rate: Risk-free rate of return (default: 0.0)
+        annualization_factor: Number of periods in a year (default: 252 for daily returns)
+    
+    Returns:
+        Sortino ratio
+    """
+    if not returns or len(returns) < 2:
+        return 0.0
+    
+    # Convert to numpy array
+    returns_array = np.array(returns)
+    
+    # Calculate excess returns
+    daily_risk_free = risk_free_rate / annualization_factor
+    excess_returns = returns_array - daily_risk_free
+    
+    # Calculate average excess return
+    avg_excess_return = np.mean(excess_returns)
+    
+    # Calculate downside deviation (standard deviation of negative returns only)
+    negative_returns = excess_returns[excess_returns < 0]
+    
+    if len(negative_returns) == 0:
+        # No negative returns, avoid division by zero
+        return float('inf') if avg_excess_return > 0 else 0.0
+    
+    downside_deviation = np.sqrt(np.mean(negative_returns**2))
+    
+    if downside_deviation == 0:
+        return float('inf') if avg_excess_return > 0 else 0.0
+    
+    # Calculate annualized Sortino ratio
+    sortino_ratio = (avg_excess_return / downside_deviation) * np.sqrt(annualization_factor)
+    
+    return sortino_ratio
+
+
+def expectancy(trades: List[Dict[str, Any]]) -> float:
+    """
+    Calculate the expectancy (average profit/loss per trade).
+    
+    Args:
+        trades: List of trade dictionaries, each containing at least a 'profit' key
+               with the profit/loss value for the trade
+    
+    Returns:
+        float: Expectancy value (average profit/loss per trade)
+    """
+    if not trades:
+        return 0.0
+    
+    total_profit = sum(trade.get('profit', 0) for trade in trades)
+    return total_profit / len(trades)
+
+
+def drawdown(returns: List[float]) -> Tuple[float, int, int]:
+    """
+    Calculate the maximum drawdown, drawdown duration, and drawdown start index.
+    
+    Args:
+        returns: List of period returns (as decimals, e.g., 0.01 for 1%)
+    
+    Returns:
+        Tuple containing:
+        - Maximum drawdown as a positive decimal (e.g., 0.25 for 25%)
+        - Drawdown duration in periods
+        - Start index of the drawdown
+    """
+    if not returns or len(returns) < 2:
+        return 0.0, 0, 0
+    
+    # Calculate cumulative returns
+    cum_returns = np.cumprod(1 + np.array(returns))
+    
+    # Calculate running maximum
+    running_max = np.maximum.accumulate(cum_returns)
+    
+    # Calculate drawdowns
+    drawdowns = (cum_returns - running_max) / running_max
+    
+    # Find maximum drawdown and its index
+    max_dd_idx = np.argmin(drawdowns)
+    max_dd = abs(drawdowns[max_dd_idx])
+    
+    # Find the start of the drawdown (index of the last peak before the drawdown)
+    peak_idx = np.where(cum_returns[:max_dd_idx+1] == running_max[max_dd_idx])[0][-1]
+    
+    # Calculate drawdown duration
+    dd_duration = max_dd_idx - peak_idx
+    
+    return max_dd, dd_duration, peak_idx
+
+
+def profit_factor(trades: List[Dict[str, Any]]) -> float:
+    """
+    Calculate the profit factor (gross profit / gross loss).
+    
+    Args:
+        trades: List of trade dictionaries, each containing at least a 'profit' key
+               with the profit/loss value for the trade
+    
+    Returns:
+        float: Profit factor (> 1.0 is profitable)
+    """
+    if not trades:
+        return 0.0
+    
+    gross_profit = sum(trade.get('profit', 0) for trade in trades if trade.get('profit', 0) > 0)
+    gross_loss = sum(abs(trade.get('profit', 0)) for trade in trades if trade.get('profit', 0) < 0)
+    
+    if gross_loss == 0:
+        return float('inf') if gross_profit > 0 else 0.0
+    
+    return gross_profit / gross_loss
+
+
+def win_rate(trades: List[Dict[str, Any]]) -> float:
+    """
+    Calculate the win rate (percentage of profitable trades).
+    
+    Args:
+        trades: List of trade dictionaries, each containing at least a 'profit' key
+               with the profit/loss value for the trade
+    
+    Returns:
+        float: Win rate as a decimal (e.g., 0.65 for 65%)
+    """
+    if not trades:
+        return 0.0
+    
+    winning_trades = sum(1 for trade in trades if trade.get('profit', 0) > 0)
+    return winning_trades / len(trades)
+
+
+def calmar_ratio(returns: List[float], drawdowns: List[float] = None, annualization_factor: int = 252) -> float:
+    """
+    Calculate the Calmar ratio, which is the annualized return divided by the maximum drawdown.
+    
+    Args:
+        returns: List of period returns (as decimals, e.g., 0.01 for 1%)
+        drawdowns: Optional list of drawdown values. If not provided, will be calculated from returns.
+        annualization_factor: Number of periods in a year (default: 252 for daily returns)
+    
+    Returns:
+        Calmar ratio
+    """
+    if not returns or len(returns) < 2:
+        return 0.0
+    
+    # Calculate annualized return
+    returns_array = np.array(returns)
+    total_return = np.prod(1 + returns_array) - 1
+    periods = len(returns)
+    annualized_return = (1 + total_return) ** (annualization_factor / periods) - 1
+    
+    # Calculate maximum drawdown if not provided
+    if drawdowns is None:
+        # Calculate cumulative returns
+        cum_returns = np.cumprod(1 + returns_array)
+        # Calculate running maximum
+        running_max = np.maximum.accumulate(cum_returns)
+        # Calculate drawdowns
+        drawdowns = (cum_returns - running_max) / running_max
+    
+    # Get maximum drawdown (as a positive number)
+    max_drawdown = abs(min(drawdowns)) if drawdowns else 0.0
+    
+    # Avoid division by zero
+    if max_drawdown == 0:
+        return float('inf') if annualized_return > 0 else 0.0
+    
+    # Calculate Calmar ratio
+    calmar = annualized_return / max_drawdown
+    
+    return calmar
 
 
 def calculate_timing(func=None, *, metric_name: Optional[str] = None,

@@ -10,7 +10,36 @@ exceeded, protecting capital during periods of high volatility or when
 unusual market behaviors are detected.
 """
 
+import time
+import logging
+import numpy as np
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+import asyncio
+from enum import Enum, auto
 from typing import Dict, List, Optional, Tuple, Any, Union, Set, Type
+
+from common.constants import TIMEFRAMES, CIRCUIT_BREAKER_THRESHOLDS
+from common.logger import get_logger
+from common.utils import calculate_zscore, detect_outliers, exponential_backoff
+from common.async_utils import create_task_with_retry
+from common.metrics import MetricsCollector
+from common.exceptions import CircuitBreakerTrippedException, SystemCriticalError
+
+from data_storage.market_data import MarketDataRepository
+from feature_service.features.volatility import VolatilityCalculator
+
+logger = get_logger("risk_manager.circuit_breaker")
+
+
+# Define this function at the top level to avoid circular imports
+def get_circuit_breaker(name: str, *args, **kwargs):
+    """Instantiate a registered circuit breaker by name."""
+    from risk_manager.circuit_breaker import BaseCircuitBreaker
+    cls = BaseCircuitBreaker.registry.get(name)
+    if cls is None:
+        raise ValueError(f"Unknown circuit breaker: {name}")
+    return cls(*args, **kwargs)
 
 
 class BaseCircuitBreaker:
@@ -26,28 +55,19 @@ class BaseCircuitBreaker:
     async def check(self, *args, **kwargs) -> bool:
         raise NotImplementedError
 
-import time
-import logging
-import numpy as np
-from dataclasses import dataclass
-from datetime import datetime, timedelta
-import asyncio
-from enum import Enum, auto
-
-from common.constants import TIMEFRAMES, CIRCUIT_BREAKER_THRESHOLDS
-from common.logger import get_logger
-from common.utils import calculate_zscore, detect_outliers, exponential_backoff
-from common.async_utils import create_task_with_retry
-from common.metrics import MetricsCollector
-from common.exceptions import CircuitBreakerTrippedException, SystemCriticalError
-
-from data_storage.market_data import MarketDataRepository
-from feature_service.features.volatility import VolatilityCalculator
-
-logger = get_logger("risk_manager.circuit_breaker")
-
 
 class CircuitBreakerState(Enum):
+    """
+    Enum representing the possible states of a circuit breaker.
+    
+    States:
+        CLOSED: Normal operation, circuit breaker is not triggered
+        OPEN: Circuit breaker is triggered, operations are blocked
+        HALF_OPEN: Transitional state during recovery
+    """
+    CLOSED = auto()
+    OPEN = auto()
+    HALF_OPEN = auto()
     """Enum for the possible states of a circuit breaker."""
     NORMAL = auto()         # Circuit breaker is inactive, trading permitted
     WARNING = auto()        # Approaching threshold, caution advised
@@ -1142,13 +1162,91 @@ class CircuitBreaker(BaseCircuitBreaker):
         logger.info(f"Registered custom circuit breaker: {cb_id} - {name}")
 
         return cb_id
-
-
-def get_circuit_breaker(name: str, *args, **kwargs) -> BaseCircuitBreaker:
-    """Instantiate a registered circuit breaker by name."""
-    cls = BaseCircuitBreaker.registry.get(name)
-    if cls is None:
-        raise ValueError(f"Unknown circuit breaker: {name}")
-    return cls(*args, **kwargs)
-
-__all__ = ["BaseCircuitBreaker", "get_circuit_breaker"]
+    
+    
+    class VolatilityCircuitBreaker(BaseCircuitBreaker, name="VolatilityCircuitBreaker"):
+        """
+        Circuit breaker that triggers when market volatility exceeds a threshold.
+        
+        This circuit breaker monitors market volatility and trips when it exceeds
+        a predefined threshold, protecting against extreme market conditions.
+        """
+        
+        def __init__(self,
+                     volatility_threshold: float = 3.0,
+                     lookback_periods: int = 20,
+                     cooldown_minutes: int = 30,
+                     asset_specific_thresholds: Dict[str, float] = None,
+                     **kwargs):
+            """
+            Initialize the volatility circuit breaker.
+            
+            Args:
+                volatility_threshold: Z-score threshold for volatility (default: 3.0)
+                lookback_periods: Number of periods to look back for volatility calculation
+                cooldown_minutes: Minutes to wait before resetting after triggering
+                asset_specific_thresholds: Optional dict of asset-specific thresholds
+            """
+            self.volatility_threshold = volatility_threshold
+            self.lookback_periods = lookback_periods
+            self.cooldown_minutes = cooldown_minutes
+            self.asset_specific_thresholds = asset_specific_thresholds or {}
+            
+            self.last_triggered = {}
+            self.state = CircuitBreakerState.CLOSED
+            self.metrics = MetricsCollector("circuit_breaker.volatility")
+            self.logger = get_logger("risk_manager.circuit_breaker.volatility")
+            self.logger.info(f"Volatility circuit breaker initialized with threshold {volatility_threshold}")
+        
+        async def check(self, asset: str, current_volatility: float = None,
+                       market_data: Dict[str, Any] = None) -> bool:
+            """
+            Check if the circuit breaker should be triggered.
+            
+            Args:
+                asset: Asset to check
+                current_volatility: Current volatility value (optional)
+                market_data: Market data for volatility calculation (optional)
+                
+            Returns:
+                True if circuit breaker is triggered, False otherwise
+            """
+            # Check if we're in cooldown period
+            now = datetime.now()
+            if asset in self.last_triggered:
+                cooldown_end = self.last_triggered[asset] + timedelta(minutes=self.cooldown_minutes)
+                if now < cooldown_end:
+                    self.logger.debug(f"Volatility circuit breaker for {asset} in cooldown until {cooldown_end}")
+                    return False
+            
+            # Get asset-specific threshold or use default
+            threshold = self.asset_specific_thresholds.get(asset, self.volatility_threshold)
+            
+            # Use provided volatility or calculate it
+            volatility = current_volatility
+            if volatility is None and market_data is not None:
+                # Simple volatility calculation if market data is provided
+                if 'close' in market_data and len(market_data['close']) >= self.lookback_periods:
+                    prices = market_data['close'][-self.lookback_periods:]
+                    returns = np.diff(prices) / prices[:-1]
+                    volatility = np.std(returns) * np.sqrt(252)  # Annualized
+            
+            if volatility is None:
+                self.logger.warning(f"Cannot check volatility circuit breaker for {asset}: no volatility data")
+                return False
+            
+            # Check if volatility exceeds threshold
+            self.metrics.set(f"volatility.{asset}", volatility)
+            
+            if volatility > threshold:
+                self.logger.warning(f"Volatility circuit breaker triggered for {asset}: {volatility:.4f} > {threshold:.4f}")
+                self.last_triggered[asset] = now
+                self.state = CircuitBreakerState.OPEN
+                self.metrics.increment(f"triggers.{asset}")
+                return True
+            
+            return False
+    
+    
+    # Export the necessary symbols
+    __all__ = ["BaseCircuitBreaker", "VolatilityCircuitBreaker", "get_circuit_breaker"]
