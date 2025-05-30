@@ -352,7 +352,7 @@ class DQNAgent(RLAgent):
         if len(self.memory) < self.batch_size:
             return None
         if TORCH_AVAILABLE:
-            batch = random.sample(self.memory, self.batch_size)
+            batch = self.memory.sample(self.batch_size)
             states, actions, rewards, next_states, dones = zip(*batch)
             state_batch = torch.FloatTensor(states)
             action_batch = torch.LongTensor(actions).unsqueeze(1)

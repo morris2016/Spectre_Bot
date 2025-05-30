@@ -441,6 +441,7 @@ except ImportError:  # pragma: no cover - optional dependency
     date_parser = None  # type: ignore
 import threading
 import functools
+from concurrent.futures import ThreadPoolExecutor
 import itertools
 import collections
 import urllib.parse
@@ -2622,7 +2623,7 @@ def calculate_risk_reward(*args: Union[str, float]) -> float:
         action = "buy"
     elif len(args) == 4:
         action, entry_price, stop_loss, take_profit = args
-
+    else:
         raise ValueError("calculate_risk_reward expects 3 or 4 arguments")
 
     try:
@@ -5347,6 +5348,55 @@ def normalize_quantity(
 
 
 
+
+
+def format_timestamp(timestamp: Union[int, float, datetime.datetime], format_str: str = "%Y-%m-%d %H:%M:%S") -> str:
+    """
+    Format a timestamp to a human-readable string.
+    
+    Args:
+        timestamp: Unix timestamp, datetime object, or timestamp in milliseconds
+        format_str: Format string for datetime formatting
+        
+    Returns:
+        Formatted timestamp string
+    """
+    if isinstance(timestamp, datetime.datetime):
+        dt = timestamp
+    elif isinstance(timestamp, (int, float)):
+        # Handle both seconds and milliseconds timestamps
+        if timestamp > 1e10:  # Likely milliseconds
+            timestamp = timestamp / 1000
+        dt = datetime.datetime.fromtimestamp(timestamp)
+    else:
+        raise ValueError(f"Unsupported timestamp type: {type(timestamp)}")
+    
+    return dt.strftime(format_str)
+
+
+def escape_html(text: str) -> str:
+    """
+    Escape HTML special characters in text.
+    
+    Args:
+        text: Text to escape
+        
+    Returns:
+        HTML-escaped text
+    """
+    if not isinstance(text, str):
+        text = str(text)
+    
+    html_escape_table = {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#x27;",
+        "/": "&#x2F;",
+    }
+    
+    return "".join(html_escape_table.get(c, c) for c in text)
 
 
 def validate_data(df: pd.DataFrame) -> pd.DataFrame:

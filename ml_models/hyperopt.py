@@ -87,7 +87,7 @@ class HyperparameterOptimizer:
             best_params: Dict[str, Any] | None = None
             for params in self._iter_grid(search_space):
                 score = objective(params)
-                self.metrics.observe("trial_score", score)
+                self.metrics.gauge("trial_score", score)
                 self.metrics.increment("trials_total")
                 if (
                     self.direction == "maximize" and score > best_score
