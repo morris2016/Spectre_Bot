@@ -427,6 +427,11 @@ class MetricsCollector:
 
         return hist
 
+    # Compatibility shim for code expecting an ``observe`` method
+    def observe(self, metric_name, value):
+        """Alias to :meth:`record_histogram` for histogram metrics."""
+        return self.record_histogram(metric_name, value)
+
     def get_histogram_stats(self, metric_name):
         """Get statistical information about a histogram."""
         full_name = f"{self.namespace}.{metric_name}"

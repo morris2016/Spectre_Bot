@@ -113,6 +113,11 @@ class OrderFlowBrain(StrategyBrain):
         """
         super().__init__(config, asset_id, timeframe, **kwargs)
 
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            asyncio.set_event_loop(asyncio.new_event_loop())
+
         self.logger = get_logger("OrderFlowBrain")
         self.logger.info(f"Initializing OrderFlowBrain v{self.VERSION} for {asset_id} on {timeframe} timeframe")
 
