@@ -112,7 +112,11 @@ class StrategyBrain(HistoricalMemoryMixin, ABC):
         self.name = name or self.__class__.__name__
         self.redis_client = redis_client
         self.db_client = db_client
-        self.loop = loop or asyncio.get_event_loop()
+        try:
+            self.loop = loop or asyncio.get_event_loop()
+        except RuntimeError:
+            self.loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(self.loop)
 
         HistoricalMemoryMixin.__init__(
             self,

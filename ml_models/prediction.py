@@ -73,15 +73,15 @@ class ModelPredictor:
             metrics_collector: Optional metrics collector for performance tracking
         """
         self.config = config
-        self.metrics_collector = metrics_collector or MetricsCollector()
+        self.metrics_collector = metrics_collector or MetricsCollector("ml_models.prediction")
         self.market_data_repo = MarketDataRepository(config)
         self.feature_extractor = FeatureExtractor(config)
         self.redis_client = RedisClient(config)
         
         # Configure GPU usage
         self.use_gpu = config.get("ml_models.use_gpu", True)
-        self.cuda_available = torch.cuda.is_available()
-        self.tf_gpu_available = tf.config.list_physical_devices('GPU')
+        self.cuda_available = torch.cuda.is_available() if torch is not None else False
+        self.tf_gpu_available = tf.config.list_physical_devices('GPU') if tf is not None else []
         
         if self.use_gpu:
             self._setup_gpu()
@@ -123,18 +123,19 @@ class ModelPredictor:
         """Configure GPU environment for optimal prediction performance."""
         try:
             # Setup GPU for TensorFlow
-            gpus = tf.config.list_physical_devices('GPU')
-            if gpus:
-                for gpu in gpus:
-                    tf.config.experimental.set_memory_growth(gpu, True)
-                
-                # Set visible devices based on config
-                visible_gpus = self.config.get("ml_models.visible_gpus", [0])
-                if len(gpus) > 1 and visible_gpus:
-                    tf.config.set_visible_devices([gpus[i] for i in visible_gpus], 'GPU')
+            if tf is not None:
+                gpus = tf.config.list_physical_devices('GPU')
+                if gpus:
+                    for gpu in gpus:
+                        tf.config.experimental.set_memory_growth(gpu, True)
+                    
+                    # Set visible devices based on config
+                    visible_gpus = self.config.get("ml_models.visible_gpus", [0])
+                    if len(gpus) > 1 and visible_gpus:
+                        tf.config.set_visible_devices([gpus[i] for i in visible_gpus], 'GPU')
             
             # Setup GPU for PyTorch
-            if torch.cuda.is_available():
+            if torch is not None and torch.cuda.is_available():
                 # Set CUDA device
                 cuda_device = self.config.get("ml_models.cuda_device", 0)
                 torch.cuda.set_device(cuda_device)
