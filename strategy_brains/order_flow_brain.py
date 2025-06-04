@@ -126,11 +126,20 @@ class OrderFlowBrain(StrategyBrain):
 
         # Configure feature providers
         self.order_flow_features = OrderFlowFeatures(config, asset_id)
-        self.volume_profile_features = VolumeProfileFeatures(config, asset_id)
-        self.order_book_features = OrderBookFeatures(config, asset_id)
+        if VolumeProfileFeatures is not None:
+            self.volume_profile_features = VolumeProfileFeatures(config, asset_id)
+        else:
+            self.volume_profile_features = None
+        if OrderBookFeatures is not None:
+            self.order_book_features = OrderBookFeatures(config, asset_id)
+        else:
+            self.order_book_features = None
 
         # Microstructure analyzer for loophole detection
-        self.microstructure = MicrostructureAnalyzer(config, asset_id)
+        try:
+            self.microstructure = MicrostructureAnalyzer(config, asset_id)
+        except Exception:
+            self.microstructure = None
 
         # Data storage
         self.market_data = MarketDataStorage(config)
