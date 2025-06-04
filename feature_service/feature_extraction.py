@@ -793,6 +793,29 @@ class FeatureExtractor:
         period = params.get('di_period', 14)
         return ta.adx(high=data['high'], low=data['low'], close=data['close'], length=period)['DMN_{}_{}'.format(period, period)]
 
+    @feature_calculation
+    def pair_correlation(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
+        """Correlation between this asset and a paired asset."""
+        pair_data = params.get("pair_data")
+        column = params.get("pair_column", "close")
+        window = params.get("corr_window")
+        if pair_data is None:
+            raise ValueError("pair_data parameter required for pair_correlation")
+        corr = compute_pair_correlation(data, pair_data, column=column, window=window)
+        if isinstance(corr, pd.Series):
+            return corr.rename("pair_correlation")
+        return pd.Series([corr] * len(data), index=data.index, name="pair_correlation")
+
+    @feature_calculation
+    def cointegration_pvalue(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
+        """Engle-Granger cointegration p-value with a paired asset."""
+        pair_data = params.get("pair_data")
+        column = params.get("pair_column", "close")
+        if pair_data is None:
+            raise ValueError("pair_data parameter required for cointegration_pvalue")
+        pvalue = cointegration_score(data, pair_data, column=column)
+        return pd.Series([pvalue] * len(data), index=data.index, name="cointegration_pvalue")
+
 
 # Standalone helper wrappers
 def atr(data: pd.DataFrame, period: int = 14) -> pd.Series:
@@ -1763,126 +1786,3 @@ def fibonacci_levels(data: pd.DataFrame) -> Dict[str, float]:
             return corr.rename("pair_correlation")
         return pd.Series([corr] * len(data), index=data.index, name="pair_correlation")
 
-    @feature_calculation
-    def cointegration_pvalue(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
-        """Engle-Granger cointegration p-value with a paired asset."""
-        pair_data = params.get("pair_data")
-        column = params.get("pair_column", "close")
-        if pair_data is None:
-            raise ValueError("pair_data parameter required for cointegration_pvalue")
-        pvalue = cointegration_score(data, pair_data, column=column)
-        return pd.Series([pvalue] * len(data), index=data.index, name="cointegration_pvalue")
-
-
-
-def atr(high: Union[pd.Series, List[float]],
-        low: Union[pd.Series, List[float]],
-        close: Union[pd.Series, List[float]],
-        period: int = 14) -> pd.Series:
-    """Standalone ATR calculator for easy reuse."""
-    data = pd.DataFrame({'high': high, 'low': low, 'close': close})
-    return ta.atr(high=data['high'], low=data['low'], close=data['close'], length=period)
-
-
-def fibonacci_levels(high: float, low: float) -> List[float]:
-    """Calculate Fibonacci retracement levels."""
-    levels = [0.0, 0.236, 0.382, 0.5, 0.618, 0.786, 1.0]
-    diff = high - low
-    return [high - diff * lvl for lvl in levels]
-# Convenience wrapper functions
-
-def atr(data: pd.DataFrame, period: int = 14) -> pd.Series:
-    """Calculate ATR directly."""
-    return ta.atr(high=data['high'], low=data['low'], close=data['close'], length=period)
-
-
-def fibonacci_levels(price: float, ratios: Optional[List[float]] = None) -> Dict[str, float]:
-    """Generate basic Fibonacci retracement levels."""
-    if ratios is None:
-        ratios = [0.236, 0.382, 0.5, 0.618, 0.786]
-    return {str(r): price * r for r in ratios}
-
-def atr(data: pd.DataFrame, period: int = 14) -> pd.Series:
-    """Convenience wrapper for ATR calculation."""
-    return ta.atr(high=data['high'], low=data['low'], close=data['close'], length=period)
-
-
-def fibonacci_levels(high: float, low: float) -> List[float]:
-    """Simple Fibonacci retracement level calculator."""
-    diff = high - low
-    return [high - diff * r for r in [0.236, 0.382, 0.5, 0.618, 0.786]]
-
-def fibonacci_levels(high: float, low: float) -> Dict[str, float]:
-    """Calculate common Fibonacci retracement levels."""
-    ratios = [0.0, 0.236, 0.382, 0.5, 0.618, 0.786, 1.0, 1.272, 1.618, 2.618]
-    diff = high - low
-    return {str(r): high - diff * r for r in ratios}
-
-
-__all__ = [
-    'FeatureExtractor', 'atr', 'fibonacci_levels'
-]
-
-#
-# Cross-Asset Features
-#
-
-@feature_calculation
-def pair_correlation(
-    self,
-    data: pd.DataFrame,
-    params: Dict[str, Any],
-) -> pd.Series:
-    """Rolling correlation between two assets."""
-    other = params.get("other_series")
-    window = params.get("corr_window", 30)
-    if other is None:
-        raise ValueError("other_series parameter is required for pair correlation")
-    return compute_pair_correlation(data["close"], other, window=window)
-
-@feature_calculation
-def cointegration_pvalue(
-    self,
-    data: pd.DataFrame,
-    params: Dict[str, Any],
-) -> pd.Series:
-    """Cointegration test p-value between two assets."""
-    other = params.get("other_series")
-    if other is None:
-        raise ValueError("other_series parameter is required for cointegration")
-    pval = cointegration_score(data["close"], other)
-    return pd.Series([pval] * len(data), index=data.index, name="cointegration_pvalue")
-@feature_calculation
-def pair_correlation(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
-    """Correlation between this asset and another."""
-    pair_data = params.get("pair_data")
-    column = params.get("cross_column", "close")
-    if pair_data is None:
-        raise ValueError("pair_data parameter required for pair_correlation")
-    """Correlation between this asset and a paired asset."""
-    pair_data = params.get("pair_data")
-    column = params.get("pair_column", "close")
-    if pair_data is None:
-        raise ValueError("pair_data parameter is required for pair_correlation")
-    corr = compute_pair_correlation(data, pair_data, column=column)
-    return pd.Series(corr, index=data.index, name="pair_correlation")
-
-@feature_calculation
-def cointegration_pvalue(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
-    """Cointegration test p-value with another asset."""
-    pair_data = params.get("pair_data")
-    column = params.get("cross_column", "close")
-    if pair_data is None:
-        raise ValueError("pair_data parameter required for cointegration_pvalue")
-    pvalue = cointegration_score(data, pair_data, column=column)
-    return pd.Series(pvalue, index=data.index, name="cointegration_pvalue")
-
-    """Engle-Granger cointegration p-value between two assets."""
-    pair_data = params.get("pair_data")
-    column = params.get("pair_column", "close")
-    if pair_data is None:
-        raise ValueError("pair_data parameter is required for cointegration_pvalue")
-    pval = cointegration_score(data, pair_data, column=column)
-    return pd.Series(pval, index=data.index, name="cointegration_pvalue")
-
-__all__ = ['atr', 'fibonacci_levels']
