@@ -717,6 +717,18 @@ class FeatureExtractor:
         period = params.get('di_period', 14)
         return ta.adx(high=data['high'], low=data['low'], close=data['close'], length=period)['DMN_{}_{}'.format(period, period)]
 
+    @feature_calculation
+    def pair_correlation(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
+        """Correlation between this asset and a paired asset."""
+        pair_data = params.get("pair_data")
+        column = params.get("pair_column", "close")
+        window = params.get("corr_window")
+        if pair_data is None:
+            raise ValueError("pair_data parameter required for pair_correlation")
+        corr = compute_pair_correlation(data, pair_data, column=column, window=window)
+        if isinstance(corr, pd.Series):
+            return corr.rename("pair_correlation")
+        return pd.Series([corr] * len(data), index=data.index, name="pair_correlation")
 
 
     @feature_calculation
@@ -1685,7 +1697,6 @@ class FeatureExtractor:
 def atr(data: pd.DataFrame, period: int = 14) -> pd.Series:
     """Calculate Average True Range from OHLCV data."""
     return ta.atr(high=data["high"], low=data["low"], close=data["close"], length=period)
-
 
 def fibonacci_levels(data: pd.DataFrame) -> Dict[str, float]:
     """Compute basic Fibonacci retracement levels."""
