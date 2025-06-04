@@ -65,8 +65,6 @@ repos:
           - flake8-comprehensions
           - flake8-simplify
           - flake8-docstrings
-          - flake8-naming
-          - pep8-naming
 
   # Type checking with mypy
   - repo: https://github.com/pre-commit/mirrors-mypy
@@ -112,17 +110,6 @@ repos:
           --ignore-init-module-imports
         ]
 
-  # Docstring formatting
-  - repo: https://github.com/PyCQA/docformatter
-    rev: v1.7.5
-    hooks:
-      - id: docformatter
-        args: [
-          --in-place,
-          --wrap-summaries=150,
-          --wrap-descriptions=150,
-          --make-summary-multi-line
-        ]
 
   # YAML formatting
   - repo: https://github.com/pre-commit/mirrors-prettier

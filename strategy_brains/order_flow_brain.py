@@ -137,6 +137,7 @@ class OrderFlowBrain(StrategyBrain):
             else None
         )
 
+
         # Microstructure analyzer for loophole detection
         try:
             self.microstructure = MicrostructureAnalyzer(config, asset_id)
