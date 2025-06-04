@@ -12,7 +12,15 @@ import numpy as np
 import pandas as pd
 from typing import Dict, List, Tuple, Any, Optional, Union, Callable
 import logging
-import shap
+try:
+    import shap
+    SHAP_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    shap = None  # type: ignore
+    SHAP_AVAILABLE = False
+    logging.getLogger(__name__).warning(
+        "shap not available; SHAP-based importance disabled"
+    )
 try:
     import eli5  # type: ignore
     ELI5_AVAILABLE = True
@@ -246,6 +254,9 @@ class FeatureImportanceAnalyzer:
         Returns:
             Dictionary with SHAP importance results
         """
+        if not SHAP_AVAILABLE:
+            raise ImportError("shap is required for SHAP importance calculations")
+
         try:
             # Sample data if too large
             sample_size = min(500, X.shape[0])

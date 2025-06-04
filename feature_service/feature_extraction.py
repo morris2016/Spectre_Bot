@@ -60,7 +60,6 @@ from common.exceptions import (
     FeatureCalculationError, InvalidFeatureDefinitionError
 )
 
-__all__ = ["atr", "fibonacci_levels"]
 
 logger = get_logger(__name__)
 metrics = MetricsCollector.get_instance("feature_service.extractor")
@@ -1738,4 +1737,3 @@ def cointegration_pvalue(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd
 # Register the functions as methods on FeatureExtractor
 FeatureExtractor.pair_correlation = pair_correlation
 FeatureExtractor.cointegration_pvalue = cointegration_pvalue
-
