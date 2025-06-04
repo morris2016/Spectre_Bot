@@ -55,62 +55,12 @@ from feature_service.features.cross_asset import (
 
 from common.logger import get_logger
 from common.metrics import MetricsCollector
-# Exported helper functions
-def atr(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> pd.Series:
-    """Wrapper for ATR calculation."""
-    return ta.atr(high=high, low=low, close=close, length=period)
-
-
-def fibonacci_levels(high: float, low: float) -> Dict[str, float]:
-    """Compute Fibonacci retracement levels."""
-    diff = high - low
-    return {
-        'level_23.6': high - diff * 0.236,
-        'level_38.2': high - diff * 0.382,
-        'level_50.0': high - diff * 0.5,
-        'level_61.8': high - diff * 0.618,
-        'level_78.6': high - diff * 0.786,
-    }
-# from common.utils import profile_execution, chunk_dataframe # Removed unused imports
 from common.constants import DEFAULT_FEATURE_PARAMS
-# Removed unused FEATURE_CACHE_SIZE
 from common.exceptions import (
     FeatureCalculationError, InvalidFeatureDefinitionError
 )
 
-
-def atr(data: pd.DataFrame, period: int = 14) -> pd.Series:
-    """Simple wrapper to calculate Average True Range."""
-    return ta.atr(high=data['high'], low=data['low'], close=data['close'], length=period)
-
-
-def fibonacci_levels(high: float, low: float) -> Dict[str, float]:
-    """Return key Fibonacci retracement levels."""
-    ratios = [0.236, 0.382, 0.5, 0.618, 0.786]
-    diff = high - low
-    levels = {'0': high, '1': low}
-    for r in ratios:
-        levels[str(r)] = high - diff * r
-    return levels
-
-
-__all__ = ['atr', 'fibonacci_levels']
-def atr(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> pd.Series:
-    """Simple ATR calculation used by tests."""
-    return ta.atr(high=high, low=low, close=close, length=period)
-
-
-def fibonacci_levels(high: float, low: float) -> Dict[str, float]:
-    """Compute basic Fibonacci retracement levels."""
-    diff = high - low
-    return {
-        '0.0%': high,
-        '23.6%': high - diff * 0.236,
-        '38.2%': high - diff * 0.382,
-        '50.0%': high - diff * 0.5,
-        '61.8%': high - diff * 0.618,
-        '100%': low,
-    }
+__all__ = ["atr", "fibonacci_levels"]
 
 logger = get_logger(__name__)
 metrics = MetricsCollector.get_instance("feature_service.extractor")
@@ -153,32 +103,6 @@ def feature_calculation(f):
     # Store original function signature for inspection
     wrapper.__signature__ = inspect.signature(f)
     return wrapper
-
-
-def atr(data: pd.DataFrame, period: int = 14) -> pd.Series:
-    """Simple Average True Range calculation."""
-    high = data['high']
-    low = data['low']
-    close = data['close']
-    prev_close = close.shift()
-    tr = pd.concat([
-        high - low,
-        (high - prev_close).abs(),
-        (low - prev_close).abs(),
-    ], axis=1).max(axis=1)
-    return tr.rolling(period).mean()
-
-
-def fibonacci_levels(high: float, low: float) -> Dict[str, float]:
-    """Calculate basic Fibonacci retracement levels."""
-    diff = high - low
-    return {
-        '0.236': high - diff * 0.236,
-        '0.382': high - diff * 0.382,
-        '0.500': high - diff * 0.5,
-        '0.618': high - diff * 0.618,
-        '0.786': high - diff * 0.786,
-    }
 
 
 class FeatureExtractor:
@@ -793,26 +717,31 @@ class FeatureExtractor:
         period = params.get('di_period', 14)
         return ta.adx(high=data['high'], low=data['low'], close=data['close'], length=period)['DMN_{}_{}'.format(period, period)]
 
+    @feature_calculation
+    def pair_correlation(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
+        """Correlation between this asset and a paired asset."""
+        pair_data = params.get("pair_data")
+        column = params.get("pair_column", "close")
+        window = params.get("corr_window")
+        if pair_data is None:
+            raise ValueError("pair_data parameter required for pair_correlation")
+        corr = compute_pair_correlation(data, pair_data, column=column, window=window)
+        if isinstance(corr, pd.Series):
+            return corr.rename("pair_correlation")
+        return pd.Series([corr] * len(data), index=data.index, name="pair_correlation")
 
-# Standalone helper wrappers
-def atr(data: pd.DataFrame, period: int = 14) -> pd.Series:
-    """Calculate Average True Range from OHLCV data."""
-    return ta.atr(high=data['high'], low=data['low'], close=data['close'], length=period)
+
+    @feature_calculation
+    def cointegration_pvalue(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
+        """Engle-Granger cointegration p-value with a paired asset."""
+        pair_data = params.get("pair_data")
+        column = params.get("pair_column", "close")
+        if pair_data is None:
+            raise ValueError("pair_data parameter required for cointegration_pvalue")
+        pvalue = cointegration_score(data, pair_data, column=column)
+        return pd.Series([pvalue] * len(data), index=data.index, name="cointegration_pvalue")
 
 
-def fibonacci_levels(data: pd.DataFrame) -> Dict[str, float]:
-    """Compute basic Fibonacci retracement levels."""
-    high = data['high'].max()
-    low = data['low'].min()
-    diff = high - low
-    return {
-        '0.0%': high,
-        '23.6%': high - 0.236 * diff,
-        '38.2%': high - 0.382 * diff,
-        '50.0%': high - 0.5 * diff,
-        '61.8%': high - 0.618 * diff,
-        '100.0%': low,
-    }
     
     @feature_calculation
     def obv(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
@@ -1763,58 +1692,16 @@ def fibonacci_levels(data: pd.DataFrame) -> Dict[str, float]:
             return corr.rename("pair_correlation")
         return pd.Series([corr] * len(data), index=data.index, name="pair_correlation")
 
-    @feature_calculation
-    def cointegration_pvalue(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd.Series:
-        """Engle-Granger cointegration p-value with a paired asset."""
-        pair_data = params.get("pair_data")
-        column = params.get("pair_column", "close")
-        if pair_data is None:
-            raise ValueError("pair_data parameter required for cointegration_pvalue")
-        pvalue = cointegration_score(data, pair_data, column=column)
-        return pd.Series([pvalue] * len(data), index=data.index, name="cointegration_pvalue")
 
-
-
-def atr(high: Union[pd.Series, List[float]],
-        low: Union[pd.Series, List[float]],
-        close: Union[pd.Series, List[float]],
-        period: int = 14) -> pd.Series:
-    """Standalone ATR calculator for easy reuse."""
-    data = pd.DataFrame({'high': high, 'low': low, 'close': close})
-    return ta.atr(high=data['high'], low=data['low'], close=data['close'], length=period)
-
-
-def fibonacci_levels(high: float, low: float) -> List[float]:
-    """Calculate Fibonacci retracement levels."""
-    levels = [0.0, 0.236, 0.382, 0.5, 0.618, 0.786, 1.0]
-    diff = high - low
-    return [high - diff * lvl for lvl in levels]
-# Convenience wrapper functions
-
+# Standalone helper wrappers
 def atr(data: pd.DataFrame, period: int = 14) -> pd.Series:
-    """Calculate ATR directly."""
-    return ta.atr(high=data['high'], low=data['low'], close=data['close'], length=period)
+    """Calculate Average True Range from OHLCV data."""
+    return ta.atr(high=data["high"], low=data["low"], close=data["close"], length=period)
 
-
-def fibonacci_levels(price: float, ratios: Optional[List[float]] = None) -> Dict[str, float]:
-    """Generate basic Fibonacci retracement levels."""
-    if ratios is None:
-        ratios = [0.236, 0.382, 0.5, 0.618, 0.786]
-    return {str(r): price * r for r in ratios}
-
-def atr(data: pd.DataFrame, period: int = 14) -> pd.Series:
-    """Convenience wrapper for ATR calculation."""
-    return ta.atr(high=data['high'], low=data['low'], close=data['close'], length=period)
-
-
-def fibonacci_levels(high: float, low: float) -> List[float]:
-    """Simple Fibonacci retracement level calculator."""
-    diff = high - low
-    return [high - diff * r for r in [0.236, 0.382, 0.5, 0.618, 0.786]]
-
-def fibonacci_levels(high: float, low: float) -> Dict[str, float]:
-    """Calculate common Fibonacci retracement levels."""
-    ratios = [0.0, 0.236, 0.382, 0.5, 0.618, 0.786, 1.0, 1.272, 1.618, 2.618]
+def fibonacci_levels(data: pd.DataFrame) -> Dict[str, float]:
+    """Compute basic Fibonacci retracement levels."""
+    high = data["high"].max()
+    low = data["low"].min()
     diff = high - low
     return {str(r): high - diff * r for r in ratios}
 
@@ -1851,3 +1738,4 @@ def cointegration_pvalue(self, data: pd.DataFrame, params: Dict[str, Any]) -> pd
 # Register the functions as methods on FeatureExtractor
 FeatureExtractor.pair_correlation = pair_correlation
 FeatureExtractor.cointegration_pvalue = cointegration_pvalue
+
