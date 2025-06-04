@@ -39,8 +39,10 @@ class OrderFlowFeatures(BaseFeature):
     by analyzing order book dynamics, trade flow, and market microstructure.
     """
     
-    def __init__(self):
-        super().__init__()
+    def __init__(self, config: Dict[str, Any] | None = None, asset_id: str | None = None):
+        """Initialize order flow features with optional config and asset id."""
+        super().__init__(config)
+        self.asset_id = asset_id
         # Historical snapshots for calculating changes over time
         self.order_book_history = deque(maxlen=1000)
         self.trade_history = deque(maxlen=5000)
